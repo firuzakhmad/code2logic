@@ -1,2 +1,83 @@
-# code2logic
-A cross-platform algorithm visualization tool built with modern C++ and OpenGL. Code2Logic provides interactive visualizations of common algorithms with detailed step-by-step execution, real-time variable tracking, and performance analysis.
+<p>
+  <img 
+    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/icons/code2logic.png" 
+    alt="Code2Logic Logo" width="180" 
+  />
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"/>
+  </a>
+</p>
+
+Code2Logic is a cross-platform algorithm visualization tool built with modern C++ and OpenGL. It provides interactive visualizations of common algorithms with detailed step-by-step execution, real-time variable tracking, and performance analysis.
+
+## Features
+
+### Algorithm Visualization
+- Interactive step-by-step execution with forward/backward navigation
+- Multiple visualization styles including bar charts, dot plots, network graphs, and tree visualizations
+- Real-time variable tracking and state monitoring
+- Visual comparison of elements during algorithm execution
+<p>
+  <img 
+    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/icons/screenshot.png" 
+    alt="Code2Logic" width="400" 
+  />
+</p>
+
+
+## Getting Started
+
+### Prerequisites
+- **CMake** 3.16+
+- **C++17** compatible compiler
+- **OpenGL** 3.3+ support
+- **Git**
+
+### Installation
+
+#### Windows
+```bash
+git clone https://github.com/firuzakhmad/code2logic.git
+cd code2logic
+mkdir build && cd build
+cmake .. -G "MinGW Makefiles"
+cmake --build . --config Release
+```
+
+#### macOS
+```bash
+git clone https://github.com/firuzakhmad/code2logic.git
+cd code2logic
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+```
+
+#### Linux
+```bash
+git clone https://github.com/firuzakhmad/code2logic.git
+cd code2logic
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+```
+
+
+### Running
+After building, launch the application from:
+
+    Windows: build/app/code2logic.exe
+
+    macOS: build/app/code2logic.app
+
+    Linux: build/app/code2logic
+
+### Contributing
+
+We welcome contributions! Please see our Contribution Guidelines.
+
+Support
+For help, please open an issue.
+
+
+### License
+
+Code2Logic is released under the MIT License - see [LICENSE.txt](LICENSE.txt) for details.
