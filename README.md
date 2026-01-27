@@ -1,6 +1,6 @@
 <p>
   <img 
-    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/icons/code2logic.png" 
+    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/icons/default/code2logic/code2logic.png" 
     alt="Code2Logic Logo" width="180" 
   />
   <a href="LICENSE">
@@ -19,7 +19,7 @@ Code2Logic is a cross-platform algorithm visualization tool built with modern C+
 - Visual comparison of elements during algorithm execution
 <p>
   <img 
-    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/icons/screenshot.png" 
+    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/screenshot/screenshot.png" 
     alt="Code2Logic" width="400" 
   />
 </p>
@@ -40,8 +40,8 @@ Code2Logic is a cross-platform algorithm visualization tool built with modern C+
 git clone https://github.com/firuzakhmad/code2logic.git
 cd code2logic
 mkdir build && cd build
-cmake .. -G "MinGW Makefiles"
-cmake --build . --config Release
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 ```
 
 #### macOS
@@ -57,7 +57,7 @@ cmake --build build --config Release
 git clone https://github.com/firuzakhmad/code2logic.git
 cd code2logic
 cmake -B build -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
+cmake --build build -j$(nproc)
 ```
 
 
