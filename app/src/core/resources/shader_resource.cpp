@@ -10,11 +10,11 @@
 namespace c2l::core::resources
 {
     ShaderResource::ShaderResource(
-        const std::string &path,
+        const std::filesystem::path& path,
         filesystem::IFileSystem& file_system)
-        : m_path{path},
-          m_file_system{file_system},
-          m_last_access_time{std::chrono::steady_clock::now()}
+        : IResource(path)
+        ,  m_file_system{file_system}
+        ,  m_last_access_time{std::chrono::steady_clock::now()}
     {
         const auto stats = m_file_system.get_file_stats(path);
         m_is_separate_files = stats.is_directory;
@@ -29,7 +29,7 @@ namespace c2l::core::resources
     {
         if (m_state == ResourceState::Loading)
         {
-            LOG_WARNING("Shader resource already loading: {}", m_path);
+            LOG_WARNING("Shader resource already loading: {}", m_path.string());
             return false;
         }
 
@@ -58,13 +58,12 @@ namespace c2l::core::resources
             m_state = ResourceState::Loaded;
             detect_uniforms();
             update_access_time();
-            LOG_DEBUG("ShaderResource loaded successfully: {}", m_path);
         }
         else
         {
             m_state = ResourceState::Error;
             unload();
-            LOG_ERROR("ShaderResource failed to load: {}\nLog: {}", m_path, m_log);
+            LOG_ERROR("ShaderResource failed to load: {}\nLog: {}", m_path.string(), m_log);
         }
 
         return success;
@@ -275,20 +274,32 @@ namespace c2l::core::resources
         {
             if (!m_file_system.exists(m_path))
             {
-                LOG_ERROR("ShaderResource file not found: {}", m_path);
+                LOG_ERROR("ShaderResource file not found: {}", m_path.string());
                 return false;
             }
 
-            std::string source = m_file_system.read_text(m_path);
-            m_memory_usage = source.size();
-
-            size_t dot_pos = m_path.find_last_of('.');
-            if (dot_pos == std::string::npos)
+            auto source = m_file_system.read_text(m_path);
+            if (!source)
             {
-                LOG_WARNING("Shader file has no extension: {}", m_path);
+                LOG_ERROR("failed to read file {}", m_path.string());
+                return false;
             }
 
-            std::string extension = m_path.substr(dot_pos);
+            m_memory_usage = source->size();
+
+            if (!m_path.has_extension())
+            {
+                LOG_ERROR("Shader file has no extension: {}", m_path.string());
+                return false;
+            }
+        
+            std::string extension = m_path.extension().string();
+            std::transform(
+                extension.begin(), 
+                extension.end(), 
+                extension.begin(),
+               [](unsigned char c){ return std::tolower(c); }
+            );
 
             ShaderType type = get_shader_type_from_extension(extension);
 
@@ -297,7 +308,7 @@ namespace c2l::core::resources
                 // For single file, we assume it contains both vertex and fragment shaders
                 // separated by specific markers or we create a simple program with one shader
                 GLuint shader_id = 0;
-                if (!compile_shader(source, type, shader_id))
+                if (!compile_shader(*source, type, shader_id))
                     return false;
 
                 m_program_id = glCreateProgram();
@@ -308,13 +319,13 @@ namespace c2l::core::resources
             }
             else
             {
-                LOG_ERROR("ShaderResource unsupported shader type for single file: {}", m_path);
+                LOG_ERROR("ShaderResource unsupported shader type for single file: {}", m_path.string());
                 return false;
             }
         }
         catch (const std::exception& e)
         {
-            LOG_ERROR("Failed to load shader from file: {} - {}", m_path, e.what());
+            LOG_ERROR("Failed to load shader from file: {} - {}", m_path.string(), e.what());
             return false;
         }
     }
@@ -336,14 +347,19 @@ namespace c2l::core::resources
 
             for (const auto& file : files)
             {
-                size_t dot_pos = file.find_last_of('.');
-                if (dot_pos == std::string::npos)
+                if (!file.has_extension())
                 {
-                    LOG_WARNING("Shader file has no extension: {}", file);
+                    LOG_WARNING("Shader file has no extension: {}", file.string());
                     continue;
                 }
 
-                std::string extension = file.substr(dot_pos);
+                std::string extension = file.extension().string();
+                std::transform(
+                    extension.begin(), 
+                    extension.end(), 
+                    extension.begin(),
+                    [](unsigned char c){ return std::tolower(c); }
+                );
 
                 ShaderType type = get_shader_type_from_extension(extension);
 
@@ -352,11 +368,17 @@ namespace c2l::core::resources
                     has_essential_shaders = true;
                 }
 
-                std::string source = m_file_system.read_text(file);
-                m_memory_usage += source.size();
+                auto source = m_file_system.read_text(file);
+                if (!source)
+                {
+                    LOG_WARNING("Failed to read file {}", file.string());
+                    continue;
+                }
+
+                m_memory_usage += source->size();
 
                 GLuint shader_id = 0;
-                if (compile_shader(source, type, shader_id))
+                if (compile_shader(*source, type, shader_id))
                 {
                     m_shader_ids.push_back(shader_id);
                     glAttachShader(m_program_id, shader_id);
@@ -364,14 +386,14 @@ namespace c2l::core::resources
                 }
                 else
                 {
-                    LOG_ERROR("ShaderResource failed to compile shader: {}", file);
+                    LOG_ERROR("ShaderResource failed to compile shader: {}", file.string());
                     return false;
                 }
             }
 
             if (!has_essential_shaders)
             {
-                LOG_ERROR("ShaderResource missing essential shaders (vertex/fragment) in: {}", m_path);
+                LOG_ERROR("ShaderResource missing essential shaders (vertex/fragment) in: {}", m_path.string());
                 return false;
             }
 
@@ -379,7 +401,7 @@ namespace c2l::core::resources
         }
         catch (const std::exception& e)
         {
-            LOG_ERROR("Failed to load shader from directory: {} - {}", m_path, e.what());
+            LOG_ERROR("Failed to load shader from directory: {} - {}", m_path.string(), e.what());
             return false;
         }
     }
@@ -479,7 +501,7 @@ namespace c2l::core::resources
         {
             LOG_ERROR(
                 "Shader '{}' uniform '{}' not found",
-                m_path, name
+                m_path.string(), name
             );
             return false;
         }
@@ -488,7 +510,7 @@ namespace c2l::core::resources
         {
             LOG_ERROR(
                 "Shader '{}' uniform '{}' type mismatch. Expected {}, got {}",
-                m_path,
+                m_path.string(),
                 name,
                 uniform_type_to_string(expected),
                 uniform_type_to_string(uniform->type)

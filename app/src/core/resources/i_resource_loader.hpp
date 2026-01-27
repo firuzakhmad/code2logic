@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <filesystem>
 
 namespace c2l::core::resources
 {
@@ -31,8 +32,9 @@ namespace c2l::core::resources
 		 * @param file_system File system to use for loading
 		 * @return Shared pointer to loaded resource, nullptr if failed
 		 */
-		virtual std::shared_ptr<IResource> load(const std::string& path,
-												filesystem::IFileSystem& file_system) = 0;
+		virtual std::shared_ptr<IResource> load(
+			const std::filesystem::path& path,
+			filesystem::IFileSystem& file_system) = 0;
 		
 		/**
 		 * @brief Get support file extensions

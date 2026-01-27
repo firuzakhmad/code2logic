@@ -2,7 +2,7 @@
 #include "core/utils/assert/assert.hpp"
 
 #include <sys/stat.h>
-#include <math.h>
+#include <cmath>
 
 namespace c2l::ui::managers
 {
@@ -11,9 +11,11 @@ namespace c2l::ui::managers
 
     IconManager::IconManager(
         core::ThreadManager& thread_manager,
-        core::resources::ResourceManager& resource_manager)
+        core::resources::ResourceManager& resource_manager,
+        core::ConfigManager& config_manager)
             : m_thread_manager{thread_manager}
             , m_resource_manager{resource_manager}
+            , m_config_manager{config_manager}
     {
         // Fallback initialization of the texture
         std::call_once(s_fallback_init_flag, [] ()
@@ -50,7 +52,7 @@ namespace c2l::ui::managers
 
         if (m_registry.find(type) != m_registry.end())
         {
-            LOG_WARNING("Icon {} already registered", icon_type_to_string(type));
+            LOG_WARNING("Icon {} already registered", icon_type_to_string(type).value());
             return false;
         }
 
@@ -66,7 +68,7 @@ namespace c2l::ui::managers
             load_icon(type, config.preferred_thread_type == c2l::core::ThreadManager::ThreadType::IO);
         }
 
-        LOG_DEBUG("Registered icon {}: {}", icon_type_to_string(type), config.path);
+        LOG_DEBUG("Registered icon {}: {}", icon_type_to_string(type).value(), config.path);
 
         return true;
     }
@@ -110,7 +112,7 @@ namespace c2l::ui::managers
             m_cache.erase(it);
         }
 
-        LOG_DEBUG("Unregistered icon {}", icon_type_to_string(type));
+        LOG_DEBUG("Unregistered icon {}", icon_type_to_string(type).value());
         return true;
     }
 
@@ -157,7 +159,7 @@ namespace c2l::ui::managers
                 auto registry_it = m_registry.find(type);
                 if (registry_it == m_registry.end())
                 {
-                    LOG_ERROR("Icon {} not registered", icon_type_to_string(type));
+                    LOG_ERROR("Icon {} not registered", icon_type_to_string(type).value());
                     return false;
                 }
 
@@ -226,13 +228,13 @@ namespace c2l::ui::managers
             const auto resource = m_resource_manager.load<c2l::core::resources::TextureResource>(config.path);
             if (!resource)
             {
-                LOG_ERROR("Failed to create texture resource for icon {}", icon_type_to_string(type));
+                LOG_ERROR("Failed to create texture resource for icon {}", icon_type_to_string(type).value());
             }
 
             // Loading data only (noGPU upload)
             if (!resource->load_data_only())
             {
-                LOG_ERROR("Failed to load texture data for icon {}", icon_type_to_string(type));
+                LOG_ERROR("Failed to load texture data for icon {}", icon_type_to_string(type).value());
             }
 
             update_icon_progress(type, 0.6f);
@@ -262,7 +264,7 @@ namespace c2l::ui::managers
             }
 
             LOG_DEBUG("IO Thread: Icon {} data loaded ({}x{})",
-                     icon_type_to_string(type),
+                     icon_type_to_string(type).value(),
                      resource->get_width(),
                      resource->get_height());
 
@@ -295,7 +297,7 @@ namespace c2l::ui::managers
             // Uploading to GPU (MUST be on main thread)
             if (!resource->upload_to_gpu())
             {
-                LOG_ERROR("GPU upload failed for icon {}", icon_type_to_string(type));
+                LOG_ERROR("GPU upload failed for icon {}", icon_type_to_string(type).value());
             }
 
             // Applying quality settings
@@ -317,7 +319,7 @@ namespace c2l::ui::managers
             }
 
             LOG_INFO("Icon {} ready ({}x{}, {}KB)",
-                    icon_type_to_string(type),
+                    icon_type_to_string(type).value(),
                     resource->get_width(),
                     resource->get_height(),
                     resource->get_memory_usage() / 1024);
@@ -342,19 +344,66 @@ namespace c2l::ui::managers
 
     void IconManager::load_default_icons()
     {
-        const std::vector<std::pair<IconType, IconConfig>>& icons = {
-        { IconType::PLAY, {"resources/icons/play.png", IconQuality::HIGH} },
-        { IconType::STEP_FORWARD,{"resources/icons/arrow_right.png", IconQuality::HIGH} },
-        { IconType::STEP_BACKWARD,{"resources/icons/arrow_left.png", IconQuality::HIGH} },
-        { IconType::PAUSE,{"resources/icons/pause.png", IconQuality::HIGH} },
-        { IconType::ARRAY,{"resources/icons/array.png", IconQuality::HIGH} },
-        { IconType::ALGORITHM,{"resources/icons/algorithm.png", IconQuality::HIGH} },
-        { IconType::STATISTIC,{"resources/icons/statistic.png", IconQuality::HIGH} },
-        { IconType::STEPS,{"resources/icons/steps.png", IconQuality::HIGH} },
-        { IconType::RESET,{"resources/icons/reset.png", IconQuality::HIGH} }
-        };
+        auto icon_config = m_config_manager.get_icon_config();
 
-        register_icons(icons);
+        if (icon_config.empty() || !icon_config.contains("icons"))
+        {
+            LOG_ERROR("Invalid icon configuration format");
+            return;
+        }
+
+        std::vector<std::pair<IconType, IconConfig>> icons;
+
+        const auto& icons_object = icon_config["icons"];
+
+        for (auto it = icons_object.begin(); it != icons_object.end(); ++it)
+        {
+            std::string icon_name = it.key();
+            const auto& icon_data = it.value();
+
+            if (!icon_data.contains("type"))
+            {
+                LOG_WARNING("Icon '{}' missing type", icon_name);
+                continue;
+            }
+
+            auto icon_type_opt = string_to_icon_type(icon_data["type"]);
+            if (!icon_type_opt)
+            {
+                LOG_WARNING("Unknown icon type: {}", icon_name);
+                continue;
+            }
+
+            // Getting default path
+            if (!icon_data.contains("default_path"))
+            {
+                LOG_WARNING("Icon '{}' missing default_path", icon_name);
+                continue;
+            }
+
+            std::string default_path = icon_data["default_path"].get<std::string>();
+
+            IconQuality quality = IconQuality::HIGH;
+            if (icon_data.contains("sizes"))
+            {
+                quality = determine_icon_quality_from_size(icon_data["sizes"]);
+            }
+
+            // Adding to vector
+            icons.push_back({*icon_type_opt, {default_path, quality}});
+
+            LOG_DEBUG("Loaded icon: {} -> {} (quality: {})",
+                 icon_name, default_path, static_cast<int>(quality));
+        }
+
+        // Register all icons
+        if (!icons.empty())
+        {
+            register_icons(icons);
+            LOG_INFO("Successfully loaded {} icons from configuration", icons.size());
+        } else {
+            LOG_WARNING("No icons were loaded from configuration");
+        }
     }
 
 
@@ -657,7 +706,7 @@ namespace c2l::ui::managers
             entry->data.retry_count++;
 
             LOG_ERROR("Icon {} error: {} (retry {}/{})",
-                     icon_type_to_string(type), error,
+                     icon_type_to_string(type).value(), error,
                      entry->data.retry_count, entry->config.max_retries);
 
             if (m_error_callback)
@@ -685,7 +734,7 @@ namespace c2l::ui::managers
             }
         }
 
-        LOG_DEBUG("Retrying icon {}", icon_type_to_string(type));
+        LOG_DEBUG("Retrying icon {}", icon_type_to_string(type).value());
         load_icon(type, true);
     }
 
@@ -730,7 +779,7 @@ namespace c2l::ui::managers
 
         for (const auto& [type, entry] : m_cache)
         {
-            LOG_DEBUG("icon {}", icon_type_to_string(type));
+            LOG_DEBUG("icon {}", icon_type_to_string(type).value());
 
             if (!entry->config.persistent &&
                 !entry->locked &&
@@ -930,7 +979,33 @@ namespace c2l::ui::managers
         return m_memory_usage;
     }
 
-    std::string IconManager::icon_type_to_string(const IconType& type)
+    IconQuality IconManager::determine_icon_quality_from_size(
+            const nlohmann::json& sizes_json)
+    {
+        IconQuality quality = IconQuality::MEDIUM; // Default
+
+        if (sizes_json.is_array()) {
+            int max_size = 0;
+            for (const auto& size : sizes_json) {
+                if (size.is_number()) {
+                    max_size = std::max(max_size, size.get<int>());
+                }
+            }
+
+            // Defining quality based on available sizes
+            if (max_size >= 48) {
+                quality = IconQuality::HIGH;
+            } else if (max_size >= 32) {
+                quality = IconQuality::MEDIUM;
+            } else {
+                quality = IconQuality::LOW;
+            }
+        }
+
+        return quality;
+    }
+
+    std::optional<std::string> IconManager::icon_type_to_string(const IconType& type)
     {
         static const char* names[] = {
             "PLAY", "PAUSE", "STEP_FORWARD", "STEP_BACKWARD", "RESET", "SETTINGS",
@@ -941,13 +1016,14 @@ namespace c2l::ui::managers
         };
 
         size_t index = static_cast<size_t>(type);
-        if (index < sizeof(names) / sizeof(names[0])) {
+        if (index < sizeof(names) / sizeof(names[0]))
+        {
             return names[index];
         }
-        return "UNKNOWN";
+        return std::nullopt;
     }
 
-    IconType IconManager::string_to_icon_type(const std::string& str)
+    std::optional<IconType> IconManager::string_to_icon_type(const std::string& str)
     {
         static const char* names[] = {
             "PLAY", "PAUSE", "STEP_FORWARD", "STEP_BACKWARD", "RESET", "SETTINGS",
@@ -963,7 +1039,7 @@ namespace c2l::ui::managers
                 return static_cast<IconType>(i);
             }
         }
-        return IconType::UNKNOWN;
+        return std::nullopt;
     }
 
 } // namespace c2l::ui::managers

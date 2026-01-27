@@ -275,7 +275,7 @@ namespace c2l::algorithms
                 draw_list->AddRect(glow_min, glow_max, ImColor(255, 255, 255, 150), 0, 0, 2.0f);
 
                 // Pulse animation (simple version)
-                float pulse = (sin(ImGui::GetTime() * 8.0f) + 1.0f) * 0.5f;
+                float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 8.0f) + 1.0f) * 0.5f;
                 ImU32 pulse_color = ImColor(255, 255, 255, static_cast<int>(100 * pulse));
                 draw_list->AddRect(bar_min, bar_max, pulse_color, 0, 0, 1.5f);
             }
@@ -558,7 +558,7 @@ namespace c2l::algorithms
                 );
 
                 // Draw animated comparison indicator
-                float pulse = (sin(ImGui::GetTime() * 8.0f) + 1.0f) * 0.5f;
+                float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 8.0f) + 1.0f) * 0.5f;
                 draw_list->AddCircleFilled(mid_point, 8.0f + pulse * 4.0f, ImColor(255, 255, 0, 150));
 
                 // Show comparison result
@@ -608,7 +608,7 @@ namespace c2l::algorithms
             if (i == step.visualization.highlighted_index ||
                 i == step.visualization.compared_index)
             {
-                float pulse = (sin(ImGui::GetTime() * 6.0f) + 1.0f) * 0.5f;
+                float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 6.0f) + 1.0f) * 0.5f;
                 draw_list->AddCircle(
                     node_positions[i],
                     node_radius + 8 + pulse * 6,
@@ -796,7 +796,7 @@ namespace c2l::algorithms
             draw_list->AddCircleFilled(screen_pos, particle.size, particle_color);
 
             // Outer glow
-            float pulse = (sin(ImGui::GetTime() * 6.0f + i * 0.5f) + 1.0f) * 0.3f;
+            float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 6.0f + i * 0.5f) + 1.0f) * 0.3f;
             draw_list->AddCircle(screen_pos, particle.size + 3 + pulse * 2,
                                ImColor(255, 255, 255, 80), 0, 2.0f);
 
@@ -913,7 +913,7 @@ namespace c2l::algorithms
             );
 
             // Animated connection line
-            float pulse = (sin(ImGui::GetTime() * 10.0f) + 1.0f) * 0.5f;
+            float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 10.0f) + 1.0f) * 0.5f;
             ImU32 line_color = ImColor(255, 255, 255, static_cast<int>(150 + 100 * pulse));
 
             draw_list->AddLine(screen_pos1, screen_pos2, line_color, 3.0f);
@@ -1066,7 +1066,7 @@ namespace c2l::algorithms
             if (i == step.visualization.highlighted_index ||
                 i == step.visualization.compared_index)
             {
-                float pulse = (sin(ImGui::GetTime() * 8.0f) + 1.0f) * 0.5f;
+                float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 8.0f) + 1.0f) * 0.5f;
                 ImU32 glow_color = ImColor(255, 255, 255, static_cast<int>(150 + 100 * pulse));
 
                 draw_list->AddCircle(
@@ -1090,7 +1090,7 @@ namespace c2l::algorithms
                        cursor_pos.y + node_positions[*step.visualization.compared_index].y);
 
             // Draw animated comparison line
-            float pulse = (sin(ImGui::GetTime() * 10.0f) + 1.0f) * 0.5f;
+            float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 10.0f) + 1.0f) * 0.5f;
             draw_list->AddLine(pos1, pos2, ImColor(255, 255, 0, static_cast<int>(150 + 100 * pulse)), 3.0f);
 
             // Draw comparison operator
@@ -1146,7 +1146,7 @@ namespace c2l::algorithms
         {
             int level = static_cast<int>(std::log2(i + 1));
             int max_nodes_at_level = 1 << level;
-            int position_in_level = i + 1 - (1 << level);
+            int position_in_level = static_cast<int>(i) + 1 - (1 << level);
 
             float x = static_cast<float>(position_in_level + 1) / (max_nodes_at_level + 1) * region_size.x;
             float y = static_cast<float>(level + 1) / (depth + 1) * region_size.y;
@@ -1285,7 +1285,7 @@ namespace c2l::algorithms
         ImVec2 region_size = ImGui::GetContentRegionAvail();
 
         // Create neural network layers
-        int input_size = step.data.size();
+        int input_size = static_cast<int>(step.data.size());
         int hidden_size = std::min(8, input_size);
         int output_size = input_size;
 
@@ -1332,7 +1332,7 @@ namespace c2l::algorithms
     std::vector<ImVec2> ArrayBasedVisualizer::calculate_layer_positions(int node_count, const ImVec2& region_size, float x_ratio)
     {
         std::vector<ImVec2> positions;
-        positions.reserve(node_count);
+        positions.reserve(static_cast<size_t>(node_count));
 
         for (int i = 0; i < node_count; ++i)
         {
@@ -1399,8 +1399,8 @@ namespace c2l::algorithms
 
         for (size_t i = 0; i < count; ++i)
         {
-            int row = i / cols;
-            int col = i % cols;
+            int row = static_cast<int>(i) / cols;
+            int col = static_cast<int>(i) % cols;
 
             float x = col * cell_width + cell_width * 0.5f;
             float y = row * cell_height + cell_height * 0.5f;

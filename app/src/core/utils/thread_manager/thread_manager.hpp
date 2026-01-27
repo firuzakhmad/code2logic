@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CODE2LOGIC_CORE_THREAD_MANAGER_HPP
+#define CODE2LOGIC_CORE_THREAD_MANAGER_HPP
 
 #include "core/utils/logger/logger.hpp"
 
@@ -625,3 +626,5 @@ namespace c2l::core
     }
 
 } // namespace c2l::core
+
+#endif

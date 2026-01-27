@@ -32,12 +32,15 @@ set(CODE2LOGIC_SOURCES
         src/ui/managers/icon_manager.cpp
         src/scenes/algorithm_comparison_scene.cpp
         src/algorithms/algorithm_variables.cpp
+        src/core/config_manager/config_manager.cpp
+
 
 )
 
 set(CODE2LOGIC_HEADERS
         src/core/application.hpp
         src/core/utils/logger/logger.hpp
+        src/core/utils/timer/i_timer.hpp
         src/core/utils/assert/assert.hpp
         src/core/utils/timer/timer.hpp
         src/core/window/window_settings.hpp
@@ -68,8 +71,13 @@ set(CODE2LOGIC_HEADERS
         src/core/resources/texture_loader.hpp
         src/core/resources/shader_resource.hpp
         src/core/resources/shader_loader.hpp
+        src/core/resources/shader_types.hpp
         src/scenes/algorithm_visualizer_scene.hpp
         src/algorithms/i_simple_algorithm.hpp
+        src/algorithms/algorithm_observer.hpp
+        src/algorithms/algorithm_step.hpp
+        src/algorithms/algorithm_step_operation.hpp
+        src/algorithms/algorithm_state_tracker.hpp
         src/algorithms/algorithm_base.hpp
         src/algorithms/bubble_sort_algorithm.hpp
         src/algorithms/quick_sort_algorithm.hpp
@@ -81,6 +89,9 @@ set(CODE2LOGIC_HEADERS
         src/ui/managers/icon_manager.hpp
         src/scenes/algorithm_comparison_scene.hpp
         src/algorithms/algorithm_variable.hpp
+        src/core/config_manager/config_manager.hpp
+        src/core/utils/utils.hpp
+        src/core/utils/variables.hpp
 
 )
 
@@ -108,7 +119,6 @@ target_include_directories(code2logic PRIVATE src)
 # Platform-specific executable properties
 if(WIN32)
     set_target_properties(code2logic PROPERTIES
-            WIN32_EXECUTABLE ON
             VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
 else()

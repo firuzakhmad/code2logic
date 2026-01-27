@@ -8,11 +8,11 @@
 
 namespace c2l::core::resources
 {
-	FontResource::FontResource(std::string  path,
+	FontResource::FontResource(const std::filesystem::path& path,
 							   core::filesystem::IFileSystem& file_system,
 							   const float size_pixels,
 							   const std::vector<uint8_t>* font_data)
-	: m_path{std::move(path)}
+	: IResource(path)
 	, m_file_system{file_system}
 	, m_last_access_time(std::chrono::steady_clock::now())
 	, m_size_pixels{size_pixels}
@@ -61,7 +61,7 @@ namespace c2l::core::resources
         else 
         {
             m_state = ResourceState::Error;
-            LOG_ERROR("FontResource failed to load: {}", m_path);
+            LOG_ERROR("FontResource failed to load: {}", m_path.string());
             unload();
         }
 
@@ -101,12 +101,12 @@ namespace c2l::core::resources
 
         if (std::abs(m_size_pixels - size) < 0.001f) 
         {
-            return; // No change needed
+            return;
         }
 
         m_size_pixels = size;
 
-        // If font is already loaded, rebuild it with new size
+        // If font is already loaded, rebuilding it with new size
         if (m_state == ResourceState::Loaded && !m_font_data.empty())
         {
             build_font();
@@ -119,16 +119,21 @@ namespace c2l::core::resources
 		{
             if (!m_file_system.exists(m_path))
             {
-                LOG_ERROR("FontResource file not found: {}", m_path);
+                LOG_ERROR("FontResource file not found: {}", m_path.string());
                 return false;
             }
+			const auto font_data = m_file_system.read_binary(m_path);
+			if (!font_data)
+			{
+				LOG_ERROR("Failed to read binary font file: {}", m_path.string());
+			}
 
-			m_font_data = m_file_system.read_binary(m_path);
+			m_font_data = *font_data;
 
 			return load_from_memory();
 		} catch(const std::exception& e)
 		{
-			LOG_ERROR("Failed to load font from file: {}", m_path);
+			LOG_ERROR("Failed to load font {}: {}", m_path.string(), e.what());
 		}
 		return false;
 	}
@@ -178,11 +183,6 @@ namespace c2l::core::resources
 		{
 			unload();
 		}
-	}
-
-	const std::string& FontResource::get_path() const
-	{
-		return m_path;
 	}
 
 	ResourceState FontResource::get_state() const

@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace c2l::core::resources
 {
@@ -18,6 +19,9 @@ namespace c2l::core::resources
     {
     public:
         TextureLoader() = default;
+
+        TextureLoader(const TextureLoader&) = delete;
+	    TextureLoader& operator=(const TextureLoader&) = delete;
 
         /**
          * @brief Checks whether the loader supports the given file extension.
@@ -49,7 +53,7 @@ namespace c2l::core::resources
          * @return Return std::shared_ptr<IResource> of the loaded texture
          */
         std::shared_ptr<core::resources::IResource> load(
-            const std::string& path, 
+            const std::filesystem::path& path, 
             core::filesystem::IFileSystem& file_system) override
         {
             auto texture = std::make_shared<TextureResource>(path, file_system);

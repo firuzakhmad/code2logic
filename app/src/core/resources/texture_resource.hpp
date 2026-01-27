@@ -24,7 +24,7 @@ namespace c2l::core::resources
 	 	 * @param texture_data Optional preloading texture data
 	 	 * @param stbi_set_flip_vertically_on_load false on default
 	 	 */
-	 	TextureResource(const std::string& path,
+	 	TextureResource(const std::filesystem::path& path,
 	 					core::filesystem::IFileSystem& file_system,
 	 					const std::vector<uint8_t>* texture_data = nullptr,
 	 					const bool stbi_set_flip_vertically_on_load = false,
@@ -32,11 +32,6 @@ namespace c2l::core::resources
 	 	~TextureResource() override;
 
 	 	// IResource implementation
-	    /**
-	     * @copydoc IResource::get_path()
-	     */
-	    [[nodiscard]] const std::string& get_path() const override { return m_path; }
-
 	 	/**
 		 * @copydoc IResource::get_state()
 		 */
@@ -133,7 +128,6 @@ namespace c2l::core::resources
 	 	bool upload_to_gpu_internal(const unsigned char*);
 	 	void cleanup();
 
-	 	std::string m_path;
 	    core::filesystem::IFileSystem& m_file_system;
 
 	    ResourceState m_state{ResourceState::Unloaded};

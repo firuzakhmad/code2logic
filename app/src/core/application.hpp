@@ -8,6 +8,7 @@
 #include "core/file_system/std_file_system.hpp"
 #include "core/resources/resource_manager.hpp"
 #include "ui/managers/icon_manager.hpp"
+#include "core/config_manager/config_manager.hpp"
 
 #include <memory>
 
@@ -33,6 +34,7 @@ namespace c2l
 
 		std::unique_ptr<core::ThreadManager> m_thread_manager;
 		std::unique_ptr<core::filesystem::IFileSystem> m_file_system;
+		std::unique_ptr<core::ConfigManager> m_config_manager;
 		std::unique_ptr<core::resources::ResourceManager> m_resource_manager;
 		std::unique_ptr<c2l::ui::managers::IconManager> m_icon_manager;
 		std::unique_ptr<scenes::SceneManager> m_scene_manager;

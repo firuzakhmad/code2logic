@@ -10,6 +10,8 @@
 #include <memory>
 #include <mutex>
 #include <atomic>
+#include <filesystem>
+#include <optional>
 
 
 namespace c2l::core::resources
@@ -50,7 +52,7 @@ namespace c2l::core::resources
 		 * auto texture resource_manager->load<TextureResource>("texture/icon.png");
 		 */
 		template<typename T>
-		std::shared_ptr<T> load(const std::string& path);
+		std::shared_ptr<T> load(const std::filesystem::path& path);
 
 		/**
 		* @brief Get a previously loaded resource
@@ -59,14 +61,14 @@ namespace c2l::core::resources
 		* @return Shared pointer to resource if loaded, nullptr otherwise
 		*/
 		template<typename T>
-		std::shared_ptr<T> get(const std::string& path);
+		std::shared_ptr<T> get(const std::filesystem::path& path);
 
 		/**
 		 * @brief Unload a specific resource
 		 * @param path Resource path to unload
 		 * @return true if found and unloaded, false otherwise
 		 */
-		bool unload(const std::string& path);
+		bool unload(const std::filesystem::path& path);
 
 		/**
 	     * @brief Unload all resources not used since specified time
@@ -141,33 +143,34 @@ namespace c2l::core::resources
 	     * @param path Resource path to check
 	     * @return true if exists, false otherwise
 	     */
-	    bool resource_exists(const std::string& path) const;
+	    bool resource_exists(const std::filesystem::path& path) const;
 
 	    /**
 	     * @brief Get all loaded resource paths
 	     * @return Vector of loaded resource paths
 	     */
-	    std::vector<std::string> get_loaded_resources() const;
+	    std::vector<std::filesystem::path> get_loaded_resources() const;
 
 	    /**
 	     * @brief Preload multiple resources 
 	     * @param path Vector of resource path to preload
 	     */
-	    void preload_resources(const std::vector<std::string>& path);
+	    void preload_resources(const std::vector<std::filesystem::path>& path);
 
 	    /**
 	     * @brief Scan directory and register found resources
 	     * @param path Directory path to scan
 	     * @param recursive Whether to scan subdirectories
 	     */
-	    void scan_directory(const std::string& path, bool recursive = true);
+	    void scan_directory(const std::filesystem::path& path, bool recursive = true);
 	    
 	    /**
 	     * @brief Get the resolved absolute path for a resource
 	     * @param relative_path Relative resource path
-	     * @return Absolute path if found, empty string if not found
+	     * @return Absolute path if found, std::nullopt if not found
 	     */
-	    [[nodiscard]] std::string get_resource_path(const std::string& relative_path) const;
+	    [[nodiscard]] std::optional<std::filesystem::path> 
+		get_resource_path(const std::filesystem::path& relative_path) const;
 
 		/**
 		 * @return Returns reference of filesystem::IFileSystem&
@@ -183,26 +186,28 @@ namespace c2l::core::resources
 			uint64_t memory_usage;
 		};
 
-		std::shared_ptr<IResource> load_internal(const std::string& path);
-		IResourceLoader* find_loader(const std::string& path) const;
+		std::shared_ptr<IResource> load_internal(const std::filesystem::path& path);
+		IResourceLoader* find_loader(const std::filesystem::path& path) const;
 		void evict_resources_if_needed();
-		std::string get_extension(const std::string& path) const;
-		void update_resource_entry(const std::string& path, std::shared_ptr<IResource> resource);
+		std::string get_extension(const std::filesystem::path& path) const;
+		void update_resource_entry(
+			const std::filesystem::path& path, 
+			std::shared_ptr<IResource> resource);
 
-		// Memebers
+		// Members
 		filesystem::IFileSystem& m_file_system;
 		c2l::core::ThreadManager& m_thread_manager;
 
-		std::unordered_map<std::string, ResourceEntry> m_resources;
+		std::unordered_map<std::filesystem::path, ResourceEntry> m_resources;
 		std::vector<std::unique_ptr<IResourceLoader>> m_loaders;
 		mutable std::mutex m_mutex;
 		std::atomic<uint64_t> m_memory_usage	{0};
-	    std::atomic<uint64_t> m_memory_budget	{0}; // 0 = no limit
+	    std::atomic<uint64_t> m_memory_budget	{0};
 	    std::atomic<bool> m_hot_reload_enabled	{false};
 	};
 
 	template<typename T> 
-	std::shared_ptr<T> ResourceManager::load(const std::string& path)
+	std::shared_ptr<T> ResourceManager::load(const std::filesystem::path& path)
 	{
 		static_assert(std::is_base_of_v<IResource, T>, 
 					  "T must derive from IResource");
@@ -212,7 +217,7 @@ namespace c2l::core::resources
 	}
 
 	template<typename T>
-	std::shared_ptr<T> ResourceManager::get(const std::string& path) 
+	std::shared_ptr<T> ResourceManager::get(const std::filesystem::path& path) 
 	{
 		static_assert(std::is_base_of_v<IResource, T>, 
 					  "T must derive from IResource");

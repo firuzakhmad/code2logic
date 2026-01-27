@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace c2l::core::resources
 {
@@ -23,6 +24,9 @@ namespace c2l::core::resources
 	     */
 	    explicit FontLoader(const float default_size = 16.0f) : m_default_size(default_size) {}
 		~FontLoader() override = default;
+
+		FontLoader(const FontLoader&) = delete;
+		FontLoader& operator=(const FontLoader&) = delete;
 
 		/**
 		 * @brief Checks whether the loader supports the given file extension.
@@ -41,7 +45,7 @@ namespace c2l::core::resources
 		 * @return Returns std::shared_ptr<IResource> of the loaded font
 		 */
 		std::shared_ptr<IResource> load(
-	        const std::string& path, 
+	        const std::filesystem::path& path, 
 	        core::filesystem::IFileSystem& file_system) override
 	    {
 	        auto font = std::make_shared<FontResource>(path, file_system, m_default_size);
