@@ -4,6 +4,8 @@
 #include "core/utils/thread_manager/thread_manager.hpp"
 #include "core/resources/texture_resource.hpp"
 #include "core/resources/resource_manager.hpp"
+#include "core/utils/variables.hpp"
+#include "core/config_manager/config_manager.hpp"
 
 #include <string>
 #include <imgui.h>
@@ -18,11 +20,11 @@
 #include <condition_variable>
 #include <unordered_set>
 #include <utility>
-
-#include "core/utils/variables.hpp"
+#include <nlohmann/json.hpp>
 
 
 #define DEFAULT_BUTTON_ICON_SIZE ImVec2(25, 18)
+
 
 namespace c2l::ui::managers
 {
@@ -153,7 +155,8 @@ namespace c2l::ui::managers
 
         IconManager(
             c2l::core::ThreadManager& thread_manager,
-            c2l::core::resources::ResourceManager& resource_manager);
+            c2l::core::resources::ResourceManager& resource_manager,
+            c2l::core::ConfigManager& config_manager);
 
         ~IconManager();
 
@@ -205,12 +208,14 @@ namespace c2l::ui::managers
         [[nodiscard]] size_t get_loading_count() const;
         [[nodiscard]] size_t get_error_count() const;
         [[nodiscard]] size_t get_memory_usage() const;
+        [[nodiscard]] IconQuality determine_icon_quality_from_size(
+            const nlohmann::json& sizes_json);
 
         void update();
 
         // Utility
-        static std::string icon_type_to_string(const IconType& type);
-        static IconType string_to_icon_type(const std::string& str);
+        static std::optional<std::string> icon_type_to_string(const IconType& type);
+        static std::optional<IconType> string_to_icon_type(const std::string& str);
 
     private:
         struct CacheEntry
@@ -283,7 +288,9 @@ namespace c2l::ui::managers
 
         // Members
         c2l::core::ThreadManager& m_thread_manager;
-        c2l::core::resources::ResourceManager&   m_resource_manager;
+        c2l::core::resources::ResourceManager& m_resource_manager;
+        c2l::core::ConfigManager& m_config_manager;
+
 
         mutable std::shared_mutex m_cache_mutex;
         std::unordered_map<IconType, std::shared_ptr<CacheEntry>> m_cache;

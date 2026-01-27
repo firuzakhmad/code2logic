@@ -29,18 +29,15 @@ namespace c2l::core::resources
          * @param path Path to the shader file or directory
          * @param file_system File system for loading
          */
-        ShaderResource(const std::string& path,
+        ShaderResource(const std::filesystem::path& path,
                        filesystem::IFileSystem& file_system);
 
         ~ShaderResource() override;
 
+        ShaderResource(const ShaderResource&) = delete;
+        ShaderResource& operator=(const ShaderResource&) = delete;
+
         // IResource implementation
-        /**
-         * @copydoc IResource::get_path
-         */
-        [[nodiscard]] const std::string& get_path() const override { return m_path; }
-
-
         /**
          * @copydoc IResource::get_state
          */
@@ -173,7 +170,6 @@ namespace c2l::core::resources
         bool load_single_file();
         bool load_separate_files();
 
-        std::string m_path;
         ResourceState m_state       {ResourceState::Unloaded};
         filesystem::IFileSystem& m_file_system;
         std::chrono::steady_clock::time_point m_last_access_time;

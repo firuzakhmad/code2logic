@@ -3,6 +3,8 @@
 
 #include <string>
 #include <chrono>
+#include <filesystem>
+#include <optional>
 
 namespace c2l::core::resources
 {
@@ -26,6 +28,10 @@ namespace c2l::core::resources
 	class IResource
 	{
 	public:
+		explicit IResource(const std::filesystem::path& path)
+			: m_path{path} 
+		{}
+
 		virtual ~IResource() = default;
 
 		/**
@@ -43,12 +49,6 @@ namespace c2l::core::resources
 		 * @brief Update last access time
 		 */
 		virtual void update_access_time() = 0;
-
-		/**
-		 * @brief Get the resource path
-		 * @return Resource file path
-		 */
-		[[nodiscard]] virtual const std::string& get_path() const = 0;
 
 		/**
 		 * @brief Get the current resource state
@@ -73,6 +73,18 @@ namespace c2l::core::resources
 	     * @return Last access time
 	     */
 	    [[nodiscard]] virtual std::chrono::steady_clock::time_point get_last_access_time() const = 0;
+
+		/**
+		 * @brief Get the resource path
+		 * @return Resource file path
+		 */
+		[[nodiscard]] virtual const std::filesystem::path& get_path() const noexcept final
+		{
+			return m_path;
+		}
+
+	protected:
+		std::filesystem::path m_path;
 	};
 
 } // namespace c2l::core::resources

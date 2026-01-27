@@ -7,11 +7,14 @@
 
 namespace c2l::core::filesystem
 {
-	namespace fs = std::filesystem;
 	
 	StdFileSystem::StdFileSystem()
 	{
-		m_base_path = find_root_path();
+		const auto root_path = find_root_path();
+		if (root_path)
+			m_base_path = *root_path;
+		else 
+			LOG_ERROR("Failed to find root path");
 
 		setup_default_search_path();
 	}
@@ -23,362 +26,374 @@ namespace c2l::core::filesystem
 		setup_default_search_path();
 	}
 
-	bool StdFileSystem::exists(const std::string& path) const
+	bool StdFileSystem::exists(const fs::path& path) const
 	{
-		return fs::exists(path);
+		return resolve_path(path).has_value();
 	}
 
-	std::string StdFileSystem::read_text(const std::string& path) const
-	{
-		try
-		{
-			const auto resolved_path = resolve_path(path);
-			if (resolved_path.empty())
-				return {};
-
-			std::ifstream file(resolved_path);
-			if (!file)
-				return {};
-
-			std::stringstream buffer;
-			buffer << file.rdbuf();
-			return buffer.str();
-		}
-		catch (const std::exception& e)
-		{
-			LOG_ERROR("Exception while reading file '{}': {}", path, e.what());
-			return {};
-		}
-	}
-
-	std::vector<uint8_t> StdFileSystem::read_binary(const std::string& path) const
+	std::optional<std::string> StdFileSystem::read_text(const fs::path& path) const
 	{
 		const auto resolved_path = resolve_path(path);
-		if (resolved_path.empty())
-		{
-			LOG_ERROR("File not found: {}", path);
-			return {};
-		}
+		if (!resolved_path)
+			return std::nullopt;
 
-		std::ifstream file(resolved_path, std::ios::binary | std::ios::ate);
+		std::error_code ec;
+		const auto size = fs::file_size(*resolved_path, ec);
+		if (ec)
+			return std::nullopt;
+
+		std::ifstream file(*resolved_path);
 		if (!file)
-		{
-			LOG_ERROR("Cannot open file: {}", resolved_path);
-			return {};
-		}
+			return std::nullopt;
+
+		std::string content;
+    	content.resize(static_cast<size_t>(size));
+
+		if (!file.read(content.data(), static_cast<std::streamsize>(content.size())))
+        	return std::nullopt;
+		
+			return content;
+	}
+
+	std::optional<std::vector<uint8_t>> StdFileSystem::read_binary(const fs::path& path) const
+	{
+		const auto resolved_path = resolve_path(path);
+		if (!resolved_path)
+			return std::nullopt;
+
+		std::ifstream file(*resolved_path, std::ios::binary | std::ios::ate);
+		if (!file)
+			return std::nullopt;
 
 		const std::streamsize size = file.tellg();
-		if (size <= 0)
-		{
-			LOG_ERROR("Invalid file size: {}", resolved_path);
-			return {};
-		}
+		if (size < 0)
+			return std::nullopt;
 
 		file.seekg(0, std::ios::beg);
 
 		std::vector<uint8_t> buffer(static_cast<size_t>(size));
 		if (!file.read(reinterpret_cast<char*>(buffer.data()), size))
-		{
-			LOG_ERROR("Failed to read file: {}", resolved_path);
-			return {};
-		}
+			return std::nullopt;
 
 		return buffer;
 	}
 
-	bool StdFileSystem::write_text(const std::string& path, const std::string& content) const
+	bool StdFileSystem::write_text(
+		const fs::path& path, 
+		const std::string& content) const
 	{
-		try
+		const fs::path dir = path.parent_path();
+		if (!dir.empty() && !fs::exists(dir))
 		{
-			auto dir = fs::path(path).parent_path();
-			if (!dir.empty() && !fs::exists(dir))
+			std::error_code ec;
+			fs::create_directories(dir, ec);
+			if (ec)
+    			return false;
+		}
+
+		std::ofstream file(path);
+		if (!file)
+        	return false;
+
+		file.write(content.data(), static_cast<std::streamsize>(content.size()));
+		return file.good();
+	}
+
+	bool StdFileSystem::write_binary(
+		const fs::path& path, 
+		const std::vector<uint8_t>& data)
+	{
+		const fs::path dir = path.parent_path();
+		if (!dir.empty() && !fs::exists(dir))
+		{
+			std::error_code ec;
+			fs::create_directories(dir, ec);
+			if (ec)
+    			return false;
+		}
+
+		std::ofstream file(path, std::ios::binary);
+		if (!file.is_open()) 
+			return false;
+
+		std::streamsize size = static_cast<std::streamsize>(data.size());
+		file.write(reinterpret_cast<const char*>(data.data()), size);
+		
+		return file.good();
+	}
+
+	bool StdFileSystem::delete_file(const fs::path& path)
+	{
+		std::error_code ec;
+		fs::remove(path, ec);
+		return !ec;
+	}
+
+	bool StdFileSystem::create_directory(const fs::path& path)
+	{
+		std::error_code ec;
+		fs::create_directories(path, ec);
+		return !ec;
+	}
+
+	std::vector<fs::path> StdFileSystem::list_directory(
+		const fs::path& path, bool recursive) const
+	{
+		std::vector<fs::path> result;
+
+		std::error_code ec;
+
+		if (recursive)
+		{
+			for (fs::recursive_directory_iterator it(path, ec), end;
+				 it != end && !ec; 
+				 it.increment(ec))
 			{
-				fs::create_directories(dir);
+				result.emplace_back(it->path());
 			}
-
-			std::ofstream file(path);
-			if (!file.is_open()) return false;
-
-			file << content;
-			return true;
-		} catch (...)
+		} 
+		else 
 		{
-			return false;
-		}
-	}
-
-	bool StdFileSystem::write_binary(const std::string& path, const std::vector<uint8_t>& data)
-	{
-		try
-		{
-			auto dir = fs::path(path).parent_path();
-			if (!dir.empty() && !fs::exists(dir))
+			for (fs::directory_iterator it(path, ec), end;
+				 it != end && !ec; 
+				 it.increment(ec))
 			{
-				fs::create_directories(dir);
+				result.emplace_back(it->path());
 			}
-
-			std::ofstream file(path, std::ios::binary);
-        	if (!file.is_open()) return false;
-
-        	file.write(reinterpret_cast<const char*>(data.data()), data.size());
-        	return true;
-
-		} catch(...)
-		{
-			return false;
 		}
-	}
-
-	bool StdFileSystem::delete_file(const std::string& path)
-	{
-		try
-		{
-			return fs::remove_all(path) > 0;
-		} catch(...)
-		{
-			return false;
-		}
-	}
-
-	bool StdFileSystem::create_directory(const std::string& path)
-	{
-		try
-		{
-			return fs::create_directories(path);
-		} catch(...)
-		{
-			return false;
-		}
-	}
-
-	std::vector<std::string> StdFileSystem::list_directory(const std::string& path, bool recursive) const
-	{
-		std::vector<std::string> result;
-		try
-		{
-			if (recursive)
-			{
-				for (const auto& entry : fs::recursive_directory_iterator(path))
-				{
-					result.push_back(entry.path().string());
-				}
-			} else {
-				for (const auto& entry : fs::directory_iterator(path))
-				{
-					result.push_back(entry.path().string());
-				}
-			}
-		} catch(...)
-		{}
 
 		return result;
 	}
 
-	std::string StdFileSystem::get_absolute_path(const std::string& path) const 
+	std::optional<fs::path> StdFileSystem::get_absolute_path(
+		const fs::path& path) const 
 	{
-	    try {
-	        return fs::absolute(path).string();
-	    } catch (...) {
-	        return path;
-	    }
+		std::error_code ec;
+		fs::path result = fs::absolute(path, ec);
+
+		if (ec)
+			return std::nullopt;
+
+		return result;
 	}
 
-	std::string StdFileSystem::get_working_directory() const 
+	fs::path StdFileSystem::get_working_directory() const 
 	{
-	    return fs::current_path().string();
+	    return fs::current_path();
 	}
 
-	core::filesystem::FileStats StdFileSystem::get_file_stats(const std::string& path) const 
+	core::filesystem::FileStats StdFileSystem::get_file_stats(
+		const fs::path& path) const 
 	{
 		core::filesystem::FileStats stats{};
-		try {
-			if (fs::exists(path)) {
-				auto fileStatus = fs::status(path);
-				stats.exists = true;
-				stats.is_directory = fs::is_directory(path);
-				
-				if (!stats.is_directory) {
-					stats.size = fs::file_size(path);
-				}
-				
-				auto ftime = fs::last_write_time(path);
-				auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-					ftime - fs::file_time_type::clock::now()
-					+ std::chrono::system_clock::now());
-				stats.last_modified = sctp;
-			}
-		} catch (...) {
-			// Leaving stats as default (exists = false)
+
+		std::error_code ec;
+
+		const auto status = fs::status(path, ec);
+		if (ec)
+			return stats;
+
+		stats.exists = fs::exists(status);
+		stats.is_directory = fs::is_directory(status);
+
+		if (!stats.is_directory)
+		{
+			stats.size = fs::file_size(path, ec);
+			if (ec)
+				stats.size = 0;
 		}
+
+		const auto ftime = fs::last_write_time(path, ec);
+		if (!ec)
+		{
+			stats.last_modified =
+				std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+					ftime - fs::file_time_type::clock::now()
+				+ std::chrono::system_clock::now());
+		}
+
 		return stats;
 	}
 
 
-	uint64_t StdFileSystem::get_file_size(const std::string& path) const 
+	std::optional<uint64_t> StdFileSystem::get_file_size(
+		const fs::path& path) const
 	{
-	    try {
-	        return fs::file_size(path);
-	    } catch (...) {
-	        return 0;
-	    }
+		std::error_code ec;
+		const auto size = fs::file_size(path, ec);
+		if (ec)
+			return std::nullopt;
+
+		return size;
 	}
 
-	std::chrono::system_clock::time_point StdFileSystem::get_last_modified(const std::string& path) const
+	std::optional<std::chrono::system_clock::time_point> 
+	StdFileSystem::get_last_modified(
+		const fs::path& path) const
 	{
-		try {
-			auto ftime = fs::last_write_time(path);
-			return std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-				ftime - fs::file_time_type::clock::now()
-				+ std::chrono::system_clock::now());
-		} catch (...) {
-			return std::chrono::system_clock::time_point{};
+		std::error_code ec;
+		const auto ftime = fs::last_write_time(path, ec);
+		if (ec)
+			return std::nullopt;
+
+		return std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+			ftime - fs::file_time_type::clock::now()
+			+ std::chrono::system_clock::now());
+	}
+
+	std::optional<fs::file_time_type> 
+	StdFileSystem::get_last_write(const fs::path& path) const
+	{
+		std::error_code ec;
+		auto ftime = fs::last_write_time(path, ec);
+
+		if (ec)
+			return std::nullopt;
+
+		return ftime;
+	}
+
+	void StdFileSystem::add_search_path(const fs::path& path)
+	{
+		auto abs = get_absolute_path(path);
+		if (!abs)
+			return;
+
+		auto normalized = normalize_path(*abs);
+		if (!normalized)
+			return;
+
+		m_search_paths.insert(*normalized);
+	}
+
+	void StdFileSystem::remove_search_path(const fs::path& path)
+	{
+		auto abs = get_absolute_path(path);
+		if (!abs)
+			return;
+
+		m_search_paths.erase(*abs);
+	}
+
+	std::optional<fs::path> StdFileSystem::resolve_path(
+		const fs::path& relative_path) const 
+	{
+		std::error_code ec;
+
+		if (relative_path.is_absolute())
+			return fs::exists(relative_path, ec) && !ec
+				? std::optional(relative_path)
+				: std::nullopt;
+
+		fs::path base = m_base_path / relative_path;
+		if (fs::exists(base, ec) && !ec)
+			return base;
+
+		for (const auto& search_path : m_search_paths)
+		{
+			fs::path candidate = search_path / relative_path;
+			if (fs::exists(candidate, ec) && !ec)
+				return candidate;
 		}
+
+		return std::nullopt;
 	}
 
-
-	void StdFileSystem::add_search_path(const std::string& path)
+	void StdFileSystem::set_base_path(const fs::path& path)
 	{
-		m_search_paths.insert(normalize_path(get_absolute_path(path)));
+		auto abs = get_absolute_path(path);
+		if (!abs)
+			throw std::runtime_error("Invalid base path");
+		
+		m_base_path = *abs;
 	}
 
-	void StdFileSystem::remove_search_path(const std::string& path)
-	{
-		m_search_paths.erase(get_absolute_path(path));
-	}
-
-	std::string StdFileSystem::resolve_path(const std::string& relative_path) const 
-	{
-		// Checking if path is already absolute
-	    fs::path path(relative_path);
-	    if (path.is_absolute()) {
-	        return fs::exists(path) ? path.string() : "";
-	    }
-
-	    // before base + relative:
-		fs::path bp = fs::path(m_base_path) / path;
-
-	    // Checking in base path first
-	    fs::path base_path(m_base_path);
-	    base_path /= path;
-	    if (fs::exists(base_path))
-	    {
-	    	return base_path.string();
-	    } 
-
-	    // then inside the loop of search paths:
-		for (const auto& search_path : m_search_paths) {
-		    fs::path spath(search_path);
-		    spath /= path;
-		    if (fs::exists(spath)) {
-		        return spath.string();
-		    }
-		}
-	    // Not found
-		LOG_ERROR("Path {} does not exist", relative_path);
-	    return "";
-	}
-
-	void StdFileSystem::set_base_path(const std::string& path)
-	{
-		m_base_path = get_absolute_path(path);
-	}
-
-	std::string StdFileSystem::get_base_path() const 
+	fs::path StdFileSystem::get_base_path() const 
 	{
 		return m_base_path;
 	}
 
-    std::string StdFileSystem::find_file_recursive(const std::string& start_dir, 
-    											   const std::string& filename) const
+    std::optional<fs::path> StdFileSystem::find_file_recursive(
+    	const fs::path& start_dir, 
+    	const std::string& filename) const
     {
-    	auto files = list_directory(start_dir, true);
-    	for (const auto& file : files)
-    	{
-    		size_t last_slash = file.find_last_of("/\\");
-            std::string current_filename = (last_slash == std::string::npos) 
-                ? file 
-                : file.substr(last_slash + 1);
-                
-            if (current_filename == filename) 
-            {
-                return file;
-            }
-    	}
+    	std::error_code ec;
+		for (fs::recursive_directory_iterator it(start_dir, ec), end;
+			it != end && !ec;
+			it.increment(ec))
+		{
+			if (it->path().filename() == filename)
+				return it->path();
+		}
 
-		LOG_ERROR("Failed to find file — {}", filename);
-    	return "";
+		return std::nullopt;
     }
 
 
-	std::string StdFileSystem::find_in_search_paths(const std::string& filename) const
+	std::optional<fs::path> StdFileSystem::find_in_search_paths(
+		const std::string& filename) const
 	{
 		if (filename.empty())
-			return {};
+			return std::nullopt;
 
 		for (const auto& base_path : m_search_paths)
 		{
-			fs::path candidate = fs::path(base_path) / filename;
+			fs::path candidate = base_path / filename;
 
 			std::error_code ec;
-			if (fs::exists(candidate, ec) && !ec)
-			{
-				return normalize_path(fs::absolute(candidate).string());
-			}
+			if (!fs::exists(candidate, ec) || ec)
+				continue;
+
+			auto abs = get_absolute_path(candidate);
+			if (!abs)
+				continue;
+
+			return normalize_path(*abs);
 		}
 
-		return {};
+		return std::nullopt;
 	}
 
-	std::string StdFileSystem::normalize_path(const std::string& path) const
+	std::optional<fs::path> StdFileSystem::normalize_path(
+		const fs::path& path) const
 	{
-		std::error_code ec;
-		const auto normalized = fs::path(path).lexically_normal();
-		return ec ? path : normalized.string();
+		return path.lexically_normal();
 	}
 
 	void StdFileSystem::setup_default_search_path()
 	{
-		add_search_path((fs::path(m_base_path) / "resources/fonts").string());
-	    add_search_path((fs::path(m_base_path) / "resources/textures").string());
-	    add_search_path((fs::path(m_base_path) / "resources/shaders").string());
-	    add_search_path((fs::path(m_base_path) / "resources/models").string());
+		add_search_path(m_base_path / "resources" / "fonts");
+	    add_search_path(m_base_path / "resources" / "textures");
+	    add_search_path(m_base_path / "resources" / "icons");
+	    add_search_path(m_base_path / "resources" / "shaders");
+	    add_search_path(m_base_path / "resources" / "models");
 	}
-	
-	std::string StdFileSystem::find_root_path()
+	 
+	std::optional<fs::path> StdFileSystem::find_root_path()
 	{
 		// Finding project root (where CMakeLists.txt is)
-	    const std::string& project_root = []() -> std::string
-		{
-	        std::vector<std::string> possible_paths = {
-	            "../../../..",		// build/bin/../../../.. -> project root
-	            "../../..",  		// build/bin/../../.. -> project root
-	            "../..",     		// build/../.. -> project root
-	            "..",        		// bin/.. -> project root
-	            ".",         		// current directory
-	            ""           		// executable directory
-	        };
-	        
-	        for (const std::string& rel_path : possible_paths)
-	        {
-	            std::filesystem::path test_path = std::filesystem::current_path();
-	            if (!rel_path.empty())
-	            {
-	                test_path = test_path / rel_path;
-	            }
-	            
-	            // Checking if this looks like our project root
-	            if (std::filesystem::exists(test_path / "CMakeLists.txt") ||
-	                std::filesystem::exists(test_path / "resources") ||
-	                std::filesystem::exists(test_path / "src"))
-	            {
-	                return test_path.string();
-	            }
-	        }
-	        
-	        return std::filesystem::current_path().string();
-	    }();
+	    std::error_code ec;
+		fs::path current = fs::current_path(ec);
+		if (ec)
+			return std::nullopt;
 
-	    return project_root;
+		while (!current.empty())
+		{
+			if (fs::exists(current / "CMakeLists.txt") ||
+				fs::exists(current / "resources") ||
+				fs::exists(current / "src"))
+			{
+				return current;
+			}
+
+			fs::path parent = current.parent_path();
+			if (parent == current)
+				break;
+
+			current = parent;
+		}
+
+		return std::nullopt;
 	}
 
 } // namespace c2l::core::filesystem

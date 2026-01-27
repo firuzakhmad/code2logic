@@ -808,7 +808,11 @@ namespace c2l::scenes
             ImGui::Text("Playback: %s",
                 m_algorithm_manager->is_playing() ? "PLAYING" : "PAUSED");
 
-            ImGui::Text("Speed: %.1fx", m_algorithm_manager->is_playing() ? 1.0f : 1.0f); // You might want to add speed getter
+            ImGui::Text(
+                "Speed: %.1fx", 
+                m_algorithm_manager->is_playing() 
+                    ? static_cast<double>(m_algorithm_manager->get_speed())
+                    : 1.0);
 
             // Performance info
             ImGui::Separator();

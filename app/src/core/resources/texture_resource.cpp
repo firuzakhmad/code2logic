@@ -6,12 +6,12 @@
 
 namespace c2l::core::resources
 {
-	TextureResource::TextureResource(const std::string& path,
+	TextureResource::TextureResource(const std::filesystem::path& path,
 	 								 core::filesystem::IFileSystem& file_system,
 	 								 const std::vector<uint8_t>* texture_data,
 	 								 const bool stbi_set_flip_vertically_on_load,
 	 								 const bool upload_to_gpu)
-		: m_path{path}
+		: IResource(path)
 		, m_file_system{file_system}
 		,  m_last_access_time{std::chrono::steady_clock::now()}
 		,  m_stbi_set_flip_vertically_on_load{stbi_set_flip_vertically_on_load}
@@ -31,7 +31,7 @@ namespace c2l::core::resources
  	{
  		if (m_state == ResourceState::Loading)
  		{
- 			LOG_WARNING("TextureResource already loading: {}", m_path);
+ 			LOG_WARNING("TextureResource already loading: {}", m_path.string());
  			return false;
  		}
 
@@ -58,7 +58,7 @@ namespace c2l::core::resources
 		}
 		else
 		{
-			success = true; // Data already loaded
+			success = true; // Means data already loaded
 		}
 
  		if (success && m_upload_to_gpu && !m_gpu_uploaded)
@@ -89,7 +89,7 @@ namespace c2l::core::resources
 
 		if (m_state == ResourceState::Loading)
 		{
-			LOG_WARNING("TextureResource already loading: {}", m_path);
+			LOG_WARNING("TextureResource already loading: {}", m_path.string());
 			return false;
 		}
 
@@ -148,7 +148,6 @@ namespace c2l::core::resources
 
 	bool TextureResource::is_loaded() const
 	{
-		// Consider loaded if either data is loaded or fully loaded with GPU
 		return m_state == ResourceState::Loaded && (m_data_loaded || m_gpu_uploaded);
 	}
 
@@ -198,18 +197,33 @@ namespace c2l::core::resources
 		{
 			if (!m_file_system.exists(m_path))
 			{
-				LOG_ERROR("TextureResource file not found: {}", m_path);
+				LOG_ERROR("TextureResource file not found: {}", m_path.string());
 				return false;
 			}
 
-			m_path = m_file_system.resolve_path(m_path);
-			m_texture_data = m_file_system.read_binary(m_path);
+			const auto resolved_path = m_file_system.resolve_path(m_path);
+			if (!resolved_path)
+			{
+				LOG_ERROR("Failed to find/resolve file {}", m_path.string());
+				return false;
+			}
+
+			m_path = *resolved_path;
+
+			const auto data = m_file_system.read_binary(m_path);
+			if (!data)
+			{
+				LOG_ERROR("Failed to read file {}", m_path.string());
+				return false;
+			}
+
+			m_texture_data = *data;
 			m_data_loaded = true;
 			return true; // Just loading data only, no GPU upload yet
 		}
 		catch(const std::exception& e)
 		{
-			LOG_ERROR("Failed to load texture from file: {} - {}", m_path, e.what());
+			LOG_ERROR("Failed to load texture from file: {} - {}", m_path.string(), e.what());
 			return false;
 		}
 	}
@@ -242,13 +256,13 @@ namespace c2l::core::resources
 
 		if (m_state == ResourceState::Loading)
 		{
-			LOG_WARNING("TextureResource already loading: {}", m_path);
+			LOG_WARNING("TextureResource already loading: {}", m_path.string());
 			return false;
 		}
 
 		m_state = ResourceState::Loading;
 
-		// Create a copy of the data since stbi_load_from_memory needs raw pointer
+		// Creating a copy of the data since stbi_load_from_memory needs raw pointer
 		std::vector<unsigned char> image_copy(m_texture_data.begin(), m_texture_data.end());
 
 		stbi_set_flip_vertically_on_load(m_stbi_set_flip_vertically_on_load);
@@ -259,7 +273,7 @@ namespace c2l::core::resources
 			&m_width,
 			&m_height,
 			&m_channels,
-			4 // Force 4 channels (RGBA)
+			4 // Forcing 4 channels (RGBA)
 		);
 
 		if (!image_data)
@@ -295,10 +309,10 @@ namespace c2l::core::resources
 			return false;
 		}
 
-		// Calculate memory usage
+		// Calculating memory usage
 		m_memory_usage = static_cast<uint64_t>(m_width) * static_cast<uint64_t>(m_height) * 4; // 4 channels
 
-		// Generate OpenGL texture
+		// Generating OpenGL texture
 		GLuint texture_id;
 		glGenTextures(1, &texture_id);
 		glBindTexture(GL_TEXTURE_2D, texture_id);

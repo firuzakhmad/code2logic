@@ -75,8 +75,6 @@ namespace c2l::algorithms
                 return tags.find(tag) != tags.end();
             }
 
-            [[nodiscard]] std::string to_debug_string() const;
-
         } metadata;
 
 

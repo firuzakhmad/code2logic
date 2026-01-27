@@ -5,6 +5,8 @@
 #include "core/file_system/i_file_system.hpp"
 
 #include <vector>
+#include <filesystem>
+#include <optional>
 
 struct ImFont;
 
@@ -25,7 +27,7 @@ namespace c2l::core::resources
 		 * @param size_pixels Font size in pixels
 		 * @param font_data Optional preloaded font data
 		 */
-		FontResource(std::string  path,
+		FontResource(const std::filesystem::path& path,
 					  core::filesystem::IFileSystem& file_system,
 					  float size_pixels = 16.0f,
 					  const std::vector<uint8_t>* font_data = nullptr);
@@ -33,11 +35,6 @@ namespace c2l::core::resources
 		~FontResource() override;
 
 		// IResource implementation
-		/**
-		 * @copydoc IResource::get_path
-		 */
-		[[nodiscard]] const std::string& get_path() const override;
-
 		/**
 		 * @copydoc IResource::get_state
 		 */
@@ -92,7 +89,6 @@ namespace c2l::core::resources
 	    [[nodiscard]] const std::vector<uint8_t>& get_font_data() const;
 
 	private:
-    	std::string m_path;
     	ResourceState m_state{ResourceState::Unloaded};
     	filesystem::IFileSystem& m_file_system;
     	std::chrono::steady_clock::time_point m_last_access_time;

@@ -1,6 +1,8 @@
 #ifndef STD_FILE_SYSTEM
 #define STD_FILE_SYSTEM
 
+#include <filesystem>
+
 #include "core/file_system/i_file_system.hpp"
 
 #include <unordered_set>
@@ -33,109 +35,124 @@ namespace c2l::core::filesystem
 		/**
 		 * @copydoc IFileSystem::exists
 		 */
-	    [[nodiscard]] bool exists(const std::string& path) const override;
+	    [[nodiscard]] bool exists(
+	    	const fs::path& path) const override;
 
 		/**
 		 * @copydoc IFileSystem::read_text
 		 */
-		[[nodiscard]] std::string read_text(const std::string& path) const override;
+		[[nodiscard]] std::optional<std::string> read_text(
+			const fs::path& path) const override;
 
 		/**
 		 * @copydoc IFileSystem::read_binary
 		 */
-	    [[nodiscard]] std::vector<uint8_t> read_binary(const std::string& path) const override;
+	    [[nodiscard]] std::optional<std::vector<uint8_t>> read_binary(
+	    	const fs::path& path) const override;
 
 		/**
 		 * @copydoc IFileSystem::write_text
 		 */
 	    [[nodiscard]] bool write_text(
-	    	const std::string& path,
+	    	const fs::path& path,
 	    	const std::string& content) const override;
 
 		/**
 		 * @copydoc IFileSystem::write_binary
 		 */
 	    [[nodiscard]] bool write_binary(
-	    	const std::string& path,
+	    	const fs::path& path,
 	    	const std::vector<uint8_t>& data) override;
 
 		/**
 		 * @copydoc IFileSystem::delete_file
 		 */
-	    [[nodiscard]] bool delete_file(const std::string& path) override;
+	    [[nodiscard]] bool delete_file(
+	    	const fs::path& path) override;
 
 		/**
 		 * @copydoc IFileSystem::create_directory
 		 */
-	    bool create_directory(const std::string& path) override;
+	    bool create_directory(const fs::path& path) override;
 
 		/**
 		 * @copydoc IFileSystem::list_directory
 		 */
-	    [[nodiscard]] std::vector<std::string> list_directory(
-	    	const std::string& path,
+	    [[nodiscard]] std::vector<fs::path> list_directory(
+	    	const fs::path& path,
 	    	bool recursive) const override;
 
 		/**
 		 * @copydoc IFileSystem::find_file_recursive
 		 */
-	    [[nodiscard]] std::string find_file_recursive(
-	    	const std::string& start_dir,
+	    [[nodiscard]] std::optional<fs::path> find_file_recursive(
+	    	const fs::path& start_dir,
 	    	const std::string& filename) const override;
 
 		/**
 		 * @copydoc IFileSystem::get_absolute_path
 		 */
-	    [[nodiscard]] std::string get_absolute_path(const std::string& path) const override;
+	    [[nodiscard]] std::optional<fs::path> get_absolute_path(
+	    	const fs::path& path) const override;
 
 		/**
 		 * @copydoc IFileSystem::get_working_directory
 		 */
-		[[nodiscard]] std::string get_working_directory() const override;
+		[[nodiscard]] fs::path get_working_directory() const override;
 
 		/**
 		 * @copydoc IFileSystem::get_file_stats
 		 */
-	    [[nodiscard]] core::filesystem::FileStats get_file_stats(const std::string& path) const override;
+	    [[nodiscard]] core::filesystem::FileStats get_file_stats(
+	    	const fs::path& path) const override;
 
 		/**
 		 * @copydoc IFileSystem::get_file_size
 		 */
-	    [[nodiscard]] uint64_t get_file_size(const std::string& path) const override;
+	    [[nodiscard]] std::optional<uint64_t> get_file_size(
+	    	const fs::path& path) const override;
 
 		/**
 		 * @copydoc IFileSystem::get_last_modified
 		 */
-	    [[nodiscard]] std::chrono::system_clock::time_point get_last_modified(const std::string& path) const override;
+	    [[nodiscard]] std::optional<std::chrono::system_clock::time_point>  
+		get_last_modified(const fs::path& path) const override;
+
+		/**
+		* @copydoc IFileSystem::get_last_write
+		*/
+		[[nodiscard]] std::optional<fs::file_time_type> 
+		get_last_write(const fs::path& path) const override;
 
 		/**
 		 * @copydoc IFileSystem::get_base_path
 		 */
-	    [[nodiscard]] std::string get_base_path() const override;
+	    [[nodiscard]] fs::path get_base_path() const override;
 
 		/**
 		 * @copydoc IFileSystem::resolve_path
 		 */
-	    [[nodiscard]] std::string resolve_path(const std::string& relativePath) const override;
+	    [[nodiscard]] std::optional<fs::path> resolve_path(
+	    	const fs::path& relativePath) const override;
 
 		/**
 		 * @copydoc IFileSystem::add_search_path
 		 */
-		void add_search_path(const std::string& path) override;
+		void add_search_path(const fs::path& path) override;
 
 		/**
 		 * @copydoc IFileSystem::remove_search_path
 		 */
-	    void remove_search_path(const std::string& path) override;
+	    void remove_search_path(const fs::path& path) override;
 
 		/**
 		 * @copydoc IFileSystem::set_base_path
 		 */
-	    void set_base_path(const std::string& path) override;
+	    void set_base_path(const fs::path& path) override;
 
  	private:
- 		std::unordered_set<std::string> m_search_paths;
- 		std::string m_base_path;
+ 		std::unordered_set<fs::path> m_search_paths;
+ 		fs::path m_base_path;
 
 		/**
 		 * @brief Searches for a file within the registered search paths.
@@ -147,10 +164,11 @@ namespace c2l::core::filesystem
 		 *
 		 * @return Absolute, normalized path to the file if found;
 		 *         empty string otherwise.
-		 *
+		 * 
 		 * @note The function does not throw and performs filesystem existence checks.
 		 */
- 		[[nodiscard]] std::string find_in_search_paths(const std::string& filename) const;
+ 		[[nodiscard]] std::optional<fs::path> find_in_search_paths(
+ 			const std::string& filename) const;
 
 		/**
 		 * @brief Normalizes a filesystem path lexically.
@@ -161,14 +179,15 @@ namespace c2l::core::filesystem
 		 *
 		 * @param path Input path string (relative or absolute).
 		 *
-		 * @return Normalized path string. If normalization fails,
+		 * @return std::optional<fs::path> Normalized path. If normalization fails,
 		 *         the original path is returned unchanged.
 		 *
 		 * @note This function performs purely lexical normalization
 		 *       and does not verify filesystem existence.
 		 * @thread_safety Thread-safe.
 		 */
- 		[[nodiscard]] std::string normalize_path(const std::string& path) const;
+ 		[[nodiscard]] std::optional<fs::path> normalize_path(
+ 			const fs::path& path) const;
 
 		/**
 		 * @brief Registers the default resource search paths.
@@ -194,14 +213,15 @@ namespace c2l::core::filesystem
 		 * If no project root can be identified, the current working
 		 * directory is returned as a fallback.
 		 *
-		 * @return Absolute path to the inferred project root directory.
+		 * @return std::optional<fs::path> Absolute path to the 
+		 	inferred project root directory, otherwise std::nullopt
 		 *
 		 * @note This function does not guarantee correctness in all
 		 *       deployment scenarios and is intended for development
 		 *       and tooling use.
 		 * @thread_safety Thread-safe.
 		 */
- 		std::string find_root_path();
+ 		std::optional<fs::path> find_root_path();
 	};
 
 } // namespace c2l::core::filesystem

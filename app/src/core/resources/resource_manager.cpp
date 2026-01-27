@@ -22,7 +22,8 @@ namespace c2l::core::resources
 		register_loader(std::make_unique<TextureLoader>());
 		register_loader(std::make_unique<ShaderLoader>());
 
-		std::vector<std::string> default_resources = {
+		// TODO: Create default respurce file (.json)
+		std::vector<std::filesystem::path> default_resources = {
 			// Fonts
 			"resources/fonts/roboto/Roboto-Black.ttf",
 		};
@@ -35,7 +36,7 @@ namespace c2l::core::resources
 		unload_all();
 	}
 
-	std::shared_ptr<IResource> ResourceManager::load_internal(const std::string& path)
+	std::shared_ptr<IResource> ResourceManager::load_internal(const std::filesystem::path& path)
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -49,35 +50,35 @@ namespace c2l::core::resources
 		}
 
 		// Resolving path using file system
-	    std::string resolved_path = m_file_system.resolve_path(path);
-		if (resolved_path.empty())
+	    auto resolved_path = m_file_system.resolve_path(path);
+		if (!resolved_path)
 	    {
 		    // Try with original path as absolute
 		    resolved_path = path;
-		    if (!m_file_system.exists(resolved_path))
+		    if (!m_file_system.exists(*resolved_path))
 	        {
-		    	LOG_ERROR("Failed to find: {}", resolved_path.c_str());
+		    	LOG_ERROR("Failed to find: {}", resolved_path->string());
 	            return nullptr;
 	        }
 	    }
 
 	    // Finding appropriate loader
-	    IResourceLoader* loader = find_loader(resolved_path);
+	    IResourceLoader* loader = find_loader(resolved_path->string());
 	    if (!loader)
 	    {
-		    LOG_ERROR("Failed to find a loader for file: {}", resolved_path.c_str());
+		    LOG_ERROR("Failed to find a loader for file: {}", resolved_path->string());
 	    	return nullptr;
 	    }
 
 	    // Loading the resource
-	    auto resource = loader->load(resolved_path, m_file_system);
+	    auto resource = loader->load(*resolved_path, m_file_system);
 	    if (!resource || !resource->is_loaded())
 	    {
-	    	LOG_ERROR("Failed to load file: {}", resolved_path);
+	    	LOG_ERROR("Failed to load file: {}", resolved_path->string());
 	    	return nullptr;
 	    }
 
-	    update_resource_entry(resolved_path, resource);
+	    update_resource_entry(resolved_path->string(), resource);
 
 	    // Checking memory constraints
 	    evict_resources_if_needed();
@@ -85,7 +86,7 @@ namespace c2l::core::resources
 	    return resource;
 	}
 
-	IResourceLoader* ResourceManager::find_loader(const std::string& path) const
+	IResourceLoader* ResourceManager::find_loader(const std::filesystem::path& path) const
 	{
 		// First check if it's a directory
 		auto stats = m_file_system.get_file_stats(path);
@@ -123,7 +124,7 @@ namespace c2l::core::resources
 		}
 
 		// Converting to vector for sorting
-		std::vector<std::pair<std::string, ResourceEntry>> entries(m_resources.begin(), m_resources.end());
+		std::vector<std::pair<std::filesystem::path, ResourceEntry>> entries(m_resources.begin(), m_resources.end());
 
 		// Sorting by last access time (oldest first)
 		std::sort(
@@ -150,22 +151,22 @@ namespace c2l::core::resources
 		}
 	}
 
-	std::string ResourceManager::get_extension(const std::string& path) const
+	std::string ResourceManager::get_extension(const std::filesystem::path& path) const
 	{
-		size_t dot_pos = path.find_last_of('.');
-		if (dot_pos == std::string::npos)
-		{
-			return "";
-		}
+		
+		if (!path.has_extension())
+			return {};
 
-		std::string extension = path.substr(dot_pos);
-		std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+		std::string ext = path.extension().string();
 
-		return extension;
+		std::transform(ext.begin(), ext.end(), ext.begin(),
+					[](unsigned char c) { return std::tolower(c); });
+
+		return ext;
 	}
 
 	void ResourceManager::update_resource_entry(
-		const std::string& path,
+		const std::filesystem::path& path,
 		std::shared_ptr<IResource> resource)
 	{
 		auto now = std::chrono::steady_clock::now();
@@ -181,7 +182,7 @@ namespace c2l::core::resources
 		m_resources[path] = std::move(entry);
 	}
 
-	bool ResourceManager::unload(const std::string& path)
+	bool ResourceManager::unload(const std::filesystem::path& path)
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -320,16 +321,16 @@ namespace c2l::core::resources
 		return reloaded_count;
 	}
 
-	bool ResourceManager::resource_exists(const std::string& path) const
+	bool ResourceManager::resource_exists(const std::filesystem::path& path) const
 	{
-		return m_file_system.exists(path) || !m_file_system.resolve_path(path).empty();
+		return m_file_system.exists(path) || m_file_system.resolve_path(path).has_value();
 	}
 
-	std::vector<std::string> ResourceManager::get_loaded_resources() const
+	std::vector<std::filesystem::path> ResourceManager::get_loaded_resources() const
 	{
 		std::lock_guard<std::mutex> lock(m_mutex);
 
-		std::vector<std::string> paths;
+		std::vector<std::filesystem::path> paths;
 		paths.reserve(m_resources.size());
 
 		for (const auto& [path, entry] : m_resources)
@@ -344,7 +345,7 @@ namespace c2l::core::resources
 	}
 
 	void ResourceManager::preload_resources(
-		const std::vector<std::string>& paths)
+		const std::vector<std::filesystem::path>& paths)
 	{
 	    for (const auto& path : paths) 
 	    {
@@ -353,7 +354,7 @@ namespace c2l::core::resources
 	}
 
 	void ResourceManager::scan_directory(
-		const std::string& path,
+		const std::filesystem::path& path,
 		bool recursive)
 	{
 	    auto files = m_file_system.list_directory(path, recursive);
@@ -365,10 +366,10 @@ namespace c2l::core::resources
 	    }
 	}
 
-	std::string ResourceManager::get_resource_path(
-		const std::string& relative_path) const
+	std::optional<std::filesystem::path> ResourceManager::get_resource_path(
+		const std::filesystem::path& relative_path) const
 	{
-	    return m_file_system.resolve_path(relative_path);
+		return m_file_system.resolve_path(relative_path);
 	}
 
 	filesystem::IFileSystem& ResourceManager::get_file_system() const

@@ -1,0 +1,112 @@
+{
+  "icons":
+  {
+    "play": 
+    {
+      "description": "Play button for algorithm execution",
+      "default_path": "resources/icons/default/play/play.png",
+      "type": "PLAY",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/play/play.png"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+
+    "pause": 
+    {
+      "description": "Pause button for algorithm execution",
+      "default_path": "resources/icons/default/pause/pause.png",
+      "type": "PAUSE",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/pause/pause.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+
+    "step_forward": 
+    {
+      "description": "Pause button for algorithm execution",
+      "default_path": "resources/icons/default/arrow/arrow_right.png",
+      "type": "STEP_FORWARD",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/arrow/arrow_right.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+
+    "step_backward": 
+    {
+      "description": "Pause button for algorithm execution",
+      "default_path": "resources/icons/default/arrow/arrow_left.png",
+      "type": "STEP_BACKWARD",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/arrow/arrow_left.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+
+    "array": 
+    {
+      "description": "Pause button for algorithm execution",
+      "default_path": "resources/icons/default/array/array.png",
+      "type": "ARRAY",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/array/array.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+
+    "algorithm": 
+    {
+      "description": "Algorithm category icon",
+      "default_path": "resources/icons/default/algorithm/algorithm.png",
+      "type": "ALGORITHM",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/algorithm/algorithm.svg"
+      },
+      "sizes": [24, 32, 48]
+    },
+
+    "statistic": 
+    {
+      "description": "Pause button for algorithm execution",
+      "default_path": "resources/icons/default/statistic/statistic.png",
+      "type": "STATISTIC",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/statistic/statistic.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+
+    "steps": 
+    {
+      "description": "Pause button for algorithm execution",
+      "default_path": "resources/icons/default/steps/steps.png",
+      "type": "STEPS",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/steps/steps.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+
+    "reset": 
+    {
+      "description": "Pause button for algorithm execution",
+      "default_path": "resources/icons/default/reset/reset.png",
+      "type": "RESET",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/reset/reset.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    }
+  }
+}

@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace c2l::core::resources
 {
@@ -23,6 +24,9 @@ namespace c2l::core::resources
     public:
         ShaderLoader() = default;
 
+        ShaderLoader(const ShaderLoader&) = delete;
+	    ShaderLoader& operator=(const ShaderLoader&) = delete;
+        
         /**
          * @brief Checks whether the loader supports the given file extension
          *
@@ -54,7 +58,7 @@ namespace c2l::core::resources
          * @return Returns std::shared_ptr<IResource> of the loaded shader
          */
         std::shared_ptr<IResource> load(
-            const std::string& path,
+            const std::filesystem::path& path,
             core::filesystem::IFileSystem& file_system) override
         {
             auto shader = std::make_shared<ShaderResource>(path, file_system);

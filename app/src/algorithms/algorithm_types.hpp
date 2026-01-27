@@ -176,9 +176,7 @@ namespace c2l::algorithms
         }
     }
 
-    // ----------------------------
     // Visualization selection
-    // ----------------------------
     inline VisualizationType get_visualization_type(AlgorithmType type)
     {
         switch (get_algorithm_category(type))
