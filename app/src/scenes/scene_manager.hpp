@@ -1,14 +1,17 @@
 #ifndef SCENE_MANAGER_HPP
 #define SCENE_MANAGER_HPP
 
-#include "i_scene.hpp"
+#include "scenes/i_scene.hpp"
+#include "ui/managers/icon_manager.hpp"
+#include "core/json_config_manager/json_config_manager.hpp"
+
+
 #include <memory>
 #include <functional>
 #include <unordered_map>
 #include <stack>
 #include <vector>
 
-#include "ui/managers/icon_manager.hpp"
 
 namespace c2l::core
 {
@@ -56,6 +59,7 @@ namespace c2l::scenes
         SceneManager(
             graphics::Renderer& renderer,
             core::ThreadManager& thread_manager,
+            core::JsonConfigManager& json_config_manager,
             core::resources::ResourceManager& resource_manager,
             ui::managers::IconManager& icon_manager);
         ~SceneManager();
@@ -104,6 +108,7 @@ namespace c2l::scenes
     private:
         graphics::Renderer& m_renderer;
         core::ThreadManager& m_thread_manager;
+        core::JsonConfigManager& m_json_config_manager;
         core::resources::ResourceManager& m_resource_manager;
         ui::managers::IconManager& m_icon_manager;
 
