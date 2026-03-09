@@ -5,7 +5,7 @@
 #include "core/resources/texture_resource.hpp"
 #include "core/resources/resource_manager.hpp"
 #include "core/utils/variables.hpp"
-#include "core/config_manager/config_manager.hpp"
+#include "core/json_config_manager/json_config_manager.hpp"
 
 #include <string>
 #include <imgui.h>
@@ -156,7 +156,7 @@ namespace c2l::ui::managers
         IconManager(
             c2l::core::ThreadManager& thread_manager,
             c2l::core::resources::ResourceManager& resource_manager,
-            c2l::core::ConfigManager& config_manager);
+            c2l::core::JsonConfigManager& json_config_manager);
 
         ~IconManager();
 
@@ -289,7 +289,7 @@ namespace c2l::ui::managers
         // Members
         c2l::core::ThreadManager& m_thread_manager;
         c2l::core::resources::ResourceManager& m_resource_manager;
-        c2l::core::ConfigManager& m_config_manager;
+        c2l::core::JsonConfigManager& m_json_config_manager;
 
 
         mutable std::shared_mutex m_cache_mutex;
