@@ -3,84 +3,149 @@
 //
 
 #include "algorithm_manager.hpp"
-#include "algorithms/bubble_sort_algorithm.hpp"
-#include "algorithms/quick_sort_algorithm.hpp"
+#include "algorithms/bubble_sort.hpp"
+#include "algorithms/quick_sort.hpp"
 #include "algorithms/array_based_visualizer.hpp"
 #include "core/utils/logger/logger.hpp"
 
 #include <utility>
+#include <random>
+#include <chrono>
 
 #include <glm/glm.hpp>
 #include "imgui.h"
 
 namespace c2l::algorithms
 {
-    AlgorithmManager::AlgorithmManager(core::ThreadManager& thread_manager)
+    AlgorithmManager::AlgorithmManager(
+        core::ThreadManager& thread_manager,
+        core::JsonConfigManager& json_config_manager)
         : m_thread_manager{thread_manager}
+        , m_json_config_manager{json_config_manager}
     {
         initialize_algorithms();
-        setup_highlight_strategies();
+        LOG_INFO(
+            "AlgorithmManager initialized with {} algorithms", 
+            m_algorithms.size()
+        );
     }
 
     AlgorithmManager::~AlgorithmManager()
     {
+        LOG_DEBUG("AlgorithmManager shutting down...");
         stop_background_execution();
         unload_current_algorithm();
+        LOG_DEBUG("AlgorithmManager destroyed");
     }
 
 
     void AlgorithmManager::initialize_algorithms()
     {
-        register_algorithm(AlgorithmType::BUBBLE_SORT, std::make_unique<BubbleSortAlgorithm>());
-        register_algorithm(AlgorithmType::QUICK_SORT, std::make_unique<QuickSortAlgorithm>());
-        LOG_INFO("Registered {} algorithms", m_algorithms.size());
+        // Registering JSON-driven algorithms
+        register_algorithm(
+            AlgorithmType::BUBBLE_SORT, 
+            std::make_unique<BubbleSort>(m_json_config_manager)
+        );
+
+        register_algorithm(
+            AlgorithmType::QUICK_SORT, 
+            std::make_unique<QuickSort>(m_json_config_manager)
+        );
+
+        LOG_INFO(
+            "Registered {} algorithms from JSON configuration", 
+            m_algorithms.size()
+        );
     }
 
-    void AlgorithmManager::register_algorithm(AlgorithmType type, std::unique_ptr<ISimpleAlgorithm> algorithm)
+    std::unique_ptr<IAlgorithmVisualizer> AlgorithmManager::create_visualizer(
+        AlgorithmType type,
+        const VisualizationConfig&)
+    {
+        auto category = algorithm_category(type);
+
+        switch (category) {
+            case AlgorithmCategory::SORTING:
+            case AlgorithmCategory::SEARCHING:
+                return std::make_unique<ArrayBasedVisualizer>();
+                
+            case AlgorithmCategory::GRAPH:
+                // return std::make_unique<GraphBasedVisualizer>(config);
+                
+            case AlgorithmCategory::TREE:
+                // return std::make_unique<TreeBasedVisualizer>(config);
+                
+            default:
+                return std::make_unique<ArrayBasedVisualizer>();
+        }
+    }
+
+    void AlgorithmManager::register_algorithm(
+        AlgorithmType type, 
+        std::unique_ptr<ISimpleAlgorithm> algorithm,
+        const VisualizationConfig& visualization_config)
     {
         std::unique_lock lock(m_algorithm_mutex);
 
         if (m_algorithms.find(type) != m_algorithms.end())
         {
-            LOG_WARNING("Algorithm type '{}' already registered, overwriting",
-                                   algorithm_type_to_string(type));
+            LOG_WARNING(
+                "Algorithm type '{}' already registered, overwriting",
+                algorithm_display_name(type)
+            );
         }
 
         m_algorithms[type] = std::move(algorithm);
 
         // Updating available types list
-        if (std::find(m_algorithm_types.begin(), m_algorithm_types.end(), type) == m_algorithm_types.end())
+        if (std::find(m_algorithm_types.begin(), 
+                      m_algorithm_types.end(), 
+                      type) == m_algorithm_types.end())
         {
             m_algorithm_types.push_back(type);
         }
 
         // Updating name mapping for backward compatibility
-        std::string name = algorithm_type_to_string(type);
+        std::string name = std::string(algorithm_id(type));
         m_name_to_type_map[name] = type;
 
         // Updating legacy names list
-        if (std::find(m_algorithm_names.begin(), m_algorithm_names.end(), name) == m_algorithm_names.end())
+        if (std::find(m_algorithm_names.begin(), 
+                      m_algorithm_names.end(), 
+                      name) == m_algorithm_names.end())
         {
             m_algorithm_names.push_back(name);
         }
 
-        m_visualizers[type] = create_visualizer(type);
+        // Creating visualizer for the registered algorithm
+        m_visualizers[type] = create_visualizer(type, visualization_config);
 
-        LOG_DEBUG("Registered algorithm: {} (Type: {})", name, static_cast<int>(type));
+        LOG_DEBUG(
+            "Registered algorithm: {} (Type: {})", 
+            name, 
+            static_cast<int>(type)
+        );
     }
 
-    void AlgorithmManager::register_algorithm(const std::string &name,
-                                              std::unique_ptr<ISimpleAlgorithm> algorithm)
+    void AlgorithmManager::register_algorithm(
+        const std::string &id,
+        std::unique_ptr<ISimpleAlgorithm> algorithm,
+        const VisualizationConfig& visualization_config)
     {
-        AlgorithmType type = string_to_algorithm_type(name);
-        register_algorithm(type, std::move(algorithm));
+        AlgorithmType type = id_to_algorithm_type(id);
+        register_algorithm(
+            type, 
+            std::move(algorithm), 
+            visualization_config
+        );
     }
 
     void AlgorithmManager::unregister_algorithm(AlgorithmType type)
     {
         std::unique_lock lock(m_algorithm_mutex);
 
-        if (m_current_algorithm_type == type)
+        if (m_current_context.metadata &&
+            m_current_context.metadata->get_type() == type)
         {
             unload_current_algorithm();
         }
@@ -89,15 +154,15 @@ namespace c2l::algorithms
         {
             m_algorithms.erase(type);
 
-            // Remove from types list
+            // Removing from types list
             auto type_it = std::find(m_algorithm_types.begin(), m_algorithm_types.end(), type);
             if (type_it != m_algorithm_types.end())
             {
                 m_algorithm_types.erase(type_it);
             }
 
-            // Remove from legacy names
-            std::string name = algorithm_type_to_string(type);
+            // Removing from legacy names
+            std::string name = std::string(algorithm_id(type));
             auto name_it = std::find(m_algorithm_names.begin(), m_algorithm_names.end(), name);
             if (name_it != m_algorithm_names.end())
             {
@@ -113,7 +178,7 @@ namespace c2l::algorithms
 
     void AlgorithmManager::unregister_algorithm(const std::string &name)
     {
-        AlgorithmType type = string_to_algorithm_type(name);
+        AlgorithmType type = id_to_algorithm_type(name);
         unregister_algorithm(type);
     }
 
@@ -123,9 +188,13 @@ namespace c2l::algorithms
 
         {
             std::shared_lock lock(m_algorithm_mutex);
+
             if (m_algorithms.find(type) == m_algorithms.end())
             {
-                LOG_ERROR("Algorithm type '{}' not registered", algorithm_type_to_string(type));
+                LOG_ERROR(
+                    "Algorithm type '{}' not registered", 
+                    algorithm_display_name(type)
+                );
                 return false;
             }
         }
@@ -134,39 +203,71 @@ namespace c2l::algorithms
 
         {
             std::unique_lock lock(m_algorithm_mutex);
-            auto it = m_algorithms.find(type);
-            if (it == m_algorithms.end()) {
-                LOG_ERROR("Algorithm type '{}' disappeared during load", algorithm_type_to_string(type));
+
+            auto alg_it = m_algorithms.find(type);
+            if (alg_it == m_algorithms.end()) 
+            {
+                LOG_ERROR(
+                    "Algorithm type '{}' disappeared during load", 
+                    algorithm_display_name(type)
+                );
                 return false;
             }
 
-            m_current_algorithm = it->second.get();
-            m_current_algorithm_type = type;
-            m_current_algorithm_name = algorithm_type_to_string(type);
 
-            if (m_current_algorithm)
-            {
-                m_current_algorithm->add_observer(this);
-            }
+            m_current_context.execution = alg_it->second.get();
+            m_current_context.metadata = dynamic_cast<IAlgorithmMetadata*>(alg_it->second.get());
 
-            // Set up visualizer
             auto viz_it = m_visualizers.find(type);
             if (viz_it != m_visualizers.end())
             {
-                m_current_visualizer = viz_it->second.get();
-                m_current_visualizer->initialize(m_current_algorithm);
+                m_current_context.visualizer = viz_it->second.get();
+                m_current_context.visualizer->initialize(
+                    m_current_context.execution,
+                    m_current_context.metadata
+                );
             }
 
+            m_current_context.type = type;
+            m_current_context.name = algorithm_display_name(type);
+
+            if (!m_current_context.metadata)
+            {
+                LOG_ERROR("Algorithm does not implement IAlgorithmMetadata");
+                return false;
+            }
+
+            if (!m_current_context.metadata->is_valid())
+            {
+                LOG_ERROR("Algorithm metadata is invalid");
+                return false;
+            }
+
+            // Attaching observer
+            if (m_current_context.execution)
+            {
+                m_current_context.execution->add_observer(this);
+            }
+
+            // Initializing random data
             auto default_data = generate_random_data();
-            m_current_algorithm->initialize(default_data);
+            m_current_context.execution->initialize(default_data);
+
+            LOG_INFO("Loaded algorithm: {} (v{})", 
+                m_current_context.name,
+                m_current_context.metadata->get_complexity().is_valid() ? "JSON" : "Legacy"
+            );
         }
+
+        m_last_step_index = std::numeric_limits<size_t>::max();
+        update_highlight_cache();
 
         return true;
     }
 
     bool AlgorithmManager::load_algorithm(const std::string &name)
     {
-        const AlgorithmType type = string_to_algorithm_type(name);
+        const AlgorithmType type = id_to_algorithm_type(name);
         return load_algorithm(type);
     }
 
@@ -175,77 +276,54 @@ namespace c2l::algorithms
         stop_background_execution();
 
         std::unique_lock lock(m_algorithm_mutex);
-
-        if (m_current_algorithm)
+        if (m_current_context.execution)
         {
-            LOG_DEBUG("Resetting current algorithm: {}", m_current_algorithm_name);
+            LOG_DEBUG(
+                "Resetting current algorithm: {}", 
+                m_current_context.name
+            );
 
-            m_current_algorithm->remove_observer(this);
 
-            m_current_algorithm->reset();
-            m_current_algorithm = nullptr;
-            m_current_algorithm_type = AlgorithmType::BUBBLE_SORT;
-            m_current_algorithm_name.clear();
+            m_current_context.execution->remove_observer(this);
+            m_current_context.execution->reset();
+            m_current_context = AlgorithmContext{};
+
             LOG_DEBUG("Algorithm unloaded");
         }
     }
 
     void AlgorithmManager::update(double dt)
     {
-        if (m_current_visualizer) {
-            m_current_visualizer->update(dt);
-        }
-    }
-
-    void AlgorithmManager::render()
-    {
-    }
-
-    std::unique_ptr<IAlgorithmVisualizer> AlgorithmManager::create_visualizer(AlgorithmType type)
-    {
-        auto viz_type = get_visualization_type(type);
-
-        switch (viz_type) {
-            case VisualizationType::ARRAY_BASED:
-                return std::make_unique<ArrayBasedVisualizer>();
-            case VisualizationType::GRAPH_BASED:
-                // return std::make_unique<GraphBasedVisualizer>(); // Implement later
-            case VisualizationType::TREE_BASED:
-                // return std::make_unique<TreeBasedVisualizer>(); // Implement later
-            default:
-                return std::make_unique<ArrayBasedVisualizer>();
+        std::shared_lock lock(m_algorithm_mutex);
+        if (m_current_context.visualizer && m_current_context.is_valid()) 
+        {
+            m_current_context.visualizer->update(dt);
         }
     }
 
     void AlgorithmManager::on_step_changed()
     {
-        // Just call the right strategy
-        if (const auto it = m_highlight_strategies.find(m_current_algorithm_type);
-            it != m_highlight_strategies.end())
-        {
-            it->second();
-        }
+
+        if (!m_current_context.is_valid()) 
+            return;
+
+        auto current_step_index = 
+            m_current_context.execution->get_current_step_index();
+
+        // Avoiding redundant updates
+        if (current_step_index == m_last_step_index)
+            return;
+
+        m_last_step_index = current_step_index;
+
+        update_highlight_cache();
     }
-
-    void AlgorithmManager::setup_highlight_strategies()
-    {
-        // Map algorithm types to highlight functions
-        m_highlight_strategies[AlgorithmType::BUBBLE_SORT] = [this]()
-        {
-            generate_bubble_sort_code_highlights();
-        };
-        m_highlight_strategies[AlgorithmType::QUICK_SORT] = [this]()
-        {
-            generate_quick_sort_code_highlights();
-        };
-        // ... add others
-    }
-
-
 
     void AlgorithmManager::play()
     {
-        if (!m_current_algorithm || m_current_algorithm->is_complete()) return;
+        if (!m_current_context.execution || 
+            m_current_context.execution->is_complete()) 
+            return;
 
         m_is_playing = true;
         m_is_paused = false;
@@ -269,9 +347,9 @@ namespace c2l::algorithms
         m_is_paused = false;
 
         std::unique_lock lock(m_algorithm_mutex);
-        if (m_current_algorithm)
+        if (m_current_context.execution)
         {
-            m_current_algorithm->reset();
+            m_current_context.execution->reset();
         }
     }
 
@@ -289,12 +367,13 @@ namespace c2l::algorithms
     {
         std::unique_lock lock(m_algorithm_mutex);
 
-        if (m_current_algorithm && !m_current_algorithm->is_complete())
+        if (m_current_context.execution && 
+            !m_current_context.execution->is_complete())
         {
-            m_current_algorithm->step_forward();
+            m_current_context.execution->step_forward();
 
             LOG_DEBUG("Stepped forward to step {}",
-                      m_current_algorithm->get_current_step_index());
+                      m_current_context.execution->get_current_step_index());
         }
     }
 
@@ -302,11 +381,12 @@ namespace c2l::algorithms
     {
         std::unique_lock lock(m_algorithm_mutex);
 
-        if (m_current_algorithm && m_current_algorithm->get_current_step_index() > 0)
+        if (m_current_context.execution && 
+            m_current_context.execution->get_current_step_index() > 0)
         {
-            m_current_algorithm->step_backward();
+            m_current_context.execution->step_backward();
             LOG_DEBUG("Stepped backward to step {}",
-                       m_current_algorithm->get_current_step_index());
+                       m_current_context.execution->get_current_step_index());
         }
     }
 
@@ -328,7 +408,8 @@ namespace c2l::algorithms
         {
             LOG_DEBUG("Cleaning up previous future...");
             auto status = m_executing_future.wait_for(std::chrono::milliseconds(100));
-            if (status == std::future_status::timeout) {
+            if (status == std::future_status::timeout) 
+            {
                 LOG_WARNING("Previous future didn't complete in time");
             }
         }
@@ -395,54 +476,69 @@ namespace c2l::algorithms
             double delta_time = std::chrono::duration<double>(current_time - last_time).count();
             last_time = current_time;
 
-            // Only process if we're actually playing and not paused
+            // Only processing if we're actually playing and not paused
             if (m_is_playing && !m_is_paused)
             {
                 m_accumulated_time += delta_time * static_cast<double>(m_speed);
                 const double step_interval = 0.5;
 
-                // Process steps based on accumulated time
+                // Processing steps based on accumulated time
                 while (m_accumulated_time >= step_interval &&
-                       m_is_executing &&
-                       m_is_playing &&
-                       !m_is_paused)
+                    m_is_executing &&
+                    m_is_playing &&
+                    !m_is_paused)
                 {
                     bool step_taken = false;
 
+                    ISimpleAlgorithm* algorithm = nullptr;
+
+                    // First safely read pointer
                     {
-                        std::unique_lock lock(m_algorithm_mutex);
+                        std::shared_lock lock(m_algorithm_mutex);
 
-                        if (m_current_algorithm && !m_current_algorithm->is_complete())
+                        if (m_current_context.is_valid())
                         {
-                            m_current_algorithm->step_forward();
-                            m_accumulated_time -= step_interval;
-                            step_taken = true;
-
-                            // Log progress occasionally
-                            if (m_current_algorithm->get_current_step_index() % 10 == 0)
-                            {
-                                LOG_DEBUG("Algorithm progress: {}/{}",
-                                         m_current_algorithm->get_current_step_index(),
-                                         m_current_algorithm->get_step_count());
-                            }
-                        }
-                        else
-                        {
-                            // Algorithm completed
-                            m_is_playing = false;
-                            LOG_DEBUG("Algorithm completed, stopping playback");
-                            break;
+                            algorithm = m_current_context.execution;
                         }
                     }
 
-                    if (!step_taken) {
-                        break; // No algorithm loaded or other issue
+                    if (algorithm && !algorithm->is_complete())
+                    {
+                        std::unique_lock lock(m_algorithm_mutex);
+
+                        // Ensure algorithm wasn't swapped/unloaded meanwhile
+                        if (m_current_context.execution == algorithm)
+                        {
+                            algorithm->step_forward();
+                            m_accumulated_time -= step_interval;
+                            step_taken = true;
+
+                            if (algorithm->get_current_step_index() % 10 == 0)
+                            {
+                                LOG_DEBUG(
+                                    "Algorithm progress: {}/{}",
+                                    algorithm->get_current_step_index(),
+                                    algorithm->get_step_count()
+                                );
+                            }
+                        }
+                    }
+                    else
+                    {
+                        m_is_playing = false;
+                        LOG_DEBUG("Algorithm completed, stopping playback");
+                        break;
+                    }
+
+                    if (!step_taken)
+                    {
+                        break;
                     }
                 }
             }
             else
             {
-                // Not playing or paused - reset accumulated time to prevent burst when resuming
+                // Not playing or paused - reseting accumulated time back to prevent burst when resuming
                 m_accumulated_time = 0.0;
             }
 
@@ -465,450 +561,146 @@ namespace c2l::algorithms
 
         std::unique_lock lock(m_algorithm_mutex);
 
-        if (m_current_algorithm && !data.empty())
+        if (m_current_context.execution && !data.empty())
         {
-            m_current_algorithm->initialize(data);
+            m_current_context.execution->initialize(data);
         }
     }
 
-    std::vector<int> AlgorithmManager::generate_random_data()
+    std::vector<int> AlgorithmManager::generate_random_data(
+        size_t size, 
+        int max_value)
     {
-        std::vector<int> new_data;
-        new_data.reserve(15);
-        for (int i = 0; i < 15; ++i)
+        std::vector<int> data;
+        data.reserve(size);
+        
+        // Using proper random number generation
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(1, max_value);
+        
+        for (size_t i = 0; i < size; ++i)
         {
-            new_data.emplace_back(rand() % 200 + 1);
+            data.push_back(dis(gen));
         }
-
-        return new_data;
+        
+        return data;
     }
 
-    void AlgorithmManager::generate_and_set_random_data()
+    void AlgorithmManager::generate_and_set_random_data(
+        size_t size, 
+        int max_value)
     {
-        std::vector<int> new_data;
-        new_data.reserve(15);
-        for (int i = 0; i < 15; ++i)
+        set_data(generate_random_data(size, max_value));
+    }
+
+    void AlgorithmManager::update_highlight_cache()
+    {
+        std::unique_lock unique_lock(m_cached_mutex);
+
+        m_cached_code_highlights.clear();
+        m_cached_pseudocode_display = {};
+
+        if (!m_current_context.is_valid())
+            return;
+
+        auto* json_algorithm = dynamic_cast<JsonAlgorithmBase*>(
+            m_current_context.execution
+        );
+
+        if (!json_algorithm)
+            return;
+
+        auto current_step = m_current_context.execution->get_current_step();
+
+        std::string operation_id;
+
+        switch (current_step.metadata.operation_type)
         {
-            new_data.emplace_back(rand() % 200 + 1);
+            case AlgorithmStepOperation::INIT:          
+                operation_id = "init"; break;
+            // Bubble Sort Operations
+            case AlgorithmStepOperation::LOOP_OUTER:    
+                operation_id = "outer_loop"; break;
+            case AlgorithmStepOperation::LOOP_INNER:    
+                operation_id = "inner_loop"; break;
+            case AlgorithmStepOperation::PASS_COMPLETE: 
+                operation_id = "pass_complete"; break;
+            // Quick Sort Operations
+            case AlgorithmStepOperation::PARTITION_START:       
+                operation_id = "partition_start"; break;
+            case AlgorithmStepOperation::PIVOT_SELECTED:          
+                operation_id = "pivot_selected"; break;
+            case AlgorithmStepOperation::PARTITION_SCAN:          
+                operation_id = "partition_scan"; break;
+            case AlgorithmStepOperation::PARTITION_SWAP:          
+                operation_id = "partition_swap"; break;
+            case AlgorithmStepOperation::PARTITION_COMPLETE:          
+                operation_id = "partition_complete"; break;
+            case AlgorithmStepOperation::RECURSIVE_CALL:          
+                operation_id = "recursive_call"; break;
+            case AlgorithmStepOperation::RECURSIVE_CALL_RIGHT:          
+                operation_id = "recursive_call_right"; break;
+            // General Operations
+            case AlgorithmStepOperation::COMPARE:       
+                operation_id = "compare"; break;
+            case AlgorithmStepOperation::SWAP:          
+                operation_id = "swap"; break;
+            case AlgorithmStepOperation::COMPLETED:      
+                operation_id = "completed"; break;
+            
+            default:                                    
+                operation_id = "unknown"; break;
         }
 
-        set_data(new_data);
-    }
+        m_cached_code_highlights =
+            json_algorithm->generate_highlights(operation_id, current_step);
 
-    // Code highlighting implementations
-    void AlgorithmManager::generate_bubble_sort_code_highlights()
-    {
-        if (!m_current_algorithm) return;
-        m_current_highlights.clear();
+        const auto& description = m_current_context.metadata->get_description();
 
-        const AlgorithmStep step = m_current_algorithm->get_current_step();
-
-        auto i  = extract_variable<size_t>(step, "i");
-        auto j  = extract_variable<size_t>(step, "j");
-        auto aj = extract_variable<int>(step, "arr[j]");
-        auto aj1= extract_variable<int>(step, "arr[j+1]");
-
-        std::unordered_map<std::string, std::string> indices;
-        std::unordered_map<std::string, std::string> values;
-
-        if (i)  indices["i"] = std::to_string(*i);
-        if (j)  indices["j"] = std::to_string(*j);
-        if (aj) values["arr[j]"] = std::to_string(*aj);
-        if (aj1)values["arr[j+1]"] = std::to_string(*aj1);
-
-        switch (step.metadata.operation_type)
+        if (description.has_pseudocode())
         {
-            case AlgorithmStepOperation::INIT:
-                m_current_highlights.emplace_back(
-                    1,
-                    "procedure bubble_sort(arr):",
-                    "Starting bubble sort algorithm",
-                    indices,
-                    values, true);
-                break;
-
-            case AlgorithmStepOperation::LOOP_OUTER:
-                m_current_highlights.emplace_back(
-                    7,
-                    "for (size_t i = 0; i < n - 1; ++i)",
-                    "Outer loop iteration",
-                    indices, values, true);
-                break;
-
-            case AlgorithmStepOperation::LOOP_INNER:
-                m_current_highlights.emplace_back(
-                    11,
-                    "for (size_t j = 0; j < n - i - 1; ++j)",
-                    "Inner loop iteration",
-                    indices, values, true);
-                break;
-
-            case AlgorithmStepOperation::COMPARE:
-                m_current_highlights.emplace_back(
-                    13,
-                    "if (arr[j] > arr[j + 1])",
-                    "Comparing adjacent elements",
-                    indices, values, true);
-                break;
-
-            case AlgorithmStepOperation::SWAP:
-                m_current_highlights.emplace_back(
-                    15,
-                    "if (arr[j] > arr[j + 1])",
-                    "Comparison condition met",
-                    indices, values, true);
-
-                m_current_highlights.emplace_back(
-                    16,
-                    "std::swap(arr[j], arr[j + 1])",
-                    "Swapping elements",
-                    indices, values, true);
-                break;
-
-            case AlgorithmStepOperation::PASS_COMPLETE:
-                m_current_highlights.emplace_back(
-                    7,
-                    "for (size_t i = 0; i < n - 1; ++i)",
-                    "Pass completed",
-                    indices, values, true);
-                break;
-
-            case AlgorithmStepOperation::FINISHED:
-                m_current_highlights.emplace_back(
-                    21,
-                    "procedure bubble_sort(arr):",
-                    "Algorithm completed",
-                    indices, values, true);
-                break;
-
-            default:
-                break;
+            m_cached_pseudocode_display.lines = description.pseudocode;
         }
-    }
-
-    void AlgorithmManager::generate_quick_sort_code_highlights()
-    {
-        if (!m_current_algorithm) return;
-        m_current_highlights.clear();
-
-        auto current_step = m_current_algorithm->get_current_step();
-        std::string description = current_step.description;
-
-        std::unordered_map<std::string, std::string> vars;
-
-        // Extract values from description
-        if (description.find("low =") != std::string::npos || description.find("high =") != std::string::npos) {
-            // Parse for low and high values
-            size_t low_pos = description.find("low =");
-            size_t high_pos = description.find("high =");
-            if (low_pos != std::string::npos) {
-                std::string low_str = description.substr(low_pos + 5);
-                size_t comma_pos = low_str.find(',');
-                if (comma_pos != std::string::npos) {
-                    vars["low"] = low_str.substr(0, comma_pos);
-                }
-            }
-            if (high_pos != std::string::npos) {
-                std::string high_str = description.substr(high_pos + 6);
-                size_t end_pos = high_str.find(')');
-                if (end_pos != std::string::npos) {
-                    vars["high"] = high_str.substr(0, end_pos);
-                }
-            }
-        }
-
-        // Determine which lines to highlight
-        if (description.find("Initial array") != std::string::npos) {
-            m_current_highlights.emplace_back(
-                1,
-                "void quickSort(vector<int>& arr, int low, int high)",
-                "Starting QuickSort algorithm",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
-        }
-        else if (description.find("Recursive call") != std::string::npos) {
-            m_current_highlights.emplace_back(
-                3,
-                "    if (low < high)",
-                "Entering recursive call",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
-            m_current_highlights.emplace_back(
-                5,
-                "        int pi = partition(arr, low, high)",
-                "Calling partition function",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
-        }
-        else if (description.find("Starting partition") != std::string::npos)
+        else 
         {
-            m_current_highlights.emplace_back(
-                10,
-                "int partition(vector<int>& arr, int low, int high)",
-                "Starting partition process",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
-            m_current_highlights.emplace_back(
-                12,
-                "    int pivot = arr[high]",
-                "Selecting pivot element",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
+            m_cached_pseudocode_display.lines = {"Pseudocode not available for this algorithm."};
+            return;
         }
-        else if (description.find("Comparing") != std::string::npos)
+
+        for (const auto& highlight : m_cached_code_highlights)
         {
-            m_current_highlights.emplace_back(
-                15,
-                "    for (int j = low; j <= high - 1; j++)",
-                "Iterating through partition",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
-            m_current_highlights.emplace_back(
-                17,
-                "        if (arr[j] <= pivot)",
-                "Comparing element with pivot",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
-        }
-        else if (description.find("Swapped") != std::string::npos)
-        {
-            m_current_highlights.emplace_back(
-                19,
-                "            swap(arr[i], arr[j])",
-                "Swapping elements",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
-        }
-        else if (description.find("Placed pivot") != std::string::npos)
-        {
-            m_current_highlights.emplace_back(
-                23,
-                "    swap(arr[i + 1], arr[high])",
-                "Placing pivot in final position",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
-        }
-        else if (description.find("completely sorted") != std::string::npos)
-        {
-            m_current_highlights.emplace_back(
-                1,
-                "void quickSort(vector<int>& arr, int low, int high)",
-                "Algorithm completed - array is sorted",
-                vars,
-                std::unordered_map<std::string, std::string>(),
-                true);
+            if (!highlight.is_active)
+                continue;
+
+            m_cached_pseudocode_display.highlighted_lines.push_back(
+                highlight.line_number
+            );
+
+            if (!highlight.index_variables.empty())
+                m_cached_pseudocode_display.line_index_values[highlight.line_number] =
+                    highlight.index_variables;
+
+            if (!highlight.variable_values.empty())
+                m_cached_pseudocode_display.line_variable_values[highlight.line_number] =
+                    highlight.variable_values;
         }
     }
 
-    void AlgorithmManager::generate_binary_search_code_highlights()
-    {
-        m_current_highlights.clear();
-        if (!m_current_algorithm) return;
-
-        auto current_step = m_current_algorithm->get_current_step();
-
-        if (current_step.description.find("Comparing") != std::string::npos) {
-            m_current_highlights.emplace_back(4, "    mid = low + (high - low) / 2", "Calculating midpoint", true);
-            m_current_highlights.emplace_back(5, "    if arr[mid] == target:", "Checking if midpoint is target", true);
-        } else if (current_step.description.find("Found") != std::string::npos) {
-            m_current_highlights.emplace_back(6, "        return mid", "Target found at midpoint", true);
-        }
-    }
-
-    void AlgorithmManager::generate_linear_search_code_highlights()
-    {
-        m_current_highlights.clear();
-        if (!m_current_algorithm) return;
-
-        auto current_step = m_current_algorithm->get_current_step();
-
-        if (current_step.description.find("Checking") != std::string::npos) {
-            m_current_highlights.emplace_back(2, "    for i = 0 to n-1:", "Iterating through array", true);
-            m_current_highlights.emplace_back(3, "        if arr[i] == target:", "Checking current element", true);
-        }
-    }
-
-    void AlgorithmManager::generate_bfs_code_highlights(){}
-    void AlgorithmManager::generate_dfs_code_highlights(){}
-
-
-    PseudocodeDisplay AlgorithmManager::generate_bubble_sort_pseudocode_display() const
-    {
-        PseudocodeDisplay display;
-        display.lines = {
-            "template<typename T>",
-            "void bubble_sort(std::vector<T>& arr)",
-            "{",
-            "       size_t n = arr.size();",
-            "       bool swapped;",
-            "",
-            "       for (size_t i = 0; i < n - 1; ++i)",
-            "       {",
-            "               swapped = false;",
-            "",
-            "               for (size_t j = 0; j < n - i - 1; ++j)",
-            "               {",
-            "                       if (arr[j] > arr[j + 1])",
-            "                       {",
-            "                               std::swap(arr[j], arr[j + 1]);",
-            "                               swapped = true;",
-            "                       }",
-            "               }",
-            "",
-            "               // If no swapping occurred, array is sorted",
-            "               if (!swapped) break;",
-            "       }",
-            "}",
-            ""
-        };
-        return display;
-    }
-
-    PseudocodeDisplay AlgorithmManager::generate_quick_sort_pseudocode_display() const
-    {
-        PseudocodeDisplay display;
-        display.lines = {
-            "template<typename T>",
-            "void quick_sort(std::vector<T>& arr, int low, int high)",
-            "{",
-            "       if (low < high)",
-            "       {",
-            "           pi = partition(arr, low, high);",
-            "",
-            "           quick_sort(arr, low, pi - 1);",
-            "           quick_sort(arr, pi + 1, high);",
-            "       }",
-            "}",
-            "",
-            "",
-            "template<typename T>",
-            "int partition(std::vector<T>& arr, int low, int high)",
-            "{",
-            "       pivot = arr[high];",
-            "",
-            "       int i = low - 1;",
-            "",
-            "       for (j = low; j <= high - 1; j++)",
-            "       {",
-            "               if (arr[j] <= pivot)",
-            "               {",
-            "                       if (i != j)",
-            "                       {",
-            "                               i++;",
-            "                               swap(arr[i], arr[j]);",
-            "                       }",
-            "               }",
-            "       }",
-            "",
-            "       swap(arr[i + 1], arr[high]);",
-            "",
-            "       return (i + 1)",
-            "}"
-        };
-        return display;
-    }
-
-    PseudocodeDisplay AlgorithmManager::generate_binary_search_pseudocode_display() const
-    {
-        PseudocodeDisplay display;
-        display.lines = {
-            "function binarySearch(arr, target):",
-            "    low = 0",
-            "    high = length(arr) - 1",
-            "",
-            "    while low <= high:",
-            "        mid = low + (high - low) // 2",
-            "",
-            "        if arr[mid] == target:",
-            "            return mid          # Target found",
-            "        else if arr[mid] < target:",
-            "            low = mid + 1       # Search right half",
-            "        else:",
-            "            high = mid - 1      # Search left half",
-            "",
-            "    return -1                   # Target not found"
-        };
-        return display;
-    }
-
-    PseudocodeDisplay AlgorithmManager::generate_linear_search_pseudocode_display() const
-    {
-        PseudocodeDisplay display;
-        display.lines = {
-            "function linearSearch(arr, target):",
-            "    n = length(arr)",
-            "",
-            "    for i = 0 to n-1:",
-            "        if arr[i] == target:",
-            "            return i            # Target found at index i",
-            "",
-            "    return -1                   # Target not found"
-        };
-        return display;
-    }
-
-    PseudocodeDisplay AlgorithmManager::get_current_pseudocode_with_highlights() const
-    {
-        PseudocodeDisplay display;
-
-        switch (m_current_algorithm_type)
-        {
-            case AlgorithmType::BUBBLE_SORT:
-                display = generate_bubble_sort_pseudocode_display();
-                break;
-            case AlgorithmType::QUICK_SORT:
-                display = generate_quick_sort_pseudocode_display();
-                break;
-            case AlgorithmType::BINARY_SEARCH:
-                display = generate_binary_search_pseudocode_display();
-                break;
-            case AlgorithmType::LINEAR_SEARCH:
-                display = generate_linear_search_pseudocode_display();
-                break;
-            default:
-                display.lines = {"Pseudocode not available for this algorithm."};
-                break;
-        }
-
-        // Add current highlights to the display
-        for (const auto& highlight : m_current_highlights)
-        {
-            if (highlight.is_active)
-            {
-                display.highlighted_lines.push_back(highlight.line_number);
-                if (!highlight.variable_values.empty())
-                {
-                    display.line_index_values[highlight.line_number] = highlight.index_variables;
-                    display.line_variable_values[highlight.line_number] = highlight.variable_values;
-
-                }
-            }
-        }
-
-        return display;
-    }
-
-    const std::unordered_map<std::string, AlgorithmType>& AlgorithmManager::get_name_to_type_map() const
+    const std::vector<CodeHighlight>& 
+    AlgorithmManager::get_current_code_highlights() const
     {
         std::shared_lock lock(m_algorithm_mutex);
-        return m_name_to_type_map;
+        return m_cached_code_highlights;
     }
 
-
-    const std::vector<CodeHighlight>& AlgorithmManager::get_current_code_highlights() const
+    const PseudocodeDisplay&
+    AlgorithmManager::get_current_pseudocode_with_highlights() const
     {
         std::shared_lock lock(m_algorithm_mutex);
-        return m_current_highlights;
+        return m_cached_pseudocode_display;
     }
+
 
     const std::vector<AlgorithmType>& AlgorithmManager::get_available_algorithm_types() const
     {
@@ -916,33 +708,35 @@ namespace c2l::algorithms
         return m_algorithm_types;
     }
 
-    const std::vector<std::string>& AlgorithmManager::get_available_algorithms() const
+    AlgorithmType AlgorithmManager::get_current_algorithm_type() const noexcept
     {
         std::shared_lock lock(m_algorithm_mutex);
-        return m_algorithm_names;
-    }
 
-    const AlgorithmType& AlgorithmManager::get_current_algorithm_type() const
+        if (!m_current_context.is_valid())
+        {
+            return AlgorithmType::UNKNOWN;
+        }
+
+        return m_current_context.metadata->get_type();
+    }
+    
+
+    IAlgorithmVisualizer* AlgorithmManager::get_current_visualizer() const
     {
         std::shared_lock lock(m_algorithm_mutex);
-        return m_current_algorithm_type;
-    }
-
-    IAlgorithmVisualizer *AlgorithmManager::get_current_visualizer() const
-    {
-        std::shared_lock lock(m_algorithm_mutex);
-        return m_current_visualizer;
+        return m_current_context.visualizer;
     }
 
 
-    std::vector<AlgorithmType> AlgorithmManager::get_algorithms_by_category(const AlgorithmCategory category) const
+    std::vector<AlgorithmType> AlgorithmManager::get_algorithm_types_by_category(
+        const AlgorithmCategory category) const
     {
         std::shared_lock lock(m_algorithm_mutex);
         std::vector<AlgorithmType> result;
 
         for (auto type : m_algorithm_types)
         {
-            if (get_algorithm_category(type) == category)
+            if (algorithm_category(type) == category)
             {
                 result.push_back(type);
             }
@@ -951,30 +745,43 @@ namespace c2l::algorithms
         return result;
     }
 
+    AlgorithmManager::CategorizedAlgorithms
+    AlgorithmManager::get_available_categorized_algorithms() const
+    {
+        CategorizedAlgorithms result;
+
+        for (AlgorithmType type : m_algorithm_types)
+        {
+            if (const auto* info = algorithms::get_algorithm_info(type))
+                result[info->display_category].push_back(info);
+        }
+
+        return result;
+    }
+
     ISimpleAlgorithm* AlgorithmManager::get_current_algorithm() const
     {
         std::shared_lock lock(m_algorithm_mutex);
-        return m_current_algorithm;
+        return m_current_context.execution;
+    }
+
+
+    IAlgorithmMetadata* AlgorithmManager::get_current_metadata() const 
+    {
+        return m_current_context.metadata;
     }
 
     const std::string& AlgorithmManager::get_current_algorithm_name() const
     {
         std::shared_lock lock(m_algorithm_mutex);
-        return m_current_algorithm_name;
+        return m_current_context.metadata->get_display_name();
     }
 
-    const std::vector<CodeHighlight>& AlgorithmManager::get_code_highlights() const
-    {
-        std::shared_lock lock(m_algorithm_mutex);
-        return m_current_highlights;
-    }
-
-    const std::vector<std::string>& AlgorithmManager::get_algorithm_names() const
+    const std::vector<std::string>& AlgorithmManager::get_available_algorithm_names() const
     {
         std::shared_lock lock(m_algorithm_mutex);
         return m_algorithm_names;
     }
-
 
 
     bool AlgorithmManager::is_playing() const
@@ -995,22 +802,6 @@ namespace c2l::algorithms
     float AlgorithmManager::get_speed() const
     {
         return m_speed.load();
-    }
-
-    std::optional<AlgorithmVariable> AlgorithmManager::extract_variable_object(
-            const AlgorithmStep& step, const std::string& key) const
-    {
-        return step.metadata.get_variable(key);
-    }
-
-    std::unordered_map<std::string, std::string> AlgorithmManager::extract_all_variables(
-        const AlgorithmStep& step) const
-    {
-        std::unordered_map<std::string, std::string> result;
-        for (const auto& [key, var] : step.metadata.variables) {
-            result[key] = var.to_string();
-        }
-        return result;
     }
 
 

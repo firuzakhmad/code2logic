@@ -5,16 +5,25 @@
 #include "scenes/scene_manager.hpp"
 #include "algorithms/i_simple_algorithm.hpp"
 #include "algorithms/managers/algorithm_manager.hpp"
+#include "core/json_config_manager/json_config_manager.hpp"
 
 namespace c2l::scenes
 {
+    /**
+     * @brief Scene for algorithm visualization with full JSON metadata support
+     * 
+     * This scene renders algorithm visualizations, metadata, pseudocode,
+     * and controls using JSON-driven configurations.
+     */
     class AlgorithmVisualizerScene final : public BaseScene
     {
     public:
-        AlgorithmVisualizerScene(graphics::Renderer& renderer,
-                                 core::ThreadManager& thread_manager,
-                                 core::resources::ResourceManager& resource_manager,
-                                 ui::managers::IconManager& icon_manager);
+        AlgorithmVisualizerScene(
+            graphics::Renderer& renderer,
+            core::ThreadManager& thread_manager,
+            core::JsonConfigManager& json_config_manager,
+            core::resources::ResourceManager& resource_manager,
+            ui::managers::IconManager& icon_manager);
         ~AlgorithmVisualizerScene() override = default;
 
         // IScene interface
@@ -53,34 +62,63 @@ namespace c2l::scenes
          */
         void render() override;
 
-    private:
-        void render_algorithm_selector();
-        void render_algorithm_visualizer();
-        void render_controls();
-        void render_data_controls();
-        void render_thread_info();
-        void render_stats_panel();
-        void render_code_panel();
-        void render_algorithm_description();
+    private: 
+        // Rendering methods
+        void render_algorithm_selector_panel();
+        void render_algorithm_visualization_panel();
+        void render_algorithm_control_panel();
+        void render_algorithm_data_control_panel();
+        void render_algorithm_code_panel();
+        void render_algorithm_description_panel();
+        void render_algorithm_stats_panel();
+        void render_thread_info_panel();
+        void render_algorithm_variable_inspector_panel();
+
+        // Panel rendering helpers
+        void render_algorithm_header(
+            const algorithms::IAlgorithmMetadata* metadata
+        );
+        void render_complexity_badges(
+            const algorithms::AlgorithmComplexityInfo& complexity
+        );
+        void render_properties_table(
+            const algorithms::AlgorithmPropertiesInfo& properties
+        );
+
+        void render_code_line(
+            size_t line_number,
+            const std::string& line,
+            bool highlight,
+            const std::unordered_map<std::string, std::string>* vars = nullptr
+        );
 
         void render_comparison_analysis(const c2l::algorithms::AlgorithmStep& step);
         void render_performance_metrics();
-        void render_metric_card(const std::string& title,
-                                const std::string& value,
-                                const ImVec4& color);
 
-
-        static void draw_code_line(
-            size_t line_number,
-            const std::string& line,
-            bool highlighted,
-            const std::unordered_map<std::string, std::string>* vars);
 
         void setup_main_menu() override;
+        void setup_shortcuts_tooltip();
 
         std::unique_ptr<algorithms::AlgorithmManager> m_algorithm_manager;
 
-        bool m_playback_controls_ready{false};
+        // Panel visibility flags
+        bool m_show_algorithm_selector_panel            {true};
+        bool m_show_algorithm_visualization_panel       {true};
+        bool m_show_algorithm_control_panel             {true};
+        bool m_show_algorithm_data_control_panel        {false};
+        bool m_show_algorithm_code_panel                {true};
+        bool m_show_algorithm_description_panel         {false};
+        bool m_show_algorithm_stats_panel               {false};
+        bool m_show_algorithm_performance_panel         {false};
+        bool m_show_algorithm_variable_inspector_panel  {false};
+        bool m_show_thread_info_panel                   {false};
+        
+        // UI state
+        bool m_playback_controls_ready                  {false};
+        float m_ui_scale                                {1.0f};
+
+        // Cached data
+        algorithms::AlgorithmManager::CategorizedAlgorithms m_cached_categorized_algorithms;
     };
 
 }

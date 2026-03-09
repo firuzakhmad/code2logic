@@ -15,6 +15,7 @@ namespace c2l::scenes
     public:
         MainMenuScene(graphics::Renderer& renderer,
                       core::ThreadManager& thread_manager,
+                      core::JsonConfigManager& json_config_manager,
                       core::resources::ResourceManager& resource_manager,
                       ui::managers::IconManager& icon_manager);
         ~MainMenuScene() override = default;
