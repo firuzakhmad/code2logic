@@ -20,13 +20,19 @@ namespace c2l::algorithms
         COMPARE,
         SWAP,
 
-        PARTITION,
-        MERGE,
-        PIVOT_PLACED,
+        PARTITION_START,
+        PIVOT_SELECTED,
+        PARTITION_SCAN,
+        PARTITION_SWAP,
+        PARTITION_COMPLETE,
         RECURSIVE_CALL,
+        RECURSIVE_CALL_RIGHT,
+
+
+        MERGE,
 
         PASS_COMPLETE,
-        FINISHED
+        COMPLETED
     };
 }
 #endif //CODE2LOGIC_ALGORITHM_STEP_OPERATION_HPP
