@@ -4,11 +4,18 @@
 
 namespace c2l::scenes
 {
-	BaseScene::BaseScene(graphics::Renderer& renderer,
-						 core::ThreadManager& thread_manager,
-						 core::resources::ResourceManager& resource_manager,
-						 ui::managers::IconManager& icon_manager)
-    : IScene(renderer, thread_manager, resource_manager, icon_manager)
+	BaseScene::BaseScene(
+		graphics::Renderer& renderer,
+		core::ThreadManager& thread_manager,
+		core::JsonConfigManager& json_config_manager,
+		core::resources::ResourceManager& resource_manager,
+		ui::managers::IconManager& icon_manager)
+    : IScene(
+		renderer, 
+		thread_manager, 
+		json_config_manager, 
+		resource_manager, 
+		icon_manager)
     , m_ui_manager{std::make_unique<ui::managers::UIManager>()}
     {
 	    setup_docking_layout();
@@ -19,7 +26,7 @@ namespace c2l::scenes
 
 	void BaseScene::render_common_ui()
 	{
-		// Render ImGui demo if enabled
+		// Rendering ImGui demo if enabled
 		if (m_show_demo_window)
 		{
 			ImGui::ShowDemoWindow(&m_show_demo_window);
@@ -38,7 +45,8 @@ namespace c2l::scenes
 		m_navigation_enabled = true;
 	}
 
-	void BaseScene::request_scene_push(const SceneType&  scene_name)
+	void BaseScene::request_scene_push(
+		const SceneType& scene_name)
 	{
 		if (m_navigation_enabled && m_push_callback)
 		{
@@ -46,12 +54,15 @@ namespace c2l::scenes
 		}
 		else
 		{
-			LOG_WARNING("Navigation not available for scene switch: {}",
-						SceneManager::scene_type_to_string(scene_name));
+			LOG_WARNING(
+				"Navigation not available for scene switch: {}",
+				SceneManager::scene_type_to_string(scene_name)
+			);
 		}
 	}
 
-	void BaseScene::request_scene_switch(const SceneType&  scene_name)
+	void BaseScene::request_scene_switch(
+		const SceneType&  scene_name)
 	{
 		if (m_navigation_enabled && m_switch_callback)
 		{
@@ -59,8 +70,10 @@ namespace c2l::scenes
 		}
 		else
 		{
-			LOG_WARNING("Navigation not available for scene switch: {}",
-						SceneManager::scene_type_to_string(scene_name));
+			LOG_WARNING(
+				"Navigation not available for scene switch: {}",
+				SceneManager::scene_type_to_string(scene_name)
+			);
 		}
 	}
 
@@ -90,8 +103,12 @@ namespace c2l::scenes
 		bool enabled,
 		const std::string& tooltip)
 	{
-		if (!ImGui::GetCurrentContext()) {
-			LOG_ERROR("No ImGui context for icon button {}", id);
+		if (!ImGui::GetCurrentContext()) 
+		{
+			LOG_ERROR(
+				"No ImGui context for icon button {}", 
+				id
+			);
 			return false;
 		}
 
@@ -109,10 +126,5 @@ namespace c2l::scenes
 
 		return clicked;
 	}
-
-
-
-
-
 
 } // namespace c2l::scenes

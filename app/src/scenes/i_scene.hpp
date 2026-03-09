@@ -21,6 +21,7 @@
 #include "core/resources/resource_manager.hpp"
 #include "core/utils/thread_manager/thread_manager.hpp"
 #include "ui/managers/icon_manager.hpp"
+#include "core/json_config_manager/json_config_manager.hpp"
 
 namespace c2l::scenes
 {
@@ -43,10 +44,12 @@ namespace c2l::scenes
     public:
         IScene(graphics::Renderer& renderer,
                core::ThreadManager& thread_manager,
+               core::JsonConfigManager& json_config_manager,
                core::resources::ResourceManager& resource_manager,
                ui::managers::IconManager& icon_manager)
             : m_renderer{renderer}
             , m_thread_manager{thread_manager}
+            , m_json_config_manager{json_config_manager}
             , m_resource_manager{resource_manager}
             , m_icon_manager{icon_manager}
         {}
@@ -122,9 +125,9 @@ namespace c2l::scenes
 
         graphics::Renderer& m_renderer;
         core::ThreadManager& m_thread_manager;
+        core::JsonConfigManager& m_json_config_manager;
         core::resources::ResourceManager& m_resource_manager;
         c2l::ui::managers::IconManager& m_icon_manager;
-
 
         bool m_created {false};
     };

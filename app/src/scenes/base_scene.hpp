@@ -6,6 +6,7 @@
 #include "ui/components/main_menu.hpp"
 #include "ui/managers/icon_manager.hpp"
 #include "scenes/scene_manager.hpp"
+#include "algorithms/algorithm_types.hpp"
 
 namespace c2l::scenes
 {
@@ -37,6 +38,7 @@ namespace c2l::scenes
 
 		BaseScene(graphics::Renderer& renderer,
 				  core::ThreadManager& thread_manager,
+				  core::JsonConfigManager& json_config_manager,
 				  core::resources::ResourceManager& resource_manager,
 				  ui::managers::IconManager& icon_manager);
 		virtual ~BaseScene() override;
@@ -53,9 +55,18 @@ namespace c2l::scenes
 		[[nodiscard]] bool can_navigate() const;
 
 		// UI management
-	    [[nodiscard]] ui::managers::UIManager& get_ui_manager() override { return *m_ui_manager; }
-	    [[nodiscard]] const ui::managers::UIManager& get_ui_manager() const override { return *m_ui_manager; }	
-	    [[nodiscard]] ui::components::MainMenu& get_main_menu() const { return *m_main_menu; }
+	    [[nodiscard]] ui::managers::UIManager& get_ui_manager() override 
+		{ 
+			return *m_ui_manager; 
+		}
+	    [[nodiscard]] const ui::managers::UIManager& get_ui_manager() const override 
+		{ 
+			return *m_ui_manager; 
+		}	
+	    [[nodiscard]] ui::components::MainMenu& get_main_menu() const 
+		{ 
+			return *m_main_menu; 
+		}
 
 	protected: 
 		// Common UI setup that derived scenes can override
@@ -76,21 +87,14 @@ namespace c2l::scenes
 
 	    std::shared_ptr<ui::components::MainMenu> m_main_menu;
 
-    	bool m_show_demo_window				{false};
-		bool m_show_algorithm_visualizer	{true};
-		bool m_show_algorithm_selector		{true};
-		bool m_show_controls				{false};
-		bool m_show_data_controls			{false};
-		bool m_show_thread_info				{false};
-		bool m_show_stats_panel				{false};
-		bool m_show_code_panel				{false};
-		bool m_show_algorithm_description	{false};
-
 		NavigationCallback m_push_callback;
 		NavigationCallback m_switch_callback;
 		ScenePopCallback m_pop_callback;
 
+		std::unordered_map<std::string_view, std::vector<const algorithms::AlgorithmInfo*>> m_available_categorized_algorithms;
+
 	private:
+		bool m_show_demo_window				{false};
 		bool m_navigation_enabled			{false};
 	};
 
