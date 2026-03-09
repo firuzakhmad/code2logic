@@ -8,56 +8,62 @@
 
 namespace c2l::algorithms
 {
-	void ArrayBasedVisualizer::initialize(const ISimpleAlgorithm* algorithm)
+	void ArrayBasedVisualizer::initialize(
+        const ISimpleAlgorithm* execution,
+        const IAlgorithmMetadata* metadata)
 	{
-        m_algorithm = algorithm;
-        LOG_DEBUG("ArrayBasedVisualizer initialized for {}", algorithm->get_name());
+        m_execution = execution;
+        m_metadata = metadata;
+
+        LOG_DEBUG(
+            "ArrayBasedVisualizer initialized for {}",
+            m_metadata ? m_metadata->get_display_name() : "Unknown"
+        );
     }
 
     void ArrayBasedVisualizer::render()
     {
-    	if (!m_algorithm) return;
+    	if (!m_execution) return;
 
-    	const auto current_step = m_algorithm->get_current_step();
+        const auto current_step = m_execution->get_current_step();
     	render_array_visualization(current_step);
     }
 
     void ArrayBasedVisualizer::update(double delta_time) 
-    {
-        // Can be used for animations if needed
-    }
+    {}
 
     void ArrayBasedVisualizer::render_header() 
     {
-        // Algorithm name with emoji
-        const char* emoji = "🎯";
-        if (m_algorithm->get_category() == AlgorithmCategory::SORTING) emoji = "🔀";
-        else if (m_algorithm->get_category() == AlgorithmCategory::SEARCHING) emoji = "🔍";
-        
-        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s %s", 
-                          emoji, m_algorithm->get_name().c_str());
-        
-        // Complexity information
-        ImGui::Text("Time: %s | Space: %s", 
-                   m_algorithm->get_time_complexity().c_str(),
-                   m_algorithm->get_space_complexity().c_str());
+        if (!m_metadata) return;
+
+        ImGui::Text(
+            "Time: %s | Space: %s", 
+            m_metadata->get_complexity().time_average.c_str(),
+            m_metadata->get_complexity().space.c_str()
+        );
         
         // Progress bar
-        float progress = m_algorithm->get_step_count() > 0 ? 
-            static_cast<float>(m_algorithm->get_current_step_index()) / 
-            (m_algorithm->get_step_count() - 1) : 0.0f;
+        float progress = m_execution->get_step_count() > 0 ? 
+            static_cast<float>(m_execution->get_current_step_index()) / 
+            (m_execution->get_step_count() - 1) : 0.0f;
         
         char progress_text[64];
-        snprintf(progress_text, sizeof(progress_text), "%zu/%zu", 
-                m_algorithm->get_current_step_index(), m_algorithm->get_step_count());
+        snprintf(
+            progress_text, 
+            sizeof(progress_text), 
+            "%zu/%zu", 
+            m_execution->get_current_step_index(), 
+            m_execution->get_step_count()
+        );
         
         ImGui::ProgressBar(progress, ImVec2(-1, 20), progress_text);
         ImGui::Separator();
     }
 
-    void ArrayBasedVisualizer::render_array_visualization(const AlgorithmStep& step) 
+    void ArrayBasedVisualizer::render_array_visualization(
+        const AlgorithmStep& step) 
     {
-        if (m_algorithm->get_category() == AlgorithmCategory::SORTING)
+        if (m_metadata->get_category() == AlgorithmCategory::SORTING)
         {
             render_sorting_visualization(step);
         } else {
@@ -65,9 +71,9 @@ namespace c2l::algorithms
         }
     }
 
-    void ArrayBasedVisualizer::render_sorting_visualization(const AlgorithmStep& step) 
+    void ArrayBasedVisualizer::render_sorting_visualization(
+        const AlgorithmStep& step) 
     {
-	    // Enhanced visualization style selector
 	    const char* styles[] = {
 	        "Enhanced Bars", "Circular", "Network", "Waveform",
             "Heat Map", "Particle System", "Tree View",
@@ -75,7 +81,12 @@ namespace c2l::algorithms
         };
 
 	    ImGui::SetNextItemWidth(180);
-	    ImGui::Combo(" ", &m_visualization_style, styles, IM_COUNTOF(styles));
+	    ImGui::Combo(
+            " ", 
+            &m_visualization_style, 
+            styles, 
+            IM_COUNTOF(styles)
+        );
 
 	    switch (m_visualization_style)
 	    {
@@ -94,9 +105,14 @@ namespace c2l::algorithms
 	    }
     }
 
-    void ArrayBasedVisualizer::render_bar_visualization(const AlgorithmStep& step) 
+    void ArrayBasedVisualizer::render_bar_visualization(
+        const AlgorithmStep& step) 
     {
-        ImGui::BeginChild("BarVisualization", ImVec2(0, 235), true);
+        ImGui::BeginChild(
+            "BarVisualization", 
+            ImVec2(0, 235), 
+            true
+        );
         
         float available_width = ImGui::GetContentRegionAvail().x;
         float bar_width = std::max(10.0f, available_width / step.data.size() - 2.0f);
@@ -110,7 +126,7 @@ namespace c2l::algorithms
         }
         
         int max_value = *std::max_element(step.data.begin(), step.data.end());
-        if (max_value == 0) max_value = 1; // Avoid division by zero
+        if (max_value == 0) max_value = 1; // Avoiding division by zero
         
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
@@ -124,29 +140,33 @@ namespace c2l::algorithms
             ImVec2 bar_min(cursor_pos.x + i * (bar_width + 2), start_y - bar_height);
             ImVec2 bar_max(cursor_pos.x + i * (bar_width + 2) + bar_width, start_y);
             
-            // Get color based on element state
+            // Getting color based on element state
             ImU32 color = get_element_color(step, i);
             
             // Draw the bar
             draw_list->AddRectFilled(bar_min, bar_max, color);
             draw_list->AddRect(bar_min, bar_max, ImColor(255, 255, 255, 255));
             
-            // Draw value label for reasonable-sized arrays
-            if (step.data.size() <= 20) {
+            // Drawing value label for reasonable-sized arrays
+            if (step.data.size() <= 20) 
+            {
                 std::string value_str = std::to_string(step.data[i]);
                 ImVec2 text_size = ImGui::CalcTextSize(value_str.c_str());
                 float text_x = bar_min.x + (bar_width - text_size.x) * 0.5f;
                 float text_y = bar_min.y - text_size.y - 2;
                 
-                // Ensure text doesn't go above the window
-                if (text_y >= cursor_pos.y) {
-                    draw_list->AddText(ImVec2(text_x, text_y), 
-                                      ImColor(255, 255, 255, 255),
-                                      value_str.c_str());
+                // Ensuring text doesn't go above the window
+                if (text_y >= cursor_pos.y) 
+                {
+                    draw_list->AddText(
+                        ImVec2(text_x, text_y), 
+                        ImColor(255, 255, 255, 255),
+                        value_str.c_str()
+                    );
                 }
             }
             
-            // Draw index below bar
+            // Drawing index below bar
             std::string index_str = std::to_string(i);
             ImVec2 index_size = ImGui::CalcTextSize(index_str.c_str());
             float index_x = bar_min.x + (bar_width - index_size.x) * 0.5f;
@@ -158,9 +178,14 @@ namespace c2l::algorithms
         ImGui::EndChild();
     }
 
-    void ArrayBasedVisualizer::render_dot_visualization(const AlgorithmStep& step) 
+    void ArrayBasedVisualizer::render_dot_visualization(
+        const AlgorithmStep& step) 
     {
-        ImGui::BeginChild("DotVisualization", ImVec2(0, 150), true);
+        ImGui::BeginChild(
+            "DotVisualization", 
+            ImVec2(0, 150), 
+            true
+        );
         
         if (step.data.empty()) 
         {
@@ -201,7 +226,10 @@ namespace c2l::algorithms
                 std::string value_str = std::to_string(step.data[i]);
                 ImVec2 text_size = ImGui::CalcTextSize(value_str.c_str());
                 draw_list->AddText(
-                    ImVec2(dot_center.x - text_size.x * 0.5f, dot_center.y - text_size.y * 0.5f),
+                    ImVec2(
+                        dot_center.x - text_size.x * 0.5f, 
+                        dot_center.y - text_size.y * 0.5f
+                    ),
                     ImColor(255, 255, 255, 255),
                     value_str.c_str()
                 );
@@ -211,9 +239,14 @@ namespace c2l::algorithms
         ImGui::EndChild();
     }
 
-    void ArrayBasedVisualizer::render_enhanced_bar_visualization(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::render_enhanced_bar_visualization(
+        const AlgorithmStep& step)
     {
-        ImGui::BeginChild("EnhancedBarVisualization", ImVec2(0, 280), true);
+        ImGui::BeginChild(
+            "EnhancedBarVisualization", 
+            ImVec2(0, 280), 
+            true
+        );
 
         float available_width = ImGui::GetContentRegionAvail().x;
         float bar_width = std::max(8.0f, available_width / step.data.size() - 1.0f);
@@ -236,7 +269,7 @@ namespace c2l::algorithms
         float max_bar_height = 180.0f;
         float spacing = 1.0f;
 
-        // Draw gradient background
+        // Drawing gradient background
         draw_list->AddRectFilledMultiColor(
             cursor_pos,
             ImVec2(cursor_pos.x + available_width, cursor_pos.y + 240),
@@ -252,11 +285,11 @@ namespace c2l::algorithms
             ImVec2 bar_min(cursor_pos.x + i * (bar_width + spacing), start_y - bar_height);
             ImVec2 bar_max(cursor_pos.x + i * (bar_width + spacing) + bar_width, start_y);
 
-            // Get enhanced color with gradient
+            // Getting enhanced color with gradient
             ImU32 base_color = get_enhanced_element_color(step, i);
             ImU32 top_color = apply_color_variation(base_color, 1.3f); // Lighter top
 
-            // Draw bar with gradient
+            // Drawing bar with gradient
             draw_list->AddRectFilledMultiColor(
                 bar_min, bar_max,
                 top_color, top_color, base_color, base_color
@@ -281,13 +314,15 @@ namespace c2l::algorithms
             }
 
             // Draw value and index with better typography
-            if (step.data.size() <= 25 && bar_height > 20) {
+            if (step.data.size() <= 25 && bar_height > 20) 
+            {
                 std::string value_str = std::to_string(step.data[i]);
                 ImVec2 text_size = ImGui::CalcTextSize(value_str.c_str());
                 float text_x = bar_min.x + (bar_width - text_size.x) * 0.5f;
                 float text_y = bar_min.y - text_size.y - 1;
 
-                if (text_y >= cursor_pos.y) {
+                if (text_y >= cursor_pos.y) 
+                {
                     draw_list->AddText(ImVec2(text_x, text_y),
                                       ImColor(240, 240, 240, 255),
                                       value_str.c_str());
@@ -313,7 +348,9 @@ namespace c2l::algorithms
         ImGui::EndChild();
     }
 
-    ImU32 ArrayBasedVisualizer::get_enhanced_element_color(const AlgorithmStep& step, size_t index)
+    ImU32 ArrayBasedVisualizer::get_enhanced_element_color(
+        const AlgorithmStep& step, 
+        size_t index)
     {
         // Sophisticated color coding with smooth transitions
         float value_ratio = static_cast<float>(step.data[index]) /
@@ -370,7 +407,9 @@ namespace c2l::algorithms
         return ImColor(r, g, b, 255);
     }
 
-    ImU32 ArrayBasedVisualizer::apply_color_variation(ImU32 color, float factor)
+    ImU32 ArrayBasedVisualizer::apply_color_variation(
+        ImU32 color, 
+        float factor)
     {
         // Lighten color for gradient effect
         int r = (color >> IM_COL32_R_SHIFT) & 0xFF;
@@ -385,12 +424,12 @@ namespace c2l::algorithms
     }
 
     void ArrayBasedVisualizer::draw_comparison_line(
-    ImDrawList* draw_list,
-    const ImVec2& cursor_pos,
-    const AlgorithmStep& step,
-    float bar_width,
-    float spacing,
-    float start_y)
+        ImDrawList* draw_list,
+        const ImVec2& cursor_pos,
+        const AlgorithmStep& step,
+        float bar_width,
+        float spacing,
+        float start_y)
 	{
 	    const auto& idx1 = step.visualization.highlighted_index;
 	    const auto& idx2 = step.visualization.compared_index;
@@ -431,9 +470,14 @@ namespace c2l::algorithms
 	}
 
 
-    void ArrayBasedVisualizer::render_circular_visualization(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::render_circular_visualization(
+        const AlgorithmStep& step)
     {
-        ImGui::BeginChild("CircularVisualization", ImVec2(0, 300), true);
+        ImGui::BeginChild(
+            "CircularVisualization", 
+            ImVec2(0, 300), 
+            true
+        );
 
         if (step.data.empty())
         {
@@ -492,7 +536,8 @@ namespace c2l::algorithms
             }
 
             // Value label at outer point
-            if (step.data.size() <= 30) {
+            if (step.data.size() <= 30) 
+            {
                 std::string value_str = std::to_string(step.data[i]);
                 ImVec2 text_size = ImGui::CalcTextSize(value_str.c_str());
                 ImVec2 text_pos = ImVec2(
@@ -507,7 +552,7 @@ namespace c2l::algorithms
         draw_list->AddCircleFilled(center, radius * 0.2f, ImColor(40, 40, 50, 255));
         draw_list->AddCircle(center, radius * 0.2f, ImColor(100, 100, 120, 255), 0, 2.0f);
 
-        std::string center_text = m_algorithm->get_name();
+        std::string center_text = m_metadata->get_display_name();
         ImVec2 text_size = ImGui::CalcTextSize(center_text.c_str());
         draw_list->AddText(ImVec2(center.x - text_size.x * 0.5f, center.y - text_size.y * 0.5f),
                           ImColor(200, 200, 220, 255), center_text.c_str());
@@ -515,9 +560,14 @@ namespace c2l::algorithms
         ImGui::EndChild();
     }
 
-    void ArrayBasedVisualizer::render_network_visualization(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::render_network_visualization(
+        const AlgorithmStep& step)
     {
-        ImGui::BeginChild("NetworkVisualization", ImVec2(0, 400), true);
+        ImGui::BeginChild(
+            "NetworkVisualization", 
+            ImVec2(0, 400), 
+            true
+        );
 
         if (step.data.empty())
         {
@@ -527,7 +577,7 @@ namespace c2l::algorithms
         }
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+        // ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
         ImVec2 region_size = ImGui::GetContentRegionAvail();
 
         // Calculate node positions based on current sorted order
@@ -551,7 +601,8 @@ namespace c2l::algorithms
                               line_color, line_thickness);
 
             // Draw comparison indicators for active comparisons
-            if (is_active_comparison) {
+            if (is_active_comparison) 
+            {
                 ImVec2 mid_point(
                     (node_positions[i].x + node_positions[i + 1].x) * 0.5f,
                     (node_positions[i].y + node_positions[i + 1].y) * 0.5f
@@ -621,9 +672,14 @@ namespace c2l::algorithms
         ImGui::EndChild();
     }
 
-    void ArrayBasedVisualizer::render_waveform_visualization(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::render_waveform_visualization(
+        const AlgorithmStep& step)
     {
-        ImGui::BeginChild("WaveformVisualization", ImVec2(0, 250), true);
+        ImGui::BeginChild(
+            "WaveformVisualization", 
+            ImVec2(0, 250), 
+            true
+        );
 
         if (step.data.empty())
         {
@@ -643,7 +699,7 @@ namespace c2l::algorithms
         float base_y = cursor_pos.y + region_size.y * 0.7f;
         float amplitude_scale = region_size.y * 0.6f;
 
-        // Draw waveform
+        // Drawing waveform
         for (size_t i = 0; i < step.data.size() - 1; ++i)
         {
             float x1 = cursor_pos.x + i * x_step;
@@ -653,16 +709,20 @@ namespace c2l::algorithms
             float y2 = base_y - (static_cast<float>(step.data[i + 1]) / max_value) * amplitude_scale;
 
             ImU32 color1 = get_enhanced_element_color(step, i);
-            ImU32 color2 = get_enhanced_element_color(step, i + 1);
+            // ImU32 color2 = get_enhanced_element_color(step, i + 1);
 
-            // Draw gradient line
+            // Drawing gradient line
             draw_list->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), color1, 3.0f);
 
-            // Draw data points
+            // Drawing data points
             if (i == step.visualization.highlighted_index ||
                 i == step.visualization.compared_index)
             {
-                draw_list->AddCircleFilled(ImVec2(x1, y1), 6.0f, ImColor(255, 255, 255, 255));
+                draw_list->AddCircleFilled(
+                    ImVec2(x1, y1), 
+                    6.0f, 
+                    ImColor(255, 255, 255, 255)
+                );
 
                 // Value label
                 std::string value_str = std::to_string(step.data[i]);
@@ -672,17 +732,24 @@ namespace c2l::algorithms
             }
         }
 
-        // Draw baseline
-        draw_list->AddLine(ImVec2(cursor_pos.x, base_y),
-                          ImVec2(cursor_pos.x + region_size.x, base_y),
-                          ImColor(100, 100, 100, 150), 1.0f);
+        // Drawing baseline
+        draw_list->AddLine(
+            ImVec2(cursor_pos.x, base_y),
+            ImVec2(cursor_pos.x + region_size.x, base_y),
+            ImColor(100, 100, 100, 150), 1.0f
+        );
 
         ImGui::EndChild();
     }
 
-    void ArrayBasedVisualizer::render_heatmap_visualization(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::render_heatmap_visualization(
+        const AlgorithmStep& step)
     {
-        ImGui::BeginChild("HeatmapVisualization", ImVec2(0, 300), true);
+        ImGui::BeginChild(
+            "HeatmapVisualization", 
+            ImVec2(0, 300), 
+            true
+        );
 
         if (step.data.empty())
         {
@@ -702,7 +769,7 @@ namespace c2l::algorithms
         float grid_height = cell_size * step.data.size();
         float start_y = cursor_pos.y + (region_size.y - grid_height) * 0.5f;
 
-        // Draw heatmap grid
+        // Drawing heatmap grid
         for (size_t i = 0; i < step.data.size(); ++i)
         {
             for (size_t j = 0; j < step.data.size(); ++j)
@@ -711,30 +778,51 @@ namespace c2l::algorithms
                 ImVec2 cell_min(cursor_pos.x + j * cell_size, start_y + i * cell_size);
                 ImVec2 cell_max(cell_min.x + cell_size, cell_min.y + cell_size);
 
-                // Color based on comparison relationship
+                // Coloring based on comparison relationship
                 ImU32 cell_color;
-                if (i == step.visualization.highlighted_index && j == step.visualization.compared_index) {
+                if (i == step.visualization.highlighted_index && 
+                    j == step.visualization.compared_index) 
+                {
                     cell_color = ImColor(255, 255, 0, 200); // Yellow for active comparison
-                } else if (i == j) {
+                } 
+                else if (i == j) 
+                {
                     cell_color = value_to_heatmap_color(value_ratio); // Diagonal - value heat
-                } else if (step.data[i] > step.data[j]) {
+                } 
+                else if (step.data[i] > step.data[j]) 
+                {
                     cell_color = ImColor(255, 50, 50, 80); // Red for greater than
-                } else {
+                } 
+                else 
+                {
                     cell_color = ImColor(50, 150, 255, 60); // Blue for less than
                 }
 
-                draw_list->AddRectFilled(cell_min, cell_max, cell_color);
-                draw_list->AddRect(cell_min, cell_max, ImColor(255, 255, 255, 30));
+                draw_list->AddRectFilled(
+                    cell_min, 
+                    cell_max, 
+                    cell_color
+                );
+                draw_list->AddRect(
+                    cell_min, 
+                    cell_max, 
+                    ImColor(255, 255, 255, 30)
+                );
 
                 // Value on diagonal
-                if (i == j && cell_size > 25) {
+                if (i == j && cell_size > 25) 
+                {
                     std::string value_str = std::to_string(step.data[i]);
                     ImVec2 text_size = ImGui::CalcTextSize(value_str.c_str());
                     ImVec2 text_pos(
                         cell_min.x + (cell_size - text_size.x) * 0.5f,
                         cell_min.y + (cell_size - text_size.y) * 0.5f
                     );
-                    draw_list->AddText(text_pos, ImColor(255, 255, 255, 255), value_str.c_str());
+                    draw_list->AddText(
+                        text_pos, 
+                        ImColor(255, 255, 255, 255), 
+                        value_str.c_str()
+                    );
                 }
             }
         }
@@ -742,7 +830,8 @@ namespace c2l::algorithms
         ImGui::EndChild();
     }
 
-    ImU32 ArrayBasedVisualizer::value_to_heatmap_color(float ratio)
+    ImU32 ArrayBasedVisualizer::value_to_heatmap_color(
+        float ratio)
     {
         // Blue (cool) to Red (hot) heatmap
         int r = static_cast<int>(255 * ratio);
@@ -751,9 +840,14 @@ namespace c2l::algorithms
         return ImColor(r, g, b, 200);
     }
 
-    void ArrayBasedVisualizer::render_particle_visualization(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::render_particle_visualization(
+        const AlgorithmStep& step)
     {
-        ImGui::BeginChild("ParticleVisualization", ImVec2(0, 400), true);
+        ImGui::BeginChild(
+            "ParticleVisualization", 
+            ImVec2(0, 400), 
+            true
+        );
 
         if (step.data.empty())
         {
@@ -762,13 +856,15 @@ namespace c2l::algorithms
             return;
         }
 
-        // Ensure particles are synchronized with current data
-        if (m_particles.size() != step.data.size()) {
+        // Ensuring particles are synchronized with current data
+        if (m_particles.size() != step.data.size()) 
+        {
             initialize_particles(step.data);
         }
 
         // Update particle values from current step data
-        for (size_t i = 0; i < m_particles.size(); ++i) {
+        for (size_t i = 0; i < m_particles.size(); ++i) 
+        {
             m_particles[i].value = step.data[i];
         }
 
@@ -797,8 +893,11 @@ namespace c2l::algorithms
 
             // Outer glow
             float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 6.0f + i * 0.5f) + 1.0f) * 0.3f;
-            draw_list->AddCircle(screen_pos, particle.size + 3 + pulse * 2,
-                               ImColor(255, 255, 255, 80), 0, 2.0f);
+            draw_list->AddCircle(
+                screen_pos, 
+                particle.size + 3 + pulse * 2,
+                ImColor(255, 255, 255, 80), 0, 2.0f
+            );
 
             // Value label
             std::string value_str = std::to_string(particle.value);
@@ -822,7 +921,8 @@ namespace c2l::algorithms
         ImGui::EndChild();
     }
 
-    void ArrayBasedVisualizer::initialize_particles(const std::vector<int>& data)
+    void ArrayBasedVisualizer::initialize_particles(
+        const std::vector<int>& data)
     {
 	    m_particles.resize(data.size());
 	    for (size_t i = 0; i < data.size(); ++i)
@@ -840,28 +940,34 @@ namespace c2l::algorithms
 	    }
     }
 
-    void ArrayBasedVisualizer::update_particles(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::update_particles(
+        const AlgorithmStep& step)
     {
         double current_time = ImGui::GetTime();
         double delta_time = current_time - m_last_update_time;
         m_last_update_time = current_time;
 
-        // Update target positions based on current array order
+        // Updating target positions based on current array order
         for (size_t i = 0; i < m_particles.size(); ++i)
         {
             auto& particle = m_particles[i];
 
-            // Find what position this value should be in based on current array order
+            // Finding what position this value should be in based on current array order
             // This ensures particles move to their correct sorted positions
             float target_x = static_cast<float>(i) / static_cast<float>(m_particles.size() - 1);
             particle.target_position.x = target_x;
 
             // Special vertical positioning for active comparisons
-            if (i == step.visualization.highlighted_index) {
+            if (i == step.visualization.highlighted_index) 
+            {
                 particle.target_position = ImVec2(target_x, 0.3f);
-            } else if (i == step.visualization.compared_index) {
+            } 
+            else if (i == step.visualization.compared_index) 
+            {
                 particle.target_position = ImVec2(target_x, 0.7f);
-            } else {
+            } 
+            else 
+            {
                 particle.target_position = ImVec2(target_x, 0.5f);
             }
 
@@ -893,8 +999,11 @@ namespace c2l::algorithms
         }
     }
 
-    void ArrayBasedVisualizer::draw_particle_connections(ImDrawList* draw_list, const ImVec2& cursor_pos,
-                                  const ImVec2& region_size, const AlgorithmStep& step)
+    void ArrayBasedVisualizer::draw_particle_connections(
+        ImDrawList* draw_list, 
+        const ImVec2& cursor_pos,
+        const ImVec2& region_size, 
+        const AlgorithmStep& step)
     {
         // Draw connections between comparing particles
         if (step.visualization.highlighted_index != static_cast<size_t>(-1) &&
@@ -934,7 +1043,7 @@ namespace c2l::algorithms
             );
         }
 
-        // Draw subtle trails between adjacent particles
+        // Drawing subtle trails between adjacent particles
         for (size_t i = 0; i < m_particles.size() - 1; ++i)
         {
             const auto& p1 = m_particles[i];
@@ -949,20 +1058,32 @@ namespace c2l::algorithms
                 cursor_pos.y + p2.position.y * region_size.y
             );
 
-            draw_list->AddLine(screen_pos1, screen_pos2, ImColor(100, 100, 150, 40), 1.0f);
+            draw_list->AddLine(
+                screen_pos1, 
+                screen_pos2, 
+                ImColor(100, 100, 150, 40), 
+                1.0f
+            );
         }
     }
 
-    ImU32 ArrayBasedVisualizer::get_particle_color(const AlgorithmStep& step, size_t index)
+    ImU32 ArrayBasedVisualizer::get_particle_color(
+        const AlgorithmStep& step, 
+        size_t index)
     {
         float value_ratio = static_cast<float>(step.data[index]) /
                            *std::max_element(step.data.begin(), step.data.end());
 
-        if (index == step.visualization.highlighted_index) {
+        if (index == step.visualization.highlighted_index) 
+        {
             return ImColor(255, 200, 50, 255); // Gold - active
-        } else if (index == step.visualization.compared_index) {
+        } 
+        else if (index == step.visualization.compared_index) 
+        {
             return ImColor(50, 220, 120, 255); // Green - comparison
-        } else {
+        } 
+        else 
+        {
             // Gradient from blue to red based on value
             return ImColor(
                 static_cast<int>(255 * value_ratio),
@@ -973,9 +1094,14 @@ namespace c2l::algorithms
         }
     }
 
-    void ArrayBasedVisualizer::render_tree_visualization(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::render_tree_visualization(
+        const AlgorithmStep& step)
     {
-        ImGui::BeginChild("TreeVisualization", ImVec2(0, 500), true);
+        ImGui::BeginChild(
+            "TreeVisualization", 
+            ImVec2(0, 500), 
+            true
+        );
 
         if (step.data.empty())
         {
@@ -992,7 +1118,8 @@ namespace c2l::algorithms
         std::vector<TreeNode> tree_nodes = build_binary_tree(step.data);
         std::vector<ImVec2> node_positions = calculate_tree_positions(tree_nodes.size(), region_size);
 
-        if (node_positions.empty()) {
+        if (node_positions.empty()) 
+        {
             ImGui::Text("Error calculating tree layout");
             ImGui::EndChild();
             return;
@@ -1007,7 +1134,9 @@ namespace c2l::algorithms
             const auto& node = tree_nodes[i];
 
             // Draw connection to left child
-            if (node.left_child < tree_nodes.size() && node.left_child < node_positions.size()) {
+            if (node.left_child < tree_nodes.size() && 
+                node.left_child < node_positions.size()) 
+            {
                 draw_list->AddLine(
                     node_positions[i],
                     node_positions[node.left_child],
@@ -1017,7 +1146,9 @@ namespace c2l::algorithms
             }
 
             // Draw connection to right child
-            if (node.right_child < tree_nodes.size() && node.right_child < node_positions.size()) {
+            if (node.right_child < tree_nodes.size() && 
+                node.right_child < node_positions.size()) 
+            {
                 draw_list->AddLine(
                     node_positions[i],
                     node_positions[node.right_child],
@@ -1028,7 +1159,9 @@ namespace c2l::algorithms
         }
 
         // Draw nodes on top of connections
-        for (size_t i = 0; i < tree_nodes.size() && i < node_positions.size(); ++i)
+        for (size_t i = 0; i < tree_nodes.size() && 
+            i < node_positions.size(); 
+            ++i)
         {
             const auto& node = tree_nodes[i];
             float value_ratio = static_cast<float>(node.value) / max_value;
@@ -1036,11 +1169,24 @@ namespace c2l::algorithms
             float node_radius = 20.0f + value_ratio * 10.0f;
 
             // Convert to screen coordinates
-            ImVec2 screen_pos(cursor_pos.x + node_positions[i].x, cursor_pos.y + node_positions[i].y);
+            ImVec2 screen_pos(
+                cursor_pos.x + node_positions[i].x, 
+                cursor_pos.y + node_positions[i].y
+            );
 
             // Draw node with gradient effect
-            draw_list->AddCircleFilled(screen_pos, node_radius, node_color);
-            draw_list->AddCircle(screen_pos, node_radius, ImColor(255, 255, 255, 200), 0, 2.0f);
+            draw_list->AddCircleFilled(
+                screen_pos, 
+                node_radius, 
+                node_color
+            );
+            draw_list->AddCircle(
+                screen_pos, 
+                node_radius, 
+                ImColor(255, 255, 255, 200), 
+                0, 
+                2.0f
+            );
 
             // Draw value
             std::string value_str = std::to_string(node.value);
@@ -1056,8 +1202,10 @@ namespace c2l::algorithms
             std::string index_str = "[" + std::to_string(i) + "]";
             ImVec2 index_size = ImGui::CalcTextSize(index_str.c_str());
             draw_list->AddText(
-                ImVec2(screen_pos.x - index_size.x * 0.5f,
-                      screen_pos.y + node_radius + 8),
+                ImVec2(
+                    screen_pos.x - index_size.x * 0.5f,
+                    screen_pos.y + node_radius + 8
+                ),
                 ImColor(180, 180, 180, 200),
                 index_str.c_str()
             );
@@ -1084,16 +1232,25 @@ namespace c2l::algorithms
             step.visualization.highlighted_index < node_positions.size() &&
             step.visualization.compared_index < node_positions.size())
         {
-            ImVec2 pos1(cursor_pos.x + node_positions[*step.visualization.highlighted_index].x,
-                       cursor_pos.y + node_positions[*step.visualization.highlighted_index].y);
-            ImVec2 pos2(cursor_pos.x + node_positions[*step.visualization.compared_index].x,
-                       cursor_pos.y + node_positions[*step.visualization.compared_index].y);
+            ImVec2 pos1(
+                cursor_pos.x + node_positions[*step.visualization.highlighted_index].x,
+                cursor_pos.y + node_positions[*step.visualization.highlighted_index].y
+            );
+            ImVec2 pos2(
+                cursor_pos.x + node_positions[*step.visualization.compared_index].x,
+                cursor_pos.y + node_positions[*step.visualization.compared_index].y
+            );
 
-            // Draw animated comparison line
+            // Drawing animated comparison line
             float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 10.0f) + 1.0f) * 0.5f;
-            draw_list->AddLine(pos1, pos2, ImColor(255, 255, 0, static_cast<int>(150 + 100 * pulse)), 3.0f);
+            draw_list->AddLine(
+                pos1, 
+                pos2, 
+                ImColor(255, 255, 0, static_cast<int>(150 + 100 * pulse)), 
+                3.0f
+            );
 
-            // Draw comparison operator
+            // Drawing comparison operator
             ImVec2 mid_point((pos1.x + pos2.x) * 0.5f, (pos1.y + pos2.y) * 0.5f);
             std::string comparison = step.data[*step.visualization.highlighted_index] >
                                    step.data[*step.visualization.compared_index] ? ">" : "<";
@@ -1105,15 +1262,19 @@ namespace c2l::algorithms
             );
         }
 
-        // Draw tree structure explanation at the bottom
+        // Drawing tree structure explanation at the bottom
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 10);
-        ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f),
-                          "📊 Binary Tree: Parent = i, Left = 2i+1, Right = 2i+2");
+        ImGui::TextColored(
+            ImVec4(0.7f, 0.7f, 1.0f, 1.0f),
+            "Binary Tree: Parent = i, Left = 2i+1, Right = 2i+2"
+        );
 
         ImGui::EndChild();
     }
 
-    std::vector<algorithms::ArrayBasedVisualizer::TreeNode> ArrayBasedVisualizer::build_binary_tree(const std::vector<int>& data)
+    std::vector<algorithms::ArrayBasedVisualizer::TreeNode> 
+    ArrayBasedVisualizer::build_binary_tree(
+        const std::vector<int>& data)
 	{
 	    std::vector<TreeNode> tree;
 	    tree.reserve(data.size());
@@ -1134,7 +1295,9 @@ namespace c2l::algorithms
 	}
 
 
-    std::vector<ImVec2> ArrayBasedVisualizer::calculate_tree_layout(size_t node_count, const ImVec2& region_size)
+    std::vector<ImVec2> ArrayBasedVisualizer::calculate_tree_layout(
+        size_t node_count, 
+        const ImVec2& region_size)
     {
         std::vector<ImVec2> positions;
         positions.reserve(node_count);
@@ -1157,9 +1320,14 @@ namespace c2l::algorithms
         return positions;
     }
 
-    void ArrayBasedVisualizer::render_molecular_visualization(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::render_molecular_visualization(
+        const AlgorithmStep& step)
     {
-        ImGui::BeginChild("MolecularVisualization", ImVec2(0, 350), true);
+        ImGui::BeginChild(
+            "MolecularVisualization", 
+            ImVec2(0, 350), 
+            true
+        );
 
         if (step.data.empty())
         {
@@ -1195,7 +1363,11 @@ namespace c2l::algorithms
             float atom_size = 12.0f + radius_ratio * 8.0f;
 
             // Draw atom with electron rings
-            draw_list->AddCircleFilled(position, atom_size, atom_color);
+            draw_list->AddCircleFilled(
+                position, 
+                atom_size, 
+                atom_color
+            );
 
             // Electron rings
             for (int ring = 1; ring <= 3; ++ring)
@@ -1211,7 +1383,11 @@ namespace c2l::algorithms
                         position.x + cos(electron_angle) * ring_radius,
                         position.y + sin(electron_angle) * ring_radius
                     );
-                    draw_list->AddCircleFilled(electron_pos, 2.0f, ImColor(200, 200, 255, 200));
+                    draw_list->AddCircleFilled(
+                        electron_pos, 
+                        2.0f, 
+                        ImColor(200, 200, 255, 200)
+                    );
                 }
             }
 
@@ -1224,7 +1400,7 @@ namespace c2l::algorithms
                 value_str.c_str()
             );
 
-            // Draw bonds between comparing elements
+            // Drawing bonds between comparing elements
             const auto& highlighted_index = step.visualization.highlighted_index;
             const auto& compared_index = step.visualization.compared_index;
 
@@ -1246,19 +1422,30 @@ namespace c2l::algorithms
                 const float pulse = (sin(static_cast<float>(ImGui::GetTime()) * 12.0f) + 1.0f) * 0.5f;
                 const ImU32 bond_color = ImColor(255, 255, 0, static_cast<int>(150 + 100 * pulse));
 
-                draw_list->AddLine(position, other_position, bond_color, 3.0f);
+                draw_list->AddLine(
+                    position, 
+                    other_position, 
+                    bond_color, 
+                    3.0f
+                );
             }
         }
 
         ImGui::EndChild();
     }
 
-    ImU32 ArrayBasedVisualizer::get_molecular_color(const AlgorithmStep& step, size_t index, float radius_ratio)
+    ImU32 ArrayBasedVisualizer::get_molecular_color(
+        const AlgorithmStep& step, 
+        size_t index, 
+        float radius_ratio)
     {
         // Periodic table inspired colors
-        if (index == step.visualization.highlighted_index) {
+        if (index == step.visualization.highlighted_index) 
+        {
             return ImColor(255, 215, 0, 255); // Gold
-        } else if (index == step.visualization.compared_index) {
+        } 
+        else if (index == step.visualization.compared_index) 
+        {
             return ImColor(50, 205, 50, 255); // Lime green
         }
 
@@ -1269,9 +1456,14 @@ namespace c2l::algorithms
         return ImColor(178, 34, 34, 255); // Fire brick red
     }
 
-    void ArrayBasedVisualizer::render_neural_network_visualization(const AlgorithmStep& step)
+    void ArrayBasedVisualizer::render_neural_network_visualization(
+        const AlgorithmStep& step)
     {
-        ImGui::BeginChild("NeuralNetworkVisualization", ImVec2(0, 400), true);
+        ImGui::BeginChild(
+            "NeuralNetworkVisualization", 
+            ImVec2(0, 400), 
+            true
+        );
 
         if (step.data.empty())
         {
@@ -1281,7 +1473,7 @@ namespace c2l::algorithms
         }
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+        // ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
         ImVec2 region_size = ImGui::GetContentRegionAvail();
 
         // Create neural network layers
@@ -1329,7 +1521,10 @@ namespace c2l::algorithms
         ImGui::EndChild();
     }
 
-    std::vector<ImVec2> ArrayBasedVisualizer::calculate_layer_positions(int node_count, const ImVec2& region_size, float x_ratio)
+    std::vector<ImVec2> ArrayBasedVisualizer::calculate_layer_positions(
+        int node_count,
+        const ImVec2& region_size, 
+        float x_ratio)
     {
         std::vector<ImVec2> positions;
         positions.reserve(static_cast<size_t>(node_count));
@@ -1344,8 +1539,11 @@ namespace c2l::algorithms
         return positions;
     }
 
-    void ArrayBasedVisualizer::draw_neural_nodes(ImDrawList* draw_list, const std::vector<ImVec2>& nodes,
-                          const AlgorithmStep& step, const std::string& layer_name)
+    void ArrayBasedVisualizer::draw_neural_nodes(
+        ImDrawList* draw_list, 
+        const std::vector<ImVec2>& nodes,
+        const AlgorithmStep& step, 
+        const std::string& layer_name)
     {
         ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
 
@@ -1366,17 +1564,35 @@ namespace c2l::algorithms
             float node_size = 8.0f + activation * 12.0f;
 
             // Draw node with glow
-            draw_list->AddCircleFilled(screen_pos, node_size, node_color);
-            draw_list->AddCircle(screen_pos, node_size + 2, ImColor(255, 255, 255, 100), 0, 1.5f);
+            draw_list->AddCircleFilled(
+                screen_pos, 
+                node_size, 
+                node_color
+            );
+            draw_list->AddCircle(
+                screen_pos, 
+                node_size + 2, 
+                ImColor(255, 255, 255, 100), 
+                0, 
+                1.5f
+            );
 
             // Activation indicator
-            if (activation > 0.7f) {
-                draw_list->AddCircle(screen_pos, node_size + 4, ImColor(255, 255, 0, 150), 0, 1.0f);
+            if (activation > 0.7f) 
+            {
+                draw_list->AddCircle(
+                    screen_pos, 
+                    node_size + 4, 
+                    ImColor(255, 255, 0, 150), 
+                    0, 
+                    1.0f
+                );
             }
         }
     }
 
-    ImU32 ArrayBasedVisualizer::get_neural_connection_color(float weight)
+    ImU32 ArrayBasedVisualizer::get_neural_connection_color(
+        float weight)
     {
         if (weight > 0.7f) return ImColor(50, 200, 50, 150);   // Strong - green
         if (weight > 0.3f) return ImColor(200, 200, 50, 120);  // Medium - yellow
@@ -1385,7 +1601,9 @@ namespace c2l::algorithms
 
 
 
-    std::vector<ImVec2> ArrayBasedVisualizer::calculate_node_positions(size_t count, const ImVec2& region_size)
+    std::vector<ImVec2> ArrayBasedVisualizer::calculate_node_positions(
+        size_t count, 
+        const ImVec2& region_size)
     {
         std::vector<ImVec2> positions;
         positions.reserve(count);
@@ -1411,9 +1629,14 @@ namespace c2l::algorithms
         return positions;
     }
 
-    void ArrayBasedVisualizer::render_searching_visualization(const AlgorithmStep& step) 
+    void ArrayBasedVisualizer::render_searching_visualization(
+        const AlgorithmStep& step) 
     {
-        ImGui::BeginChild("SearchVisualization", ImVec2(0, 120), true);
+        ImGui::BeginChild(
+            "SearchVisualization", 
+            ImVec2(0, 120), 
+            true
+        );
         
         float available_width = ImGui::GetContentRegionAvail().x;
         float element_width = std::max(40.0f, available_width / step.data.size() - 4.0f);
@@ -1430,21 +1653,33 @@ namespace c2l::algorithms
             {
                 color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red - current search position
                 state = "Currently Examining";
-            } else if (i == step.visualization.compared_index) 
+            } 
+            else if (i == step.visualization.compared_index) 
             {
                 color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green - found target
                 state = "Target Found!";
-            } else if (i < step.visualization.highlighted_index) 
+            } 
+            else if (i < step.visualization.highlighted_index) 
             {
                 color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f); // Gray - already examined
                 state = "Already Examined";
             }
             
             ImGui::PushStyleColor(ImGuiCol_Button, color);
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, 
-                                ImVec4(color.x * 1.2f, color.y * 1.2f, color.z * 1.2f, 1.0f));
+            ImGui::PushStyleColor(
+                ImGuiCol_ButtonHovered, 
+                ImVec4(
+                    color.x * 1.2f, 
+                    color.y * 1.2f,
+                    color.z * 1.2f, 
+                    1.0f
+                )
+            );
             
-            ImGui::Button(std::to_string(step.data[i]).c_str(), ImVec2(element_width, 60));
+            ImGui::Button(
+                std::to_string(step.data[i]).c_str(), 
+                ImVec2(element_width, 60)
+            );
             
             // Index below
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() - element_width);
@@ -1458,7 +1693,11 @@ namespace c2l::algorithms
                 ImGui::BeginTooltip();
                 ImGui::Text("Index: %zu", i);
                 ImGui::Text("Value: %d", step.data[i]);
-                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "State: %s", state.c_str());
+                ImGui::TextColored(
+                    ImVec4(1.0f, 1.0f, 0.0f, 1.0f), 
+                    "State: %s", 
+                    state.c_str()
+                );
                 ImGui::EndTooltip();
             }
         }
@@ -1466,7 +1705,9 @@ namespace c2l::algorithms
         ImGui::EndChild();
     }
 
-    ImU32 ArrayBasedVisualizer::get_element_color(const AlgorithmStep& step, size_t index)
+    ImU32 ArrayBasedVisualizer::get_element_color(
+        const AlgorithmStep& step, 
+        size_t index)
     {
         // Sophisticated color coding based on algorithm state
         if (index == step.visualization.highlighted_index) 
@@ -1497,7 +1738,10 @@ namespace c2l::algorithms
         return ImColor(100, 100, 100, 255);      // Gray fallback
     }
 
-    ImU32 ArrayBasedVisualizer::get_tree_node_color(const AlgorithmStep& step, size_t index, float value_ratio)
+    ImU32 ArrayBasedVisualizer::get_tree_node_color(
+        const AlgorithmStep& step, 
+        size_t index, 
+        float value_ratio)
 	{
 	    if (index == step.visualization.highlighted_index)
 	        return ImColor(255, 200, 50, 255);    // Gold - active element
@@ -1521,7 +1765,9 @@ namespace c2l::algorithms
         );
 	}
 
-    std::vector<ImVec2> ArrayBasedVisualizer::calculate_tree_positions(size_t node_count, const ImVec2& region_size)
+    std::vector<ImVec2> ArrayBasedVisualizer::calculate_tree_positions(
+        size_t node_count, 
+        const ImVec2& region_size)
 	{
 	    std::vector<ImVec2> positions;
 	    if (node_count == 0) return positions;
@@ -1533,7 +1779,8 @@ namespace c2l::algorithms
 	    size_t max_nodes_at_depth = 1;
 	    size_t total_nodes = 0;
 
-	    while (total_nodes < node_count) {
+	    while (total_nodes < node_count) 
+        {
 	        depth++;
 	        total_nodes += max_nodes_at_depth;
 	        max_nodes_at_depth *= 2;
@@ -1541,12 +1788,14 @@ namespace c2l::algorithms
 
 	    // Calculate positions for each level
 	    size_t current_index = 0;
-	    for (int level = 0; level < depth && current_index < node_count; ++level) {
+	    for (int level = 0; level < depth && current_index < node_count; ++level) 
+        {
 	        int nodes_in_level = 1 << level; // 2^level
 	        float level_height = region_size.y / (depth + 1);
 	        float y = (level + 1) * level_height;
 
-	        for (int i = 0; i < nodes_in_level && current_index < node_count; ++i) {
+	        for (int i = 0; i < nodes_in_level && current_index < node_count; ++i) 
+            {
 	            float x = (static_cast<float>(i) + 0.5f) / nodes_in_level * region_size.x;
 	            positions.emplace_back(x, y);
 	            current_index++;
@@ -1556,7 +1805,9 @@ namespace c2l::algorithms
 	    return positions;
 	}
 
-    std::vector<ImVec2> ArrayBasedVisualizer::calculate_network_positions(const std::vector<int>& data, const ImVec2& region_size)
+    std::vector<ImVec2> ArrayBasedVisualizer::calculate_network_positions(
+        const std::vector<int>& data, 
+        const ImVec2& region_size)
 	{
 	    std::vector<ImVec2> positions;
 	    positions.reserve(data.size());
@@ -1578,7 +1829,10 @@ namespace c2l::algorithms
 	    return positions;
 	}
 
-    ImU32 ArrayBasedVisualizer::get_network_node_color(const AlgorithmStep& step, size_t index, float value_ratio)
+    ImU32 ArrayBasedVisualizer::get_network_node_color(
+        const AlgorithmStep& step, 
+        size_t index, 
+        float value_ratio)
 	{
 	    if (index == step.visualization.highlighted_index)
 	        return ImColor(255, 200, 50, 255);    // Gold - active element
@@ -1600,9 +1854,11 @@ namespace c2l::algorithms
 	    return VisualizationType::ARRAY_BASED;
 	}
 
-    bool ArrayBasedVisualizer::supports_algorithm(const AlgorithmType& type) const
+    bool ArrayBasedVisualizer::supports_algorithm(
+        const AlgorithmType& type
+    ) const
     {
-	    const auto category = get_algorithm_category(type);
+	    const auto category = algorithm_category(type);
 	    return category == AlgorithmCategory::SORTING ||
                category == AlgorithmCategory::SEARCHING;
 	}
