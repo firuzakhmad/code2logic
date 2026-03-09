@@ -28,7 +28,7 @@ namespace c2l::core::utils
     inline void heading_text(
         const char* text,
         const float scale = DEFAULT_HEADING_FONT_SCALE,
-        const ImVec2& margin = {0, 7})
+        const ImVec2& margin = DEFAULT_HEADING_FONT_MARGIN)
     {
         if (!ImGui::GetCurrentContext())
             return;
@@ -51,7 +51,7 @@ namespace c2l::core::utils
         const char* text,
         const ImVec4& color = DEFAULT_HEADING_FONT_COLOR,
         const float scale = DEFAULT_HEADING_FONT_SCALE,
-        const ImVec2& margin = {0, 7})
+        const ImVec2& margin = DEFAULT_HEADING_FONT_MARGIN)
     {
         if (!ImGui::GetCurrentContext())
             return;
