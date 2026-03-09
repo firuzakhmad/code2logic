@@ -2,11 +2,19 @@
 
 namespace c2l::scenes
 {
-    AlgorithmComparisonScene::AlgorithmComparisonScene(graphics::Renderer& renderer,
-                                 core::ThreadManager& thread_manager,
-                                 core::resources::ResourceManager& resource_manager,
-                                 ui::managers::IconManager& icon_manager)
-        : BaseScene{renderer, thread_manager, resource_manager, icon_manager}
+    AlgorithmComparisonScene::AlgorithmComparisonScene(
+        graphics::Renderer& renderer,
+        core::ThreadManager& thread_manager,
+        core::JsonConfigManager& json_config_manager,
+        core::resources::ResourceManager& resource_manager,
+        ui::managers::IconManager& icon_manager)
+        : BaseScene{
+            renderer, 
+            thread_manager, 
+            json_config_manager, 
+            resource_manager, 
+            icon_manager
+        }
     {
 
     }
