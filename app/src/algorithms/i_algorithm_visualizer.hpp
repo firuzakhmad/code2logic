@@ -3,6 +3,7 @@
 
 #include "algorithms/i_simple_algorithm.hpp"
 #include "algorithm_types.hpp"
+#include "algorithms/i_algorithm_metadata.hpp"
 
 namespace c2l::algorithms
 {
@@ -11,12 +12,16 @@ namespace c2l::algorithms
 	public:
 		virtual ~IAlgorithmVisualizer() = default;
 
-		virtual void initialize(const ISimpleAlgorithm* algorithm) 	= 0;
+		virtual void initialize(
+			const ISimpleAlgorithm* execution,
+       		const IAlgorithmMetadata* metadata) 					= 0;
 		virtual void render() 										= 0;
 		virtual void update(double delta_time) 						= 0;
 
-		[[nodiscard]] virtual VisualizationType get_visualization_type() const 	= 0;
-		[[nodiscard]] virtual bool supports_algorithm(const AlgorithmType& type) const = 0;
+		[[nodiscard]] virtual VisualizationType 
+		get_visualization_type() const 	= 0;
+		[[nodiscard]] virtual bool 
+		supports_algorithm(const AlgorithmType& type) const = 0;
 	};
 } // namespace c2l::algorithms
 
