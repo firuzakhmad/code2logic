@@ -18,15 +18,20 @@ namespace c2l::core
 #define SLIDER_WIDTH                100.0f
 #define SLIDER_HEIGHT               20.0f
 
+// #define METRIC_CARD_HEIGHT          70.0f
+
 #define DEFAULT_THEME_COLOR         (1, 1, 1, 1)
 #define BACKGROUND_COLOR            (0, 0, 0, 0),
 #define TINT_COLOR                  ImVec4(1, 1, 1, 1)
 
+#define DEFAULT_WINDOW_SIZE         {400, 400}
+
 
 
 // Font variables
-#define DEFAULT_HEADING_FONT_SCALE  1.4f
-#define DEFAULT_HEADING_FONT_COLOR  ImVec4(78 /255.0f, 225/255.0f, 242/255.0f, 1.0f)
+#define DEFAULT_HEADING_FONT_SCALE  1.0f
+#define DEFAULT_HEADING_FONT_COLOR  {0.560f, 0.566f, 0.566f, 1.0f}
+#define DEFAULT_HEADING_FONT_MARGIN {0, 4}
 
 
 }

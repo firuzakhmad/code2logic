@@ -12,10 +12,10 @@ namespace c2l::ui::managers
     IconManager::IconManager(
         core::ThreadManager& thread_manager,
         core::resources::ResourceManager& resource_manager,
-        core::ConfigManager& config_manager)
+        core::JsonConfigManager& json_config_manager)
             : m_thread_manager{thread_manager}
             , m_resource_manager{resource_manager}
-            , m_config_manager{config_manager}
+            , m_json_config_manager{json_config_manager}
     {
         // Fallback initialization of the texture
         std::call_once(s_fallback_init_flag, [] ()
@@ -65,15 +65,22 @@ namespace c2l::ui::managers
             entry->config = config;
 
             lock.unlock();
-            load_icon(type, config.preferred_thread_type == c2l::core::ThreadManager::ThreadType::IO);
+            load_icon(
+                type, config.preferred_thread_type == c2l::core::ThreadManager::ThreadType::IO
+            );
         }
 
-        LOG_DEBUG("Registered icon {}: {}", icon_type_to_string(type).value(), config.path);
+        LOG_DEBUG(
+            "Registered icon {}: {}", 
+            icon_type_to_string(type).value(), 
+            config.path
+        );
 
         return true;
     }
 
-    bool IconManager::register_icons(const std::vector<std::pair<IconType, IconConfig>>& icons)
+    bool IconManager::register_icons(
+        const std::vector<std::pair<IconType, IconConfig>>& icons)
     {
         constexpr bool success = true;
 
@@ -185,7 +192,7 @@ namespace c2l::ui::managers
 
         if (async)
         {
-            // Schedule on IO thread
+            // Scheduling on IO thread
             m_thread_manager.enqueue_task(
                 c2l::core::ThreadManager::ThreadType::IO,
                 [this, type]()
@@ -228,13 +235,19 @@ namespace c2l::ui::managers
             const auto resource = m_resource_manager.load<c2l::core::resources::TextureResource>(config.path);
             if (!resource)
             {
-                LOG_ERROR("Failed to create texture resource for icon {}", icon_type_to_string(type).value());
+                LOG_ERROR(
+                    "Failed to create texture resource for icon {}", 
+                    icon_type_to_string(type).value()
+                );
             }
 
             // Loading data only (noGPU upload)
             if (!resource->load_data_only())
             {
-                LOG_ERROR("Failed to load texture data for icon {}", icon_type_to_string(type).value());
+                LOG_ERROR(
+                    "Failed to load texture data for icon {}", 
+                    icon_type_to_string(type).value()
+                );
             }
 
             update_icon_progress(type, 0.6f);
@@ -297,7 +310,10 @@ namespace c2l::ui::managers
             // Uploading to GPU (MUST be on main thread)
             if (!resource->upload_to_gpu())
             {
-                LOG_ERROR("GPU upload failed for icon {}", icon_type_to_string(type).value());
+                LOG_ERROR(
+                    "GPU upload failed for icon {}", 
+                    icon_type_to_string(type).value()
+                );
             }
 
             // Applying quality settings
@@ -344,7 +360,7 @@ namespace c2l::ui::managers
 
     void IconManager::load_default_icons()
     {
-        auto icon_config = m_config_manager.get_icon_config();
+        auto icon_config = m_json_config_manager.get_icon_config();
 
         if (icon_config.empty() || !icon_config.contains("icons"))
         {
@@ -601,17 +617,24 @@ namespace c2l::ui::managers
         ImVec2 pos = ImGui::GetCursorScreenPos();
 
         // Draw error background
-        draw_list->AddRectFilled(pos, ImVec2(pos.x + actual_size.x, pos.y + actual_size.y),
-                                ImColor(255, 50, 50, 100));
+        draw_list->AddRectFilled(
+            pos, 
+            ImVec2(pos.x + actual_size.x, pos.y + actual_size.y),
+            ImColor(255, 50, 50, 100)
+        );
 
         // Draw X
         float padding = actual_size.x * 0.2f;
-        draw_list->AddLine(ImVec2(pos.x + padding, pos.y + padding),
-                          ImVec2(pos.x + actual_size.x - padding, pos.y + actual_size.y - padding),
-                          ImColor(255, 255, 255, 255), 2.0f);
-        draw_list->AddLine(ImVec2(pos.x + actual_size.x - padding, pos.y + padding),
-                          ImVec2(pos.x + padding, pos.y + actual_size.y - padding),
-                          ImColor(255, 255, 255, 255), 2.0f);
+        draw_list->AddLine(
+            ImVec2(pos.x + padding, pos.y + padding),
+            ImVec2(pos.x + actual_size.x - padding, pos.y + actual_size.y - padding),
+            ImColor(255, 255, 255, 255), 2.0f
+        );
+        draw_list->AddLine(
+            ImVec2(pos.x + actual_size.x - padding, pos.y + padding),
+            ImVec2(pos.x + padding, pos.y + actual_size.y - padding),
+            ImColor(255, 255, 255, 255), 2.0f
+        );
 
         // Advance cursor
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + actual_size.x);
@@ -646,7 +669,8 @@ namespace c2l::ui::managers
         }
     }
 
-    std::shared_ptr<IconManager::CacheEntry> IconManager::get_or_create_entry(const IconType& type)
+    std::shared_ptr<IconManager::CacheEntry> IconManager::get_or_create_entry(
+        const IconType& type)
     {
         const auto it = m_cache.find(type);
         if (it == m_cache.end())
@@ -662,19 +686,25 @@ namespace c2l::ui::managers
         return it->second;
     }
 
-    std::shared_ptr<IconManager::CacheEntry> IconManager::find_entry(const IconType& type)
+    std::shared_ptr<IconManager::CacheEntry> IconManager::find_entry(
+        const IconType& type)
     {
         const auto it = m_cache.find(type);
         return it != m_cache.end() ? it->second : nullptr;
     }
 
-    std::shared_ptr<const IconManager::CacheEntry> IconManager::find_entry(const IconType& type) const
+    std::shared_ptr<const IconManager::CacheEntry> IconManager::find_entry(
+        const IconType& type
+    ) const
     {
         const auto it = m_cache.find(type);
         return it != m_cache.end() ? it->second : nullptr;
     }
 
-    void IconManager::set_icon_state(const IconType& type, const IconState& state, float progress)
+    void IconManager::set_icon_state(
+        const IconType& type, 
+        const IconState& state, 
+        float progress)
     {
         std::unique_lock<std::shared_mutex> lock(m_cache_mutex);
 
@@ -685,7 +715,9 @@ namespace c2l::ui::managers
         }
     }
 
-    void IconManager::update_icon_progress(const IconType& type, float progress)
+    void IconManager::update_icon_progress(
+        const IconType& type, 
+        float progress)
     {
         std::shared_lock<std::shared_mutex> lock(m_cache_mutex);
 
@@ -695,7 +727,9 @@ namespace c2l::ui::managers
         }
     }
 
-    void IconManager::handle_icon_error(const IconType& type, const std::string& error)
+    void IconManager::handle_icon_error(
+        const IconType& type, 
+        const std::string& error)
     {
         std::unique_lock<std::shared_mutex> lock(m_cache_mutex);
 
@@ -734,7 +768,11 @@ namespace c2l::ui::managers
             }
         }
 
-        LOG_DEBUG("Retrying icon {}", icon_type_to_string(type).value());
+        LOG_DEBUG(
+            "Retrying icon {}", 
+            icon_type_to_string(type).value()
+        );
+        
         load_icon(type, true);
     }
 

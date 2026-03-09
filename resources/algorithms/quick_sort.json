@@ -1,0 +1,361 @@
+{
+  "algorithm": {
+    "id": "quick_sort",
+    "name": "Quick Sort",
+    "display_type": "Quick Sort",
+    "category": "Sorting",
+    "version": "1.0.0",
+    "last_updated": "2026-03-02",
+    
+    "complexity": {
+      "time_best": "O(n log n)",
+      "time_average": "O(n log n)",
+      "time_worst": "O(n²)",
+      "space": "O(log n)",
+      "explanation": "Quick Sort is a divide-and-conquer algorithm. It works by selecting a 'pivot' element and partitioning the array around it. The worst case occurs when the pivot is always the smallest or largest element."
+    },
+    
+    "properties": {
+      "stable": false,
+      "in_place": true,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": true,
+      "parallelizable": true,
+      "deterministic": false
+    },
+    
+    "description": {
+      "brief": "An efficient divide-and-conquer sorting algorithm that works by selecting a 'pivot' element and partitioning the array around it.",
+      
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(n log n) - when pivot divides array evenly",
+        "• Average case: O(n log n) - random data",
+        "• Worst case:   O(n²)      - when array is already sorted (naive pivot)",
+        "",
+        "Space Complexity: O(log n) - due to recursion stack",
+        "",
+        "Key Characteristics:",
+        "• Divide-and-conquer strategy",
+        "• In-place sorting (no extra array needed)",
+        "• Not stable (relative order may change)",
+        "• Cache-friendly due to sequential access",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: O(n log n) average",
+        "• Swaps: O(n log n) average",
+        "• Recursion depth: O(log n) average, O(n) worst"
+      ],
+      
+      "pseudocode": [
+        "void quick_sort(vector<int>& arr, int low, int high)",
+        "{",
+        "     if (low < high)",
+        "     {",
+        "         int pi = partition(arr, low, high);",
+        "",
+        "         quick_sort(arr, low, pi - 1);",
+        "         quick_sort(arr, pi + 1, high);",
+        "     }",
+        "}",
+        "",
+        "int partition(vector<int>& arr, int low, int high)",
+        "{",
+        "     int pivot = arr[high];",
+        "     int i = low - 1;",
+        "",
+        "     for (int j = low; j <= high - 1; j++)",
+        "     {",
+        "         if (arr[j] <= pivot)",
+        "         {",
+        "             i++;",
+        "             swap(arr[i], arr[j]);",
+        "         }",
+        "     }",
+        "",
+        "     swap(arr[i + 1], arr[high]);",
+        "     return i + 1;",
+        "}"
+      ],
+      
+      "optimizations": [
+        "Median-of-three pivot selection",
+        "Randomized pivot selection",
+        "Hybrid with insertion sort for small subarrays",
+        "Tail recursion optimization",
+        "Introsort (switches to heap sort for worst-case)"
+      ],
+      
+      "use_cases": [
+        "General-purpose sorting in standard libraries",
+        "Large datasets",
+        "When average-case performance matters more than worst-case",
+        "When in-place sorting is required"
+      ],
+      
+      "disadvantages": [
+        "Not stable",
+        "Worst-case O(n²) with poor pivot selection",
+        "Recursive implementation may cause stack overflow",
+        "Not suitable for nearly sorted arrays (with naive pivot)"
+      ],
+      
+      "related_algorithms": [
+        "Merge Sort",
+        "Heap Sort",
+        "Introsort",
+        "Tim Sort"
+      ]
+    },
+    
+    "variables": [
+      {
+        "name": "low",
+        "display_name": "Low Index",
+        "type": "size_t",
+        "description": "Starting index of the current subarray being processed",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "low_boundary"
+        }
+      },
+      {
+        "name": "high",
+        "display_name": "High Index",
+        "type": "size_t",
+        "description": "Ending index of the current subarray being processed",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "high_boundary"
+        }
+      },
+      {
+        "name": "pivot",
+        "display_name": "Pivot Value",
+        "type": "int",
+        "description": "The selected pivot element used for partitioning",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "pivot"
+        }
+      },
+      {
+        "name": "pivot_index",
+        "display_name": "Pivot Index",
+        "type": "size_t",
+        "description": "Final position of the pivot element after partitioning",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "pivot_position"
+        }
+      },
+      {
+        "name": "i",
+        "display_name": "Partition Index",
+        "type": "size_t",
+        "description": "Index tracking the boundary of elements less than pivot",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "partition_index"
+        }
+      },
+      {
+        "name": "j",
+        "display_name": "Scan Index",
+        "type": "size_t",
+        "description": "Index scanning through the array during partitioning",
+        "visualization": {
+          "color": "#92A8D1",
+          "icon": "scan_index"
+        }
+      },
+      {
+        "name": "depth",
+        "display_name": "Recursion Depth",
+        "type": "size_t",
+        "description": "Current recursion depth",
+        "visualization": {
+          "color": "#F7DC6F",
+          "icon": "depth"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of element comparisons performed",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "swaps",
+        "display_name": "Swaps",
+        "type": "size_t",
+        "description": "Total number of element swaps performed",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "swap_count"
+        }
+      }
+    ],
+    
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "partition_start",
+        "name": "Partition Start",
+        "description": "Beginning the partition process on a subarray",
+        "tags": ["partition", "divide"],
+        "icon": "partition"
+      },
+      {
+        "id": "pivot_selected",
+        "name": "Pivot Selected",
+        "description": "Selected pivot element for this partition",
+        "tags": ["pivot", "selection"],
+        "icon": "pivot"
+      },
+      {
+        "id": "partition_scan",
+        "name": "Partition Scan",
+        "description": "Scanning through array and comparing with pivot",
+        "tags": ["comparison", "scan"],
+        "icon": "scan"
+      },
+      {
+        "id": "partition_swap",
+        "name": "Element Swap",
+        "description": "Swapping element to correct side of partition",
+        "tags": ["swap", "modification"],
+        "icon": "swap"
+      },
+      {
+        "id": "partition_complete",
+        "name": "Partition Complete",
+        "description": "Finished partitioning, pivot in final position",
+        "tags": ["partition", "complete"],
+        "icon": "check"
+      },
+      {
+        "id": "recursive_call",
+        "name": "Recursive Call",
+        "description": "Making recursive call on subarray",
+        "tags": ["recursive", "call"],
+        "icon": "recursive"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm completed - array is fully sorted",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+    
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void quick_sort(vector<int>& arr, int low, int high)",
+        "description_template": "Starting Quick Sort with array of size {size}",
+        "extract_variables": ["size"],
+        "tags": ["initialization"]
+      },
+      "partition_start": {
+        "pseudocode_line": 3,
+        "code_line": 3,
+        "code_line_content": "if (low < high)",
+        "description_template": "Partitioning subarray from index {low} to {high} (size = {size})",
+        "extract_variables": ["low", "high"],
+        "tags": ["partition", "boundary"]
+      },
+      "pivot_selected": {
+        "pseudocode_line": 14,
+        "code_line": 12,
+        "code_line_content": "int pivot = arr[high];",
+        "description_template": "Selected pivot = {pivot} at index {high}",
+        "extract_variables": ["pivot", "high"],
+        "tags": ["pivot", "selection"]
+      },
+      "partition_scan": {
+        "pseudocode_line": 19,
+        "code_line": 15,
+        "code_line_content": "if (arr[j] <= pivot)",
+        "description_template": "Comparing arr[{j}] = {arr[j]} with pivot {pivot}",
+        "extract_variables": ["j", "arr[j]", "pivot"],
+        "tags": ["scan", "comparison"]
+      },
+      "partition_swap": {
+        "pseudocode_line": 22,
+        "code_line": 17,
+        "code_line_content": "swap(arr[i], arr[j])",
+        "description_template": "Swapping arr[{i}] ({arr[i]}) with arr[{j}] ({arr[j]})",
+        "extract_variables": ["i", "j", "arr[i]", "arr[j]"],
+        "tags": ["swap", "modification"]
+      },
+      "partition_complete": {
+        "pseudocode_line": 26,
+        "code_line": 20,
+        "code_line_content": "swap(arr[i + 1], arr[high])",
+        "description_template": "Placing pivot {pivot} at final index {pivot_index}",
+        "extract_variables": ["i", "pivot_index", "comparisons", "swaps"],
+        "tags": ["partition", "complete"]
+      },
+      "recursive_call": {
+        "pseudocode_line": 7,
+        "code_line": 5,
+        "code_line_content": "quick_sort(arr, low, pi - 1)",
+        "description_template": "Recursive call on left subarray [{low}, {pivot_index-1}]",
+        "extract_variables": ["low", "pivot_index"],
+        "tags": ["recursive", "left"]
+      },
+      "recursive_call_right": {
+        "pseudocode_line": 8,
+        "code_line": 6,
+        "code_line_content": "quick_sort(arr, pi + 1, high)",
+        "description_template": "Recursive call on right subarray [{pivot_index+1}, {high}]",
+        "extract_variables": ["pivot_index", "high"],
+        "tags": ["recursive", "right"]
+      },
+      "completed": {
+        "pseudocode_line": 27,
+        "code_line": 22,
+        "code_line_content": "return",
+        "description_template": "Quick Sort finished. Comparisons: {comparisons}, swaps: {swaps}, max recursion depth: {max_depth}",
+        "extract_variables": ["comparisons", "swaps", "max_depth"],
+        "tags": ["completed"]
+      }
+    },
+    
+    "visualization": {
+      "default_style": "bars",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "compared": "#4ECDC4",
+        "swapped": "#FFD166",
+        "sorted": "#06D6A0",
+        "pivot": "#9B59B6",
+        "partition_low": "#3498DB",
+        "partition_high": "#E67E22",
+        "less_than_pivot": "#88B04B",
+        "greater_than_pivot": "#F7DC6F"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true
+    }
+  }
+}

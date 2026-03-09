@@ -88,6 +88,16 @@ namespace c2l::algorithms
             bool is_partition_step      {false};
             bool is_swap_step           {false};
 
+            // Quick Sort specific
+            size_t subarray_low{0};
+            size_t subarray_high{0};
+            size_t recursion_depth{0};
+            
+            // Partition boundaries visualization
+            std::vector<size_t> less_than_pivot_indices;
+            std::vector<size_t> greater_than_pivot_indices;
+
+
             // Graph-based algorithms
             struct GraphState
             {

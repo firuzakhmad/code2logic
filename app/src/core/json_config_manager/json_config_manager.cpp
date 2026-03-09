@@ -1,20 +1,20 @@
-#include "core/config_manager/config_manager.hpp"
+#include "core/json_config_manager/json_config_manager.hpp"
 #include "core/utils/timer/timer.hpp"
 
 #include <algorithm>
 #include <stdexcept>
-
+#include <fstream>
+#include <sstream>
 
 namespace c2l::core
 {
-    ConfigManager::ConfigManager(
+    JsonConfigManager::JsonConfigManager(
         filesystem::IFileSystem &filesystem,
         ThreadManager &thread_manager,
-        const ConfigManagerConfig &config)
+        const JsonConfigManagerConfig &config)
             : m_file_system{filesystem}
             , m_thread_manager{thread_manager}
             , m_config{config}
-            , m_hot_reload_enabled(config.enable_hot_reloading)
     {
         // Ensuring config directory exists
         auto config_path = m_file_system.resolve_path(m_config.config_base_path);
@@ -26,9 +26,6 @@ namespace c2l::core
             );
         }
 
-        // Starting async loader thread
-        m_loader_thread = std::thread(&ConfigManager::loader_thread_loop, this);
-
         // Starting hot reload monitor if enabled
         if (m_config.enable_hot_reloading)
         {
@@ -36,68 +33,67 @@ namespace c2l::core
         }
 
         load_icon_config().get();
+        load_algorithm_config(algorithms::AlgorithmType::BUBBLE_SORT).get();
+        load_algorithm_config(algorithms::AlgorithmType::QUICK_SORT).get();
 
-        LOG_INFO("ConfigManager initialized");
+        LOG_INFO("JsonConfigManager initialized");
     }
 
-    ConfigManager::~ConfigManager()
+    JsonConfigManager::~JsonConfigManager()
     {
-        LOG_DEBUG("ConfigManager shutting down");
+        LOG_DEBUG("JsonConfigManager shutting down");
 
         m_running.store(false, std::memory_order_release);
 
         stop_hot_reload_monitor();
 
-        // Stopping loader thread
-        {
-            std::unique_lock lock(m_queue_mutex);
-            m_queue_cv.notify_all();
-        }
-
-        if (m_loader_thread.joinable())
-        {
-            m_loader_thread.join();
-        }
-
         unload_all();
 
-        LOG_DEBUG("ConfigManager destroyed");
+        LOG_DEBUG("JsonConfigManager destroyed");
     }
 
-    std::future<ConfigManager::LoadResult> ConfigManager::load_app_config(
+    std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_app_config(
         const std::filesystem::path &path,
         bool async)
     {
-        return load_config("app_config", path, async);
+        return load_config("app_config", path, async, true);
     }
 
-    std::future<ConfigManager::LoadResult> ConfigManager::load_algorithm_config(
-        const std::string& algorithm_id,
+    std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_algorithm_config(
+        const algorithms::AlgorithmType& algorithm_type,
         bool async)
     {
-        std::filesystem::path path = std::filesystem::path("algorithms") / (algorithm_id + ".json");
-        return load_config("algorithm_" + algorithm_id, path, async);
+        std::string algorithm_filename =
+            std::string(algorithms::algorithm_id(algorithm_type)) + ".json";
+        std::filesystem::path path = std::filesystem::path{"resources"} / "algorithms" / algorithm_filename;
+        return load_config(
+            std::string(algorithms::algorithm_id(algorithm_type)), 
+            path, 
+            async,
+            true
+        );
     }
 
-    std::future<ConfigManager::LoadResult> ConfigManager::load_theme_config(
+    std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_theme_config(
         const std::string& theme_name,
         bool async)
     {
         std::filesystem::path path = std::filesystem::path("themes") / (theme_name + ".json");
-        return load_config("theme_" + theme_name, path, async);
+        return load_config("theme_" + theme_name, path, async, true);
     }
 
-    std::future<ConfigManager::LoadResult> ConfigManager::load_icon_config(
+    std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_icon_config(
         const std::filesystem::path& path,
         bool async)
     {
-        return load_config("icon_config", path, async);
+        return load_config("icon_config", path, async, true);
     }
 
-    std::future<ConfigManager::LoadResult> ConfigManager::load_config(
+    std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_config(
         const std::string &config_name,
         const std::filesystem::path &path,
-        bool async)
+        bool async,
+        bool persistent)
     {
         auto full_path = m_file_system.resolve_path(path);
         const std::string path_str = full_path ? full_path->string() : path.string();
@@ -127,39 +123,74 @@ namespace c2l::core
                 std::promise<LoadResult> promise;
                 LoadResult result = it->second.load_result;
                 promise.set_value(it->second.load_result);
-                update_cache_access(config_name);
+                const_cast<JsonConfigManager*>(this)->update_cache_access_locked(
+                    config_name
+                );
+                ++m_stats.cache_hits;
                 return promise.get_future();
             }
         }
 
-        if (async && m_config.enable_async_loading)
+        ++m_stats.cache_misses;
+
+        if (async)
         {
-            LoadRequest request{
-                config_name,
-                *full_path,
-                std::promise<LoadResult>(),
-                m_config.enable_validation,
-                false
-            };
+            // Creating promise for async result
+            auto request = std::make_shared<LoadRequest>();
+            request->config_name = config_name;
+            request->file_path = *full_path;
+            request->validate = m_config.enable_validation;
+            request->persistent = persistent;
 
-            std::future<LoadResult> future = request.promise.get_future();
+            std::future<LoadResult> future = request->promise.get_future();
 
-            {
-                std::unique_lock lock(m_queue_mutex);
-                m_load_queue.push(std::move(request));
-                m_queue_cv.notify_one();
-            }
+            // Using ThreadManager for async loading 
+            m_thread_manager.enqueue_task(
+                m_config.loader_thread_type,
+                [this, request]() mutable
+                {
+                    try
+                    {
+                        LoadResult result = load_config_sync(
+                            request->config_name,
+                            request->file_path,
+                            request->validate
+                        );
+                        request->promise.set_value(result);
+                    }
+                    catch(const std::exception& e)
+                    {
+                        LOG_ERROR(
+                            "Async load failed for {}: {}",
+                            request->config_name, 
+                            e.what()
+                        );
 
-            LOG_DEBUG("Async load queued for: {}", config_name);
+                        request->promise.set_value(
+                            LoadResult
+                            {
+                                false,
+                                e.what(),
+                                std::chrono::steady_clock::now(),
+                                0
+                            }
+                        );
+                    }
+                    
+                }
+            );
+
+            LOG_DEBUG("Async load queued via ThreadManager: {}", config_name);
             return future;
         } 
         else 
         {
+            // Synchronous load
             LoadResult result = load_config_sync(
-                                    config_name,
-                                    *full_path,
-                                    m_config.enable_validation
-                                );
+                config_name,
+                *full_path,
+                m_config.enable_validation
+            );
 
             std::promise<LoadResult> promise;
             promise.set_value(result);
@@ -167,7 +198,8 @@ namespace c2l::core
         }
     }
 
-    std::future<std::vector<ConfigManager::LoadResult> > ConfigManager::load_config_directory(
+    std::future<std::vector<JsonConfigManager::LoadResult>> 
+    JsonConfigManager::load_config_directory(
         const std::filesystem::path &directory,
         bool recursive,
         bool async)
@@ -175,7 +207,7 @@ namespace c2l::core
         auto full_path = m_file_system.resolve_path(directory);
         if (!full_path)
         {
-            throw std::runtime_error("Failed to find/resolve file.");
+            LOG_ERROR("Failed to resolve directory: ", directory.string());
         }
 
         auto load_func = [this, full_path, recursive]() -> std::vector<LoadResult>
@@ -193,7 +225,8 @@ namespace c2l::core
                         std::string config_name = file.stem().string();
                         auto result = load_config_sync(
                             config_name,
-                            file);
+                            file
+                        );
 
                         results.push_back(result);
 
@@ -204,28 +237,33 @@ namespace c2l::core
                         }
                     }
                 }
-            } catch (const std::exception& e) {
-                LOG_ERROR("Failed to load config directory {}: {}",
-                         full_path->string(), e.what());
+            } catch (const std::exception& e) 
+            {
+                LOG_ERROR(
+                    "Failed to load config directory {}: {}",
+                    full_path->string(), 
+                    e.what()
+                );
             }
 
             return results;
         };
 
-        if (async && m_config.enable_async_loading)
+        if (async)
         {
             return m_thread_manager.enqueue_task(
-                ThreadManager::ThreadType::IO,
+                m_config.loader_thread_type,
                 std::move(load_func)
             );
-        } else {
+        } else 
+        {
             std::promise<std::vector<LoadResult>> promise;
             promise.set_value(load_func());
             return promise.get_future();
         }
     }
 
-    std::string ConfigManager::get_string(
+    std::string JsonConfigManager::get_string(
         const std::string& config_name,
         const std::string& json_pointer,
         const std::string& default_value) const
@@ -234,7 +272,7 @@ namespace c2l::core
         return value.has_value() ? *value : default_value;
     }
 
-    int ConfigManager::get_int(
+    int JsonConfigManager::get_int(
         const std::string& config_name,
         const std::string& json_pointer,
         int default_value) const
@@ -243,7 +281,7 @@ namespace c2l::core
         return value ? *value : default_value;
     }
 
-    float ConfigManager::get_float(
+    float JsonConfigManager::get_float(
         const std::string& config_name,
         const std::string& json_pointer,
         float default_value) const
@@ -252,7 +290,7 @@ namespace c2l::core
         return value ? *value : default_value;
     }
 
-    bool ConfigManager::get_bool(
+    bool JsonConfigManager::get_bool(
         const std::string& config_name,
         const std::string& json_pointer,
         bool default_value) const
@@ -261,7 +299,7 @@ namespace c2l::core
         return value ? *value : default_value;
     }
 
-    std::vector<std::string> ConfigManager::get_string_array(
+    std::vector<std::string> JsonConfigManager::get_string_array(
         const std::string& config_name,
         const std::string& json_pointer,
         const std::vector<std::string>& default_value) const
@@ -271,65 +309,21 @@ namespace c2l::core
     }
 
 
-    nlohmann::json ConfigManager::get_algorithm_config(
-        const std::string& algorithm_id) const
+    nlohmann::json JsonConfigManager::get_algorithm_config(
+        const algorithms::AlgorithmType& algorithm_type) const
     {
-        return get<nlohmann::json>("algorithm_" + algorithm_id).value_or(nlohmann::json{});
+        return get<nlohmann::json>(
+            std::string(algorithms::algorithm_id(algorithm_type)))
+                    .value_or(nlohmann::json{});
     }
 
-    std::string ConfigManager::get_algorithm_description(
-        const std::string& algorithm_id) const
-    {
-        // TODO: 
-
-        return "No description available";
-    }
-
-    std::string ConfigManager::get_algorithm_time_complexity(
-        const std::string& algorithm_id) const
-    {
-        // TODO: 
-
-        return "O(?)";
-    }
-
-    std::string ConfigManager::get_algorithm_space_complexity(
-        const std::string& algorithm_id) const
-    {
-        // TODO: 
-
-        return "O(?)";
-    }
-
-    std::vector<nlohmann::json> ConfigManager::get_algorithm_variables(
-        const std::string& algorithm_id) const
-    {
-        // TODO: 
-
-        return {};
-    }
-
-    std::unordered_map<std::string, std::string> ConfigManager::get_algorithm_properties(
-        const std::string& algorithm_id) const
-    {
-        // TODO: 
-        return {};
-    }
-
-    std::vector<nlohmann::json> ConfigManager::get_algorithm_step_types(
-        const std::string& algorithm_id) const
-    {
-        // TODO: 
-        return {};
-    }
-
-    nlohmann::json ConfigManager::get_theme_config(
+    nlohmann::json JsonConfigManager::get_theme_config(
         const std::string& theme_name) const 
     {
         return get<nlohmann::json>("theme_" + theme_name).value_or(nlohmann::json{});
     }
 
-    std::string ConfigManager::get_theme_color(
+    std::string JsonConfigManager::get_theme_color(
         const std::string& theme_name,
         const std::string& color_key,
         const std::string& default_color) const
@@ -338,12 +332,12 @@ namespace c2l::core
         return {};
     }
 
-    nlohmann::json ConfigManager::get_icon_config() const
+    nlohmann::json JsonConfigManager::get_icon_config() const
     {
         return get<nlohmann::json>("icon_config").value_or(nlohmann::json{});
     }
 
-    std::optional<std::filesystem::path> ConfigManager::get_icon_path(
+    std::optional<std::filesystem::path> JsonConfigManager::get_icon_path(
         const std::string& icon_name,
         const std::string& pack) const
     {
@@ -364,7 +358,8 @@ namespace c2l::core
 
             const auto& icon_entry = icons[icon_name];
 
-            if (!pack.empty() && icon_entry.contains("alternatives") && icon_entry["alternatives"].is_object())
+            if (!pack.empty() && icon_entry.contains("alternatives") && 
+                icon_entry["alternatives"].is_object())
             {
                 const auto& alternatives = icon_entry["alternatives"];
                 if (alternatives.contains(pack) && alternatives[pack].is_string())
@@ -382,24 +377,27 @@ namespace c2l::core
             return std::nullopt;
         }
  
-        return std::filesystem::path{"resources/icons/default/" + icon_name + "/" + icon_name + ".png"};
+        return std::filesystem::path{
+            "resources/icons/default/" + 
+            icon_name + "/" + icon_name + ".png"
+        };
     }
 
 
-    std::unordered_map<std::string, std::string> ConfigManager::get_ui_icons(
+    std::unordered_map<std::string, std::string> JsonConfigManager::get_ui_icons(
         const std::string& ui_component) const
     {
         // TODO: 
         return {};
     }
 
-    bool ConfigManager::is_loaded(const std::string& config_name) const
+    bool JsonConfigManager::is_loaded(const std::string& config_name) const
     {
         std::shared_lock lock(m_cache_mutex);
         return m_config_cache.find(config_name) != m_config_cache.end();
     }
 
-    ConfigManager::LoadResult ConfigManager::get_load_status(
+    JsonConfigManager::LoadResult JsonConfigManager::get_load_status(
         const std::string& config_name) const
     {
         std::shared_lock lock(m_cache_mutex);
@@ -418,7 +416,7 @@ namespace c2l::core
         };
     }
 
-    std::future<ConfigManager::LoadResult> ConfigManager::reload_config(
+    std::future<JsonConfigManager::LoadResult> JsonConfigManager::reload_config(
         const std::string& config_name,
         bool async)
     {
@@ -440,32 +438,32 @@ namespace c2l::core
             return promise.get_future();
         }
 
-        const std::filesystem::path& file_path = it->second.file_path;
+        bool persistent = it->second.persistent;
+        const std::filesystem::path file_path = it->second.file_path;
         lock.unlock();
 
-        return load_config(config_name, file_path, async);
+        return load_config(config_name, file_path, async, persistent);
     }
 
-    bool ConfigManager::unload_config(
+    bool JsonConfigManager::unload_config(
         const std::string& config_name)
     {
         std::unique_lock lock(m_cache_mutex);
 
         auto it = m_config_cache.find(config_name);
-        if (it == m_config_cache.end())
+        if (it == m_config_cache.end() || it->second.persistent) 
         {
             return false;
         }
 
         m_stats.memory_usage_bytes -= it->second.memory_usage;
-
         m_config_cache.erase(it);
 
         LOG_DEBUG("Unloaded config: {}", config_name);
         return true;
     }
 
-    void ConfigManager::unload_all()
+    void JsonConfigManager::unload_all()
     {
         std::unique_lock lock(m_cache_mutex);
 
@@ -479,35 +477,44 @@ namespace c2l::core
                 memory_freed += it->second.memory_usage;
                 it = m_config_cache.erase(it);
                 unloaded++;
-            } else {
+            } else 
+            {
                 ++it;
             }
         }
 
         m_stats.memory_usage_bytes -= memory_freed;
 
-        LOG_DEBUG("Unloaded {} configs, freed {} bytes", unloaded, memory_freed);
+        LOG_DEBUG(
+            "Unloaded {} configs, freed {} bytes", 
+            unloaded, 
+            memory_freed
+        );
     }
 
-    void ConfigManager::set_config_changed_callback(ConfigChangedCallback callback)
+    void JsonConfigManager::set_config_changed_callback(
+        ConfigChangedCallback callback)
     {
         m_config_changed_callback = std::move(callback);
     }
 
-    void ConfigManager::set_error_callback(
+    void JsonConfigManager::set_error_callback(
         std::function<void(const std::string&, const std::string&)> callback)
     {
         m_error_callback = std::move(callback);
     }
 
-    void ConfigManager::enable_hot_reloading(bool enable)
+    void JsonConfigManager::enable_hot_reloading(bool enable)
     {
         if (enable == m_hot_reload_enabled.load())
         {
             return;
         }
 
-        m_hot_reload_enabled.store(enable, std::memory_order_release);
+        m_hot_reload_enabled.store(
+            enable, 
+            std::memory_order_release
+        );
 
         if (enable)
         {
@@ -517,7 +524,7 @@ namespace c2l::core
         }
     }
 
-    void ConfigManager::check_for_changes()
+    void JsonConfigManager::check_for_changes()
     {
         std::vector<std::pair<std::string, std::filesystem::file_time_type>> updates;      
         {
@@ -534,17 +541,33 @@ namespace c2l::core
                         {
                             updates.emplace_back(config_name, *current_time);
                         }
-                    } catch (const std::exception& e) {
-                        LOG_WARNING("Failed to check file time for {}: {}",
-                                config_name, e.what());
+                    } catch (const std::exception& e) 
+                    {
+                        LOG_WARNING(
+                            "Failed to check file time for {}: {}",
+                            config_name, 
+                            e.what()
+                        );
                     }
                 }
             }
 
+            if (updates.empty()) 
+            {
+                return;
+            }
+
+            // Updating timestamps under write lock
             {
                 std::unique_lock lock(m_cache_mutex);
                 for (auto& [name, time] : updates)
-                    m_config_cache[name].last_write_time = time;
+                {
+                    auto it = m_config_cache.find(name);
+                    if (it != m_config_cache.end())
+                    {
+                        it->second.last_write_time = time;
+                    }
+                }
             }
             
         }
@@ -554,41 +577,41 @@ namespace c2l::core
         {
             LOG_INFO("Config changed, reloading: {}", name);
             reload_config(name, true);
+            ++m_stats.hot_reloads_performed;
         }
     }
 
-    ConfigManager::Statistics ConfigManager::get_statistics() const
+    JsonConfigManager::Statistics JsonConfigManager::get_statistics() const
     {
         Statistics result;
 
-        result.total_config_loaded = m_stats.total_config_loaded.load();
-        result.total_config_failed = m_stats.total_config_failed.load();
+        result.total_configs_loaded = m_stats.total_configs_loaded.load();
+        result.total_configs_failed = m_stats.total_configs_failed.load();
         result.cache_hits          = m_stats.cache_hits.load();
         result.cache_misses        = m_stats.cache_misses.load();
         result.memory_usage_bytes  = m_stats.memory_usage_bytes.load();
         result.total_load_time_ms  = m_stats.total_load_time_ms.load();
+        result.hot_reloads_performed = m_stats.hot_reloads_performed.load();
 
         return result;
     }
 
-    std::string ConfigManager::dump_to_string() const
+    std::string JsonConfigManager::dump_to_string() const
     {
         std::shared_lock lock(m_cache_mutex);
 
         std::ostringstream ss;
-        ss << "ConfigManager Cache (" << m_config_cache.size() << " configs):\n";
+        ss << "JsonConfigManager Cache (" << m_config_cache.size() << " configs):\n";
         ss << "======================================\n";
 
-        for (const auto& [name, entry] : m_config_cache)
-        {
+        for (const auto& [name, entry] : m_config_cache) {
             ss << "[" << name << "]\n";
             ss << "  Path: " << entry.file_path << "\n";
             ss << "  Size: " << entry.memory_usage << " bytes\n";
             ss << "  Validated: " << (entry.validated ? "yes" : "no") << "\n";
             ss << "  Persistent: " << (entry.persistent ? "yes" : "no") << "\n";
 
-            if (!entry.load_result.success)
-            {
+            if (!entry.load_result.success) {
                 ss << "  ERROR: " << entry.load_result.error_message << "\n";
             }
 
@@ -598,7 +621,7 @@ namespace c2l::core
         return ss.str();
     }
 
-    bool ConfigManager::validate_config(const std::string& config_name) const
+    bool JsonConfigManager::validate_config(const std::string& config_name) const
     {
         std::shared_lock lock(m_cache_mutex);
 
@@ -611,17 +634,20 @@ namespace c2l::core
         return it->second.validated;
     }
 
-    ConfigManager::LoadResult ConfigManager::load_config_sync(
+    JsonConfigManager::LoadResult JsonConfigManager::load_config_sync(
         const std::string& config_name,
         const std::filesystem::path& file_path,
         bool validate)
     {
-        Timer timer;
-        timer.reset();
+        auto start_time = std::chrono::steady_clock::now();
 
         try
         {
-            LOG_DEBUG("Loading config synchronously: {} from {}", config_name, file_path.string());
+            LOG_DEBUG(
+                "Loading config synchronously: {} from {}", 
+                config_name, 
+                file_path.string()
+            );
 
             nlohmann::json config = load_json_file_sync(file_path);
 
@@ -647,7 +673,9 @@ namespace c2l::core
                 {
                     config_type = "icon";
                     is_valid = validate_icon_config(config);
-                } else {
+                } 
+                else 
+                {
                     is_valid = validate_json_schema(config, "generic");
                 }
 
@@ -657,7 +685,20 @@ namespace c2l::core
                 }
             }
 
-            // Storing in cache
+            // Calculating memory usage
+            size_t memory_usage = config.dump().size();
+
+            // Creating load result
+            LoadResult result;
+            result.success = is_valid;
+            result.error_message = validation_error;
+            result.load_time = std::chrono::steady_clock::now();
+            result.file_size = static_cast<size_t>(
+                std::filesystem::file_size(file_path)
+            );
+
+
+            // Preparing in cache
             ConfigEntry entry;
             entry.data = std::move(config);
             entry.file_path = file_path;
@@ -670,97 +711,104 @@ namespace c2l::core
                 entry.last_write_time = std::filesystem::file_time_type::min();
             }
             entry.validated = is_valid;
-            entry.memory_usage = entry.data.dump().size();
-            entry.memory_usage = 1024; 
-
-            // Creating load result
-            LoadResult result;
-            result.success = is_valid;
-            result.error_message = validation_error;
-            result.load_time = std::chrono::steady_clock::now();
-            try
-            {
-                result.file_size = static_cast<size_t>(std::filesystem::file_size(file_path));
-            } 
-            catch (...) 
-            {
-                result.file_size = 0;
-            }
-
+            entry.memory_usage = memory_usage;
             entry.load_result = result;
-            entry.last_access = std::chrono::steady_clock::now();
+            entry.last_access = start_time;
+
+            // Storing old data for callback (if this is an update)
+            nlohmann::json old_data;
+            bool was_updated = false;
 
             // Updating cache
-            ConfigEntry old_entry;
-            bool should_trigger_callback = false;
             {
                 std::unique_lock lock(m_cache_mutex);
 
-                // Checking if config already exists
-                auto old_it = m_config_cache.find(config_name);
-                if (old_it != m_config_cache.end())
+                // Checking if this is an update to an existing config
+                auto it = m_config_cache.find(config_name);
+                if (it != m_config_cache.end()) 
                 {
-                    old_entry = std::move(old_it->second);
-
-                    should_trigger_callback = (m_config_changed_callback && old_entry.data != entry.data);
-                    // Updating statistics
-                    m_stats.memory_usage_bytes -= old_it->second.memory_usage;
-                    m_stats.memory_usage_bytes += entry.memory_usage;
-                    old_it->second = std::move(entry);
-                } 
-                else 
+                    was_updated = true;
+                    old_data = it->second.data; // Copying old data for callback
+                    m_stats.memory_usage_bytes -= it->second.memory_usage;
+                    it->second = std::move(entry);
+                } else 
                 {
                     // New config
                     m_config_cache[config_name] = std::move(entry);
-
-                    m_stats.memory_usage_bytes += m_config_cache[config_name].memory_usage;
-
-                    timer.update(); 
-                    uint64_t load_ms = static_cast<uint64_t>(timer.get_elapsed_time() * 1000.0);
-                    m_stats.total_load_time_ms += load_ms;
                 }
+                
+                m_stats.memory_usage_bytes += memory_usage;
             }
 
-            // Calling change callback (we trigger callback outside the lock for safety)
-            if (should_trigger_callback) 
+            // Update statistics
+            auto load_duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start_time
+            );
+
+            if (is_valid) 
             {
-                try
+                ++m_stats.total_configs_failed;
+            } else 
+            {
+                ++m_stats.total_configs_failed;
+            }
+            m_stats.total_load_time_ms += load_duration.count();
+
+            // Trigger change callback if this was an update
+            // Note: Callback called outside lock for safety
+            if (was_updated && m_config_changed_callback && is_valid) 
+            {
+                try 
                 {
-                    m_config_changed_callback(config_name, old_entry.data, entry.data);
-                } catch (const std::exception& e) {
-                    LOG_ERROR("Config change callback failed: {}", e.what());
+                    // Only triggering callback if data actually changed
+                    if (old_data != entry.data) 
+                    {
+                        m_config_changed_callback(config_name, old_data, entry.data);
+                    }
+                } catch (const std::exception& e) 
+                {
+                    LOG_ERROR("Config change callback failed for {}: {}", config_name, e.what());
                 }
             }
 
-            if (is_valid)
-                ++m_stats.total_config_loaded;
-            else
-                ++m_stats.total_config_failed;
+            LOG_INFO("Loaded config: {} ({} bytes, validated: {}, took {}ms)",
+                    config_name, result.file_size, is_valid, load_duration.count());
 
-            LOG_INFO("Loaded config: {} ({} bytes, validated: {})",
-                    config_name, result.file_size, is_valid);
-
-            // Cleanup cache if needed
+            // Cleanuping cache if needed
             cleanup_cache();
 
             return result;
 
-        } catch (const std::exception& e) {
+        } catch (const std::exception& e) 
+        {
             LOG_ERROR("Failed to load config {}: {}", config_name, e.what());
 
-            if (m_error_callback) try { m_error_callback(config_name, e.what()); } catch (...) {}
-            ++m_stats.total_config_failed;
+            if (m_error_callback) 
+            {
+                try 
+                {
+                    m_error_callback(config_name, e.what());
+                } catch (...) {}
+            }
 
-            return {false, e.what(), std::chrono::steady_clock::now(), 0 };
+            ++m_stats.total_configs_failed;
+
+            return LoadResult{
+                false,
+                e.what(),
+                std::chrono::steady_clock::now(),
+                0
+            };
         }
     }
 
-    nlohmann::json ConfigManager::load_json_file_sync(const std::filesystem::path& file_path)
+    nlohmann::json JsonConfigManager::load_json_file_sync(
+        const std::filesystem::path& file_path)
     {
-        // Read file content
+        // Reading file content
         auto content = m_file_system.read_binary(file_path);
 
-        if (!content)
+        if (!content || content->empty())
         {
             throw std::runtime_error("Empty or non-existent file: " + file_path.string());
         }
@@ -768,16 +816,20 @@ namespace c2l::core
         try
         {
             return nlohmann::json::parse(*content);
-        } catch (const nlohmann::json::parse_error& e) {
-            throw std::runtime_error("JSON parse error at byte " +
-                                   std::to_string(e.byte) + ": " + e.what());
+        } catch (const nlohmann::json::parse_error& e) 
+        {
+            throw std::runtime_error(
+                "JSON parse error at byte " +
+                std::to_string(e.byte) + ": " + e.what()
+            );
         }
     }
 
     // Validation
-    bool ConfigManager::validate_json_schema(
+    bool JsonConfigManager::validate_json_schema(
         const nlohmann::json& config,
-        const std::string& config_type) const
+        const std::string& config_type
+    ) const
     {
         // Basic JSON validation
         if (!config.is_object() && !config.is_array()) 
@@ -791,19 +843,23 @@ namespace c2l::core
         return true;
     }
 
-    bool ConfigManager::validate_algorithm_config(const nlohmann::json& config) const
+    bool JsonConfigManager::validate_algorithm_config(const nlohmann::json& config) const
     {
         // TODO: 
         return true;
     }
 
-    bool ConfigManager::validate_theme_config(const nlohmann::json& config) const
+    bool JsonConfigManager::validate_theme_config(
+        const nlohmann::json& config
+    ) const
     {
         // TODO: 
         return true;
     }
 
-    bool ConfigManager::validate_icon_config(const nlohmann::json& config) const
+    bool JsonConfigManager::validate_icon_config(
+        const nlohmann::json& config
+    ) const
     {
         if (!config.contains("icons") || !config["icons"].is_object())
         {
@@ -815,14 +871,15 @@ namespace c2l::core
     }
 
 
-    std::filesystem::path ConfigManager::resolve_config_path(
+    std::filesystem::path JsonConfigManager::resolve_config_path(
         const std::filesystem::path& relative_path) const
     {
         std::filesystem::path base = m_config.config_base_path;
         return base / relative_path;
     }
 
-    void ConfigManager::update_cache_access(const std::string& config_name)
+    void JsonConfigManager::update_cache_access_locked
+    (const std::string& config_name)
     {
         auto it = m_config_cache.find(config_name);
         if (it != m_config_cache.end()) 
@@ -831,7 +888,7 @@ namespace c2l::core
         }
     }
 
-    void ConfigManager::cleanup_cache()
+    void JsonConfigManager::cleanup_cache()
     {
         std::unique_lock lock(m_cache_mutex);
 
@@ -877,118 +934,87 @@ namespace c2l::core
     }
 
     // Hot Reloading
-    void ConfigManager::start_hot_reload_monitor() 
+    void JsonConfigManager::start_hot_reload_monitor() 
     {
-        if (m_hot_reload_thread.joinable()) 
+        if (m_hot_reload_thread_active.load()) 
         {
             return; // Already running
         }
 
         m_hot_reload_enabled.store(true, std::memory_order_release);
+        m_hot_reload_thread_active.store(true, std::memory_order_release);
 
-        m_hot_reload_thread = std::thread([this]() {
-            hot_reload_loop();
-        });
+        // Generating unique thread name
+        static std::atomic<uint64_t> hot_reload_counter{0};
+        m_hot_reload_thread_name = "HotReload-" + std::to_string(++hot_reload_counter);
 
-        LOG_DEBUG("Hot reload monitor started");
+        // Starting dedicated thread via ThreadManager
+        m_thread_manager.start_dedicated_thread(
+            ThreadManager::ThreadType::BACKGROUND,
+            m_hot_reload_thread_name,
+            [this]() { hot_reload_loop(); },
+            false // Don't auto-restart
+        );
+
+        LOG_DEBUG("Hot reload monitor started via ThreadManager");
     }
 
-    void ConfigManager::stop_hot_reload_monitor() 
+    void JsonConfigManager::stop_hot_reload_monitor() 
     {
         m_hot_reload_enabled.store(false, std::memory_order_release);
 
-        if (m_hot_reload_thread.joinable()) 
-        {
+        if (m_hot_reload_thread_active.load()) {
+            // Notifying thread to stop
             {
                 std::unique_lock lock(m_hot_reload_mutex);
                 m_hot_reload_cv.notify_all();
             }
-            m_hot_reload_thread.join();
+
+            // Stopping the dedicated thread via ThreadManager
+            if (!m_hot_reload_thread_name.empty()) {
+                m_thread_manager.stop_dedicated_thread(
+                    m_hot_reload_thread_name,
+                    std::chrono::seconds(2)
+                );
+            }
+
+            m_hot_reload_thread_active.store(false, std::memory_order_release);
         }
 
         LOG_DEBUG("Hot reload monitor stopped");
     }
 
-    void ConfigManager::hot_reload_loop() 
+    void JsonConfigManager::hot_reload_loop() 
     {
+        LOG_DEBUG("Hot reload thread started");
+
         while (m_hot_reload_enabled.load(std::memory_order_acquire) &&
                m_running.load(std::memory_order_acquire)) 
-        {
-            std::unique_lock lock(m_hot_reload_mutex);
+               {
 
-            // Waiting for interval or shutdown
-            m_hot_reload_cv.wait_for(
-                lock,
-                m_config.hot_reload_check_interval,
-                [this]()
-                {
-                    return !m_hot_reload_enabled.load(std::memory_order_acquire) ||
-                           !m_running.load(std::memory_order_acquire);
-                }
-            );
-
-            if (!m_hot_reload_enabled.load(std::memory_order_acquire) ||
-                !m_running.load(std::memory_order_acquire))
+            // Waiting for check interval or shutdown
             {
-                break;
+                std::unique_lock lock(m_hot_reload_mutex);
+                m_hot_reload_cv.wait_for(
+                    lock,
+                    m_config.hot_reload_check_interval,
+                    [this]() {
+                        return !m_hot_reload_enabled.load(std::memory_order_acquire) ||
+                               !m_running.load(std::memory_order_acquire);
+                    }
+                );
             }
 
-            lock.unlock();
+            if (!m_hot_reload_enabled.load(std::memory_order_acquire) ||
+                !m_running.load(std::memory_order_acquire)) {
+                break;
+            }
 
             // Checking for file changes
             check_for_changes();
         }
+
+        LOG_DEBUG("Hot reload thread exiting");
     }
 
-
-    void ConfigManager::loader_thread_loop()
-    {
-        while (m_running.load(std::memory_order_acquire))
-        {
-            std::unique_lock lock(m_queue_mutex);
-
-            m_queue_cv.wait(lock, [this]()
-            {
-                return !m_load_queue.empty() || !m_running.load(std::memory_order_acquire);
-            });
-
-            if (!m_running.load(std::memory_order_acquire))
-            {
-                break;
-            }
-
-            if (m_load_queue.empty())
-            {
-                continue;
-            }
-
-            LoadRequest request = std::move(m_load_queue.front());
-            m_load_queue.pop();
-
-            lock.unlock();
-
-            // Processing the request
-            try
-            {
-                LoadResult result = load_config_sync(
-                    request.config_name,
-                    request.file_path,
-                    request.validate
-                );
-
-                request.promise.set_value(result);
-            } catch (const std::exception& e) {
-                LOG_ERROR("Async load failed for {}: {}", request.config_name, e.what());
-                request.promise.set_value(
-                {
-                    false, 
-                    e.what(), 
-                    std::chrono::steady_clock::now(), 
-                    0
-                });
-            }
-        }
-
-        LOG_DEBUG("ConfigManager loader thread exiting");
-    }
-} // namespace c2l::core
+ } // namespace c2l::core

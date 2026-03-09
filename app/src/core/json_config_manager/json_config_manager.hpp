@@ -1,8 +1,9 @@
-#ifndef CODE2LOGIC_CONFIG_MANAGER_HPP
-#define CODE2LOGIC_CONFIG_MANAGER_HPP
+#ifndef CODE2LOGIC_JSON_CONFIG_MANAGER_HPP
+#define CODE2LOGIC_JSON_CONFIG_MANAGER_HPP
 
 #include "core/file_system/i_file_system.hpp"
 #include "core/utils/thread_manager/thread_manager.hpp"
+#include "algorithms/algorithm_types.hpp"
 
 #include <nlohmann/json.hpp>
 #include <filesystem>
@@ -21,23 +22,46 @@
 namespace c2l::core
 {
     /**
-     * @brief Configuration for ConfigManager
+     * @brief Configuration for JsonConfigManager
      */
-    struct ConfigManagerConfig
+    struct JsonConfigManagerConfig
     {
         std::filesystem::path config_base_path = "resources";
         bool enable_hot_reloading = false;
         std::chrono::milliseconds hot_reload_check_interval{2000};
-        bool enable_async_loading = true;
         bool enable_validation = true;
         size_t max_cached_configs = 50;
+        ThreadManager::ThreadType loader_thread_type = 
+            ThreadManager::ThreadType::IO;
 
-        explicit ConfigManagerConfig() = default;
+        explicit JsonConfigManagerConfig() = default;
     };
 
-    class ConfigManager
+    /**
+     * @class JsonConfigManager
+     * @brief JSON files configuration manager with 
+     * ThreadManager integration
+     * 
+     * Features:
+     * - Async loading via ThreadManager's thread pool
+     * - Hot reloading using dedicated thread from ThreadManager
+     * - LRU caching with automatic eviction
+     * - Type-safe configuration access
+     * - Schema validation support
+     * - Performance monitoring
+     */
+    class JsonConfigManager final
     {
     public:
+        /**
+         * @brief Callback for configuration changes
+         */
+        using ConfigChangedCallback = std::function<void(
+            const std::string& config_name,
+            const nlohmann::json& old_config,
+            const nlohmann::json& new_config
+        )>;
+
         /**
          * @brief Result of a configuration operation
          */
@@ -52,30 +76,69 @@ namespace c2l::core
         };
 
         /**
-         * @brief Callback for configuration changes
+         * @brief Gets statistics
          */
-        using ConfigChangedCallback = std::function<void(
-            const std::string& config_name,
-            const nlohmann::json& old_config,
-            const nlohmann::json& new_config
-        )>;
+        struct Statistics
+        {
+            std::atomic<size_t> total_configs_loaded     {0};
+            std::atomic<size_t> total_configs_failed     {0};
+            std::atomic<size_t> cache_hits              {0};
+            std::atomic<size_t> cache_misses            {0};
+            std::atomic<size_t> memory_usage_bytes      {0};
+            std::atomic<uint64_t> total_load_time_ms    {0};
+            std::atomic<size_t> hot_reloads_performed   {0};
 
-        ConfigManager(
+            Statistics() = default;
+
+            Statistics(const Statistics& other) 
+            {
+                total_configs_loaded = other.total_configs_loaded.load();
+                total_configs_failed = other.total_configs_failed.load();
+                cache_hits = other.cache_hits.load();
+                cache_misses = other.cache_misses.load();
+                memory_usage_bytes = other.memory_usage_bytes.load();
+                total_load_time_ms = other.total_load_time_ms.load();
+                hot_reloads_performed = other.hot_reloads_performed.load();
+            }
+
+            Statistics& operator=(const Statistics& other) 
+            {
+                if (this != &other) {
+                    total_configs_loaded = other.total_configs_loaded.load();
+                    total_configs_failed = other.total_configs_failed.load();
+                    cache_hits = other.cache_hits.load();
+                    cache_misses = other.cache_misses.load();
+                    memory_usage_bytes = other.memory_usage_bytes.load();
+                    total_load_time_ms = other.total_load_time_ms.load();
+                    hot_reloads_performed = other.hot_reloads_performed.load();
+
+                }
+                return *this;
+            }
+
+            std::chrono::milliseconds get_total_load_time() const 
+            {
+                return std::chrono::milliseconds(total_load_time_ms.load());
+            }
+        };
+
+
+        JsonConfigManager(
             filesystem::IFileSystem& filesystem,
             ThreadManager& thread_manager,
-            const ConfigManagerConfig& config = ConfigManagerConfig{}
+            const JsonConfigManagerConfig& config = JsonConfigManagerConfig{}
         );
 
-        ~ConfigManager();
+        ~JsonConfigManager();
 
         // Non-copyable, non-movable
-        ConfigManager(const ConfigManager&) = delete;
-        ConfigManager& operator=(const ConfigManager&) = delete;
-        ConfigManager(ConfigManager&&) = delete;
-        ConfigManager& operator=(ConfigManager&&) = delete;
+        JsonConfigManager(const JsonConfigManager&) = delete;
+        JsonConfigManager& operator=(const JsonConfigManager&) = delete;
+        JsonConfigManager(JsonConfigManager&&) = delete;
+        JsonConfigManager& operator=(JsonConfigManager&&) = delete;
 
         /**
-         * @brief Loads application configuration (synchronous or async)
+         * @brief Loads application configuration 
          */
         std::future<LoadResult> load_app_config(
             const std::filesystem::path& path = 
@@ -104,7 +167,7 @@ namespace c2l::core
          * @brief Loads algorithm configuration
          */
         std::future<LoadResult> load_algorithm_config(
-            const std::string& algorithm_id,
+            const algorithms::AlgorithmType& algorithm_type,
             bool async = true
         );
 
@@ -114,7 +177,8 @@ namespace c2l::core
         std::future<LoadResult> load_config(
             const std::string& config_name,
             const std::filesystem::path& path,
-            bool async = true
+            bool async = true,
+            bool persistent = false
         );
 
         /**
@@ -187,51 +251,24 @@ namespace c2l::core
             const std::vector<std::string>& default_value = {}
         ) const;
 
-
         /**
          * @brief Gets complete algorithm configuration
          */
         nlohmann::json get_algorithm_config(
-            const std::string& algorithm_id) const;
-
-        /**
-         * @brief Gets algorithm description
-         */
-        std::string get_algorithm_description(
-            const std::string& algorithm_id) const;
+            const algorithms::AlgorithmType& algorithm_type) const;
 
         /**
          * @brief Gets algorithm time complexity
          */
         std::string get_algorithm_time_complexity(
-            const std::string& algorithm_id) const;
+            const algorithms::AlgorithmType& algorithm_type) const;
 
         /**
          * @brief Gets algorithm space complexity
          */
         std::string get_algorithm_space_complexity(
-            const std::string& algorithm_id) const;
+            const algorithms::AlgorithmType& algorithm_type) const;
 
-        /**
-         * @brief Gets algorithm variables metadata
-         */
-        std::vector<nlohmann::json> get_algorithm_variables(
-            const std::string& algorithm_id) const;
-
-        /**
-         * @brief Gets algorithm properties
-         */
-        std::unordered_map<std::string, std::string> get_algorithm_properties(
-            const std::string& algorithm_id) const;
-
-        /**
-         * @brief Gets algorithm step types
-         */
-        std::vector<nlohmann::json> get_algorithm_step_types(
-            const std::string& algorithm_id) const;
-
-
-        // Theme specific Helpers
         /**
          * @brief Gets theme configuration
          */
@@ -246,7 +283,6 @@ namespace c2l::core
             const std::string& default_color = "#FFFFFF"
         ) const;
 
-        // Icon-specific Helpers
         /**
          * @brief Gets icon configuration
          */
@@ -268,7 +304,6 @@ namespace c2l::core
         ) const;
 
 
-        // Configuration Management
         /**
          * @brief Checks if a configuration is loaded
          */
@@ -308,12 +343,11 @@ namespace c2l::core
          * @brief Sets callback for configuration loading errors
          */
         void set_error_callback(std::function<void(
-            const std::string&, 
-            const std::string&)> callback
+            const std::string& config_name, 
+            const std::string& error_message)> callback
         );
 
 
-        // Hot Reloading
         /**
          * @brief Enables/disables hot reloading
          */
@@ -321,53 +355,9 @@ namespace c2l::core
 
         /**
          * @brief Checks for configuration file changes
+         * @note Usually called automatically by hot reload thread
          */
         void check_for_changes();
-
-
-        // Statistics and Debug
-        /**
-         * @brief Gets statistics
-         */
-        struct Statistics
-        {
-            std::atomic<size_t> total_config_loaded     {0};
-            std::atomic<size_t> total_config_failed     {0};
-            std::atomic<size_t> cache_hits              {0};
-            std::atomic<size_t> cache_misses            {0};
-            std::atomic<size_t> memory_usage_bytes      {0};
-            std::atomic<uint64_t> total_load_time_ms    {0};
-
-            Statistics() = default;
-
-            Statistics(const Statistics& other) 
-            {
-                total_config_loaded = other.total_config_loaded.load();
-                total_config_failed = other.total_config_failed.load();
-                cache_hits = other.cache_hits.load();
-                cache_misses = other.cache_misses.load();
-                memory_usage_bytes = other.memory_usage_bytes.load();
-                total_load_time_ms = other.total_load_time_ms.load();
-            }
-
-            Statistics& operator=(const Statistics& other) 
-            {
-                if (this != &other) {
-                    total_config_loaded = other.total_config_loaded.load();
-                    total_config_failed = other.total_config_failed.load();
-                    cache_hits = other.cache_hits.load();
-                    cache_misses = other.cache_misses.load();
-                    memory_usage_bytes = other.memory_usage_bytes.load();
-                    total_load_time_ms = other.total_load_time_ms.load();
-                }
-                return *this;
-            }
-
-            std::chrono::milliseconds get_total_load_time() const 
-            {
-                return std::chrono::milliseconds(total_load_time_ms.load());
-            }
-        };
 
         Statistics get_statistics() const;
 
@@ -382,7 +372,8 @@ namespace c2l::core
         bool validate_config(const std::string& config_name) const;
 
     private:
-        struct ConfigEntry {
+        struct ConfigEntry 
+        {
             nlohmann::json data;
             std::filesystem::path file_path;
             std::filesystem::file_time_type last_write_time;
@@ -393,7 +384,8 @@ namespace c2l::core
             size_t memory_usage{0};
         };
 
-        struct LoadRequest {
+        struct LoadRequest 
+        {
             std::string config_name;
             std::filesystem::path file_path;
             std::promise<LoadResult> promise;
@@ -409,8 +401,10 @@ namespace c2l::core
             bool validate = true
         );
 
+        /**
+         * @brief Reads and parses JSON file
+         */
         nlohmann::json load_json_file_sync(const std::filesystem::path& file_path);
-        std::future<LoadResult> load_config_async(const LoadRequest& request);
 
         // Validation
         bool validate_json_schema(
@@ -433,58 +427,64 @@ namespace c2l::core
         ) const;
 
         /**
-         * @brief Updates the last access of the loaded file in the cache
-         * 
-         * @note Non-threadsafe
-         */ 
-        void update_cache_access(const std::string& config_name);
+         * @brief Updates cache access time
+         * @note Call with m_cache_mutex locked
+         */
+        void update_cache_access_locked(const std::string& config_name);
+
+        /**
+         * @brief Performs cache cleanup (LRU eviction)
+         */
         void cleanup_cache();
 
+        /**
+         * @brief Starts hot reload monitoring thread via ThreadManager
+         */
         void start_hot_reload_monitor();
-        void stop_hot_reload_monitor();
-        void hot_reload_loop();
 
-        void loader_thread_loop();
+        /**
+         * @brief Stops hot reload monitoring
+         */
+        void stop_hot_reload_monitor();
+
+        /**
+         * @brief Hot reload loop function (executed in ThreadManager thread)
+         */
+        void hot_reload_loop();
 
 
         filesystem::IFileSystem& m_file_system;
         ThreadManager& m_thread_manager;
-        ConfigManagerConfig m_config;
+        JsonConfigManagerConfig m_config;
 
         mutable std::shared_mutex m_cache_mutex;
         std::unordered_map<std::string, ConfigEntry> m_config_cache;
 
         std::atomic<bool> m_running{true};
         std::atomic<bool> m_hot_reload_enabled{false};
+        std::atomic<bool> m_hot_reload_thread_active{false};
 
-        std::thread m_hot_reload_thread;
-        std::condition_variable m_hot_reload_cv;
+        std::string m_hot_reload_thread_name;
         std::mutex m_hot_reload_mutex;
+        std::condition_variable m_hot_reload_cv;
 
         // Callbacks
         ConfigChangedCallback m_config_changed_callback;
         std::function<void(const std::string&, const std::string&)> m_error_callback;
 
         // Statistics
-        mutable std::mutex m_stats_mutex;
         mutable Statistics m_stats;
-
-        // Load request queue for async loading
-        std::queue<LoadRequest> m_load_queue;
-        std::mutex m_queue_mutex;
-        std::condition_variable m_queue_cv;
-        std::thread m_loader_thread;
     };
 
 
     template<typename T>
-    std::optional<T> ConfigManager::get(
+    std::optional<T> JsonConfigManager::get(
         const std::string& config_name,
         const std::string& json_pointer
     ) const 
     {
         std::shared_lock lock(m_cache_mutex);
-
+        
         const auto it = m_config_cache.find(config_name);
         if (it == m_config_cache.end()) {
             ++m_stats.cache_misses;
@@ -492,6 +492,8 @@ namespace c2l::core
         }
 
         ++m_stats.cache_hits;
+
+        const_cast<JsonConfigManager*>(this)->update_cache_access_locked(config_name);
 
         // If json_pointer is empty, return entire config
         if (json_pointer.empty()) 
@@ -504,7 +506,7 @@ namespace c2l::core
             }
         }
 
-        // Navigate JSON pointer
+        // Navigating JSON pointer
         try 
         {
             nlohmann::json::json_pointer ptr(json_pointer);
@@ -516,7 +518,7 @@ namespace c2l::core
     }
 
     template<typename T>
-    T ConfigManager::get_or(
+    T JsonConfigManager::get_or(
     const std::string& config_name,
     const std::string& json_pointer,
     const T& default_value
@@ -530,4 +532,4 @@ namespace c2l::core
 
 } // namespace c2l::core
 
-#endif //CODE2LOGIC_CONFIG_MANAGER_HPP
+#endif //CODE2LOGIC_JSON_CONFIG_MANAGER_HPP

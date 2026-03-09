@@ -24,15 +24,17 @@ set(CODE2LOGIC_SOURCES
         src/core/resources/shader_resource.cpp
         src/algorithms/algorithm_base.cpp
         src/scenes/algorithm_visualizer_scene.cpp
-        src/algorithms/bubble_sort_algorithm.cpp
-        src/algorithms/quick_sort_algorithm.cpp
+        src/algorithms/bubble_sort.cpp
+        src/algorithms/quick_sort.cpp
         src/algorithms/managers/algorithm_manager.cpp
         src/core/utils/thread_manager/thread_manager.cpp
         src/algorithms/array_based_visualizer.cpp
         src/ui/managers/icon_manager.cpp
         src/scenes/algorithm_comparison_scene.cpp
         src/algorithms/algorithm_variables.cpp
-        src/core/config_manager/config_manager.cpp
+        src/core/json_config_manager/json_config_manager.cpp
+        src/algorithms/algorithm_metadata_types.cpp
+        src/algorithms/json_algorithm_base.cpp
 
 
 )
@@ -79,8 +81,8 @@ set(CODE2LOGIC_HEADERS
         src/algorithms/algorithm_step_operation.hpp
         src/algorithms/algorithm_state_tracker.hpp
         src/algorithms/algorithm_base.hpp
-        src/algorithms/bubble_sort_algorithm.hpp
-        src/algorithms/quick_sort_algorithm.hpp
+        src/algorithms/bubble_sort.hpp
+        src/algorithms/quick_sort.hpp
         src/algorithms/managers/algorithm_manager.hpp
         src/core/utils/thread_manager/thread_manager.hpp
         src/algorithms/i_algorithm_visualizer.hpp
@@ -89,9 +91,12 @@ set(CODE2LOGIC_HEADERS
         src/ui/managers/icon_manager.hpp
         src/scenes/algorithm_comparison_scene.hpp
         src/algorithms/algorithm_variable.hpp
-        src/core/config_manager/config_manager.hpp
+        src/core/json_config_manager/json_config_manager.hpp
         src/core/utils/utils.hpp
         src/core/utils/variables.hpp
+        src/algorithms/i_algorithm_metadata.hpp
+        src/algorithms/algorithm_metadata_types.hpp
+        src/algorithms/json_algorithm_base.hpp
 
 )
 

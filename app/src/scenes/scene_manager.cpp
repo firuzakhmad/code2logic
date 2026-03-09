@@ -12,10 +12,12 @@ namespace c2l::scenes
     SceneManager::SceneManager(
         graphics::Renderer& renderer,
         core::ThreadManager& thread_manager,
+        core::JsonConfigManager& json_config_manager,
         core::resources::ResourceManager& resource_manager,
         ui::managers::IconManager& icon_manager)
             : m_renderer{renderer}
             , m_thread_manager{thread_manager}
+            , m_json_config_manager{json_config_manager}
             , m_resource_manager{resource_manager}
             , m_icon_manager{icon_manager}
     {
@@ -31,6 +33,7 @@ namespace c2l::scenes
         const auto algorithm_scene = std::make_shared<scenes::AlgorithmVisualizerScene>(
             m_renderer,
             m_thread_manager,
+            m_json_config_manager,
             m_resource_manager,
             m_icon_manager);
 
@@ -38,6 +41,7 @@ namespace c2l::scenes
         const auto main_menu_scene = std::make_shared<scenes::MainMenuScene>(
             m_renderer,
             m_thread_manager,
+            m_json_config_manager,
             m_resource_manager,
             m_icon_manager);
 
@@ -45,6 +49,7 @@ namespace c2l::scenes
         const auto algorithm_comparison_scene = std::make_shared<scenes::AlgorithmComparisonScene>(
             m_renderer,
             m_thread_manager,
+            m_json_config_manager,
             m_resource_manager,
             m_icon_manager);
 

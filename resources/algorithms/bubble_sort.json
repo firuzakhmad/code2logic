@@ -1,0 +1,300 @@
+{
+  "algorithm": {
+    "id": "bubble_sort",
+    "name": "Bubble Sort",
+    "display_type": "Bubble Sort",
+    "category": "Sorting",
+    "version": "1.0.0",
+    "last_updated": "2025-02-02",
+    
+    "complexity": {
+      "time_best": "O(n)",
+      "time_average": "O(n²)",
+      "time_worst": "O(n²)",
+      "space": "O(1)",
+      "explanation": "Bubble sort has quadratic time complexity in the average and worst cases, but linear in the best case when the array is already sorted."
+    },
+    
+    "properties": {
+      "stable": true,
+      "in_place": true,
+      "adaptive": true,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+    
+    "description": {
+      "brief": "A simple comparison-based sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.",
+      
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(n)   - when array is already sorted",
+        "• Average case: O(n²)  - random data",
+        "• Worst case:   O(n²)  - reverse sorted data",
+        "",
+        "Space Complexity: O(1) - in-place sorting",
+        "",
+        "Key Characteristics:",
+        "• Simple and intuitive implementation",
+        "• Excellent for educational purposes",
+        "• Efficient for small datasets (< 100 elements)",
+        "• Adaptive: can detect already sorted arrays",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: n(n-1)/2 ≈ O(n²)",
+        "• Swaps: Up to n(n-1)/2 in worst case",
+        "• Memory: Constant O(1) auxiliary space"
+      ],
+      
+      "pseudocode": [
+        "void bubble_sort(std::vector<int>& arr)",
+        "{",
+        "       size_t n = arr.size();",
+        "       bool swapped;",
+        "",
+        "       for (size_t i = 0; i < n - 1; ++i)",
+        "       {",
+        "               swapped = false;",
+        "",
+        "               for (size_t j = 0; j < n - i - 1; ++j)",
+        "               {",
+        "                       if (arr[j] > arr[j + 1])",
+        "                       {",
+        "                               std::swap(arr[j], arr[j + 1]);",
+        "                               swapped = true;",
+        "                       }",
+        "               }",
+        "",
+        "               // If no swapping occurred, array is sorted",
+        "               if (!swapped) break;",
+        "       }",
+        "}",
+        ""
+      ],
+      
+      "optimizations": [
+        "Early termination when no swaps occur in a pass",
+        "Cocktail shaker sort (bidirectional)",
+        "Comb sort (using gap sequences)",
+        "Flagged bubble sort to skip sorted portions"
+      ],
+      
+      "use_cases": [
+        "Educational purposes and teaching",
+        "Small datasets (n < 100)",
+        "Nearly sorted arrays",
+        "When code simplicity is prioritized over performance"
+      ],
+      
+      "disadvantages": [
+        "Very slow for large datasets",
+        "Poor cache performance",
+        "Inefficient compared to other O(n²) algorithms like insertion sort",
+        "Not suitable for production use"
+      ],
+      
+      "related_algorithms": [
+        "Insertion Sort",
+        "Cocktail Shaker Sort",
+        "Comb Sort",
+        "Quick Sort"
+      ]
+    },
+    
+    "variables": [
+      {
+        "name": "i",
+        "display_name": "Outer Loop Index",
+        "type": "size_t",
+        "description": "Tracks the current pass through the array. Each pass moves the largest unsorted element to its correct position.",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "outer_loop"
+        }
+      },
+      {
+        "name": "j",
+        "display_name": "Inner Loop Index",
+        "type": "size_t",
+        "description": "Tracks the current position within the unsorted portion of the array during the current pass.",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "inner_loop"
+        }
+      },
+      {
+        "name": "swapped",
+        "display_name": "Swap Flag",
+        "type": "bool",
+        "description": "Indicates whether any swaps occurred in the current pass. Used for early termination optimization.",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "swap"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of element comparisons performed so far.",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "swaps",
+        "display_name": "Swaps",
+        "type": "size_t",
+        "description": "Total number of element swaps performed so far.",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "swap_count"
+        }
+      },
+      {
+        "name": "sorted_count",
+        "display_name": "Sorted Elements",
+        "type": "size_t",
+        "description": "Number of elements that are already in their final sorted position.",
+        "visualization": {
+          "color": "#92A8D1",
+          "icon": "sorted"
+        }
+      }
+    ],
+    
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "outer_loop",
+        "name": "Outer Loop",
+        "description": "Beginning of a new pass through the array",
+        "tags": ["loop", "iteration", "pass"],
+        "icon": "outer_loop"
+      },
+      {
+        "id": "inner_loop",
+        "name": "Inner Loop",
+        "description": "Iterating through unsorted portion of array",
+        "tags": ["loop", "iteration"],
+        "icon": "inner_loop"
+      },
+      {
+        "id": "compare",
+        "name": "Comparison",
+        "description": "Comparing adjacent elements",
+        "tags": ["comparison", "decision"],
+        "icon": "compare"
+      },
+      {
+        "id": "swap",
+        "name": "Swap",
+        "description": "Swapping elements that are out of order",
+        "tags": ["modification", "swap"],
+        "icon": "swap"
+      },
+      {
+        "id": "pass_complete",
+        "name": "Pass Complete",
+        "description": "Finished one complete pass through the array",
+        "tags": ["completion", "pass"],
+        "icon": "check"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm completed - array is fully sorted",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+    
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void bubble_sort(std::vector<int>& arr)",
+        "description_template": "Initializing Bubble Sort algorithm",
+        "extract_variables": [],
+        "tags": ["initialization"]
+      },
+      "outer_loop": {
+        "pseudocode_line": 6,
+        "code_line": 7,
+        "code_line_content": "for (size_t i = 0; i < n - 1; ++i)",
+        "description_template": "Starting outer loop iteration i = {i}",
+        "extract_variables": ["i"],
+        "tags": ["outer_loop"]
+      },
+      "inner_loop": {
+        "pseudocode_line": 10,
+        "code_line": 11,
+        "code_line_content": "for (size_t j = 0; j < n - i - 1; ++j)",
+        "description_template": "Starting inner loop iteration i = {i}, j = {j}",
+        "extract_variables": ["i", "j"],
+        "tags": ["inner_loop"]
+      },
+      "compare": {
+        "pseudocode_line": 12,
+        "code_line": 13,
+        "code_line_content": "if (arr[j] > arr[j + 1])",
+        "description_template": "Comparing arr[{j}] = {arr[j]} with arr[{j+1}] = {arr[j+1]}",
+        "extract_variables": ["j", "j+1", "arr[j]", "arr[j+1]"],
+        "tags": ["comparison"]
+      },
+      "swap": {
+        "pseudocode_line": 14,
+        "code_line": 16,
+        "code_line_content": "std::swap(arr[j], arr[j + 1]);",
+        "description_template": "Swapping arr[{j}] ({arr[j]}) with arr[{j+1}] ({arr[j+1]})",
+        "extract_variables": ["j", "j+1", "arr[j]", "arr[j+1]"],
+        "tags": ["swap", "modification"]
+      },
+      "pass_complete": {
+        "pseudocode_line": 20,
+        "code_line": 19,
+        "code_line_content": "if not swapped: break",
+        "description_template": "Pass {i} complete. Swapped = {swapped}",
+        "extract_variables": ["i", "swapped"],
+        "tags": ["pass_complete"]
+      },
+      "completed": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "Algorithm completed.",
+        "description_template": "Algorithm completed. Array is fully sorted after {comparisons} comparisons and {swaps} swaps.",
+        "extract_variables": ["comparisons", "swaps"],
+        "tags": ["completed"]
+      }
+    },
+    
+    "visualization": {
+      "default_style": "bars",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "compared": "#4ECDC4",
+        "swapped": "#FFD166",
+        "sorted": "#06D6A0",
+        "pivot": "#9B59B6",
+        "visited": "#3498DB",
+        "frontier": "#E67E22"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true
+    }
+  }
+}

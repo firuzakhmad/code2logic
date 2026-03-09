@@ -18,7 +18,8 @@ namespace c2l::algorithms
         std::unordered_map<std::string, std::string> index_variables;
         std::unordered_map<std::string, std::string> variable_values;
 
-        CodeHighlight(size_t line,
+        CodeHighlight(
+            size_t line,
             std::string code,
             std::string desc = "",
             bool active = false,
@@ -30,8 +31,8 @@ namespace c2l::algorithms
             , highlight_color(color)
         {}
 
-    // New constructor with variable values
-        CodeHighlight(size_t line,
+        CodeHighlight(
+            size_t line,
             std::string code,
             std::string desc,
             std::unordered_map<std::string, std::string> index_variables,
@@ -47,7 +48,7 @@ namespace c2l::algorithms
             , variable_values(std::move(variable_values))
         {}
     };
-
+    
     struct PseudocodeDisplay
     {
         std::vector<std::string> lines;
