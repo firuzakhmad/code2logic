@@ -1,0 +1,14 @@
+{
+  "available_algorithms":
+  [
+    {
+      "id": "bubble_sort",
+      "type": "BUBBLE_SORT"
+    },
+    {
+      "id": "quick_sort",
+      "type": "QUICK_SORT"
+    }
+  ]
+}
+
