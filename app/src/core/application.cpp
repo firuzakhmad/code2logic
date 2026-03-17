@@ -27,6 +27,7 @@ namespace c2l
 
         m_file_system = std::make_unique<core::filesystem::StdFileSystem>();
         m_json_config_manager = std::make_unique<core::JsonConfigManager>(*m_file_system, *m_thread_manager);
+        m_algorithm_registry = std::make_unique<algorithms::AlgorithmRegistry>(*m_json_config_manager);
 
         m_resource_manager = std::make_unique<core::resources::ResourceManager>(*m_file_system, *m_thread_manager);
         m_resource_manager->set_memory_budget(64 * 1024 * 1024);
@@ -37,10 +38,13 @@ namespace c2l
             *m_resource_manager,
             *m_json_config_manager);
 
+
+
         m_scene_manager = std::make_unique<scenes::SceneManager>(
             *m_renderer,
             *m_thread_manager,
             *m_json_config_manager,
+            *m_algorithm_registry,
             *m_resource_manager,
             *m_icon_manager);
 

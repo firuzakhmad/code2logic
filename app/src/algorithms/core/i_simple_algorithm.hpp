@@ -2,11 +2,10 @@
 #define CODE2LOGIC_I_SIMPLE_ALGORITHM_HPP
 
 #include <vector>
-#include <string>
 
-#include "algorithm_observer.hpp"
-#include "algorithms/algorithm_types.hpp"
-#include "algorithms/algorithm_step.hpp"
+#include "algorithms/core/i_algorithm_metadata.hpp"
+#include "algorithms/core/algorithm_observer.hpp"
+#include "algorithms/core/algorithm_step.hpp"
 
 namespace c2l::algorithms
 {
@@ -29,6 +28,9 @@ namespace c2l::algorithms
         [[nodiscard]] virtual size_t get_current_step_index() const         = 0;
         [[nodiscard]] virtual bool is_complete() const                      = 0;
         [[nodiscard]] virtual bool is_steps_empty_or_invalid() const        = 0;
+
+        [[nodiscard]] virtual const IAlgorithmMetadata*
+        metadata() const noexcept     = 0;
     };
 } // namespace c2l::algorithms
 

@@ -13,11 +13,13 @@ namespace c2l::scenes
         graphics::Renderer& renderer,
         core::ThreadManager& thread_manager,
         core::JsonConfigManager& json_config_manager,
+        algorithms::AlgorithmRegistry& algorithm_registry,
         core::resources::ResourceManager& resource_manager,
         ui::managers::IconManager& icon_manager)
             : m_renderer{renderer}
             , m_thread_manager{thread_manager}
             , m_json_config_manager{json_config_manager}
+            , m_algorithm_registry{algorithm_registry}
             , m_resource_manager{resource_manager}
             , m_icon_manager{icon_manager}
     {
@@ -34,24 +36,30 @@ namespace c2l::scenes
             m_renderer,
             m_thread_manager,
             m_json_config_manager,
+            m_algorithm_registry,
             m_resource_manager,
-            m_icon_manager);
+            m_icon_manager
+        );
 
         // Create main menu
         const auto main_menu_scene = std::make_shared<scenes::MainMenuScene>(
             m_renderer,
             m_thread_manager,
             m_json_config_manager,
+            m_algorithm_registry,
             m_resource_manager,
-            m_icon_manager);
+            m_icon_manager
+        );
 
 
         const auto algorithm_comparison_scene = std::make_shared<scenes::AlgorithmComparisonScene>(
             m_renderer,
             m_thread_manager,
             m_json_config_manager,
+            m_algorithm_registry,
             m_resource_manager,
-            m_icon_manager);
+            m_icon_manager
+        );
 
         register_scene(SceneType::MAIN_MENU, main_menu_scene);
         register_scene(SceneType::ALGORITHM_VISUALIZER, algorithm_scene);
@@ -65,7 +73,10 @@ namespace c2l::scenes
     {
         if (m_scenes.find(scene_type) != m_scenes.end())
         {
-            LOG_WARNING("Scene '{}' already exists, replacing", scene_type_to_string(scene_type));
+            LOG_WARNING(
+                "Scene '{}' already exists, replacing", 
+                scene_type_to_string(scene_type)
+            );
         }
 
         // Casting to BaseScene to set callbacks for switching between scenes
@@ -108,7 +119,10 @@ namespace c2l::scenes
         auto it = m_scenes.find(scene_type);
         if (it == m_scenes.end())
         {
-            LOG_ERROR("Scene {} not found", scene_type_to_string(scene_type));
+            LOG_ERROR(
+                "Scene {} not found", 
+                scene_type_to_string(scene_type)
+            );
             return;
         }
 
@@ -141,7 +155,10 @@ namespace c2l::scenes
         auto it = m_scenes.find(scene_type);
         if (it == m_scenes.end())
         {
-            LOG_ERROR("Scene {} not found", scene_type_to_string(scene_type));
+            LOG_ERROR(
+                "Scene {} not found", 
+                scene_type_to_string(scene_type)
+            );
             return;
         }
 
@@ -159,7 +176,8 @@ namespace c2l::scenes
     }
 
 
-    void SceneManager::push_scene_immediate(const SceneType& scene_type)
+    void SceneManager::push_scene_immediate(
+        const SceneType& scene_type)
     {
         auto it = m_scenes.find(scene_type);
         if (it == m_scenes.end()) return;

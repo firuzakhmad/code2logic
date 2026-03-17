@@ -25,7 +25,7 @@ namespace c2l::core
      *
      * Key Features:
      * - Priority-based thread scheduling with thread type support
-     * - Multiple priority queues (MAIN > SIMULATION > IO > BACKGROUND)
+     * - Multiple priority queues (MAIN > COMPUTE > IO > BACKGROUND)
      * - Work-stealing task queue
      * - Sub-millisecond task dispatch latency
      * - Exception resilience policies with retry mechanisms
@@ -45,7 +45,7 @@ namespace c2l::core
         enum class ThreadType : uint8_t
         {
             MAIN,       // Highest priority - UI, rendering, input
-            SIMULATION, // Medium priority - game logic, physics
+            COMPUTE,    // Medium priority - game logic, physics
             IO,         // Lowest priority - file I/O, network, loading
             BACKGROUND  // Very low priority - cleanup, analytics
         };
@@ -67,7 +67,7 @@ namespace c2l::core
             , enable_dynamic_scaling{true}
             , thread_configs({
                 {ThreadType::MAIN, {1, 2, std::chrono::milliseconds(100), false}},
-                {ThreadType::SIMULATION, {1, 4, std::chrono::milliseconds(500), true}},
+                {ThreadType::COMPUTE, {1, 4, std::chrono::milliseconds(500), true}},
                 {ThreadType::IO, {1, 8, std::chrono::milliseconds(10000), true}},
                 {ThreadType::BACKGROUND, {1, 2, std::chrono::milliseconds(30000), true}}})
             {}
@@ -511,7 +511,7 @@ namespace c2l::core
             t.description = typeid(F).name();
 
             // Enqueuing based on priority
-            if (thread_type == ThreadType::MAIN || thread_type == ThreadType::SIMULATION) {
+            if (thread_type == ThreadType::MAIN || thread_type == ThreadType::COMPUTE) {
                 m_priority_queue.push(std::move(t));
             } else {
                 m_task_queues[thread_type].push(std::move(t));
@@ -603,7 +603,7 @@ namespace c2l::core
                 t.timeout = m_config.thread_configs[thread_type].timeout;
                 t.description = "batch_task";
 
-                if (thread_type == ThreadType::MAIN || thread_type == ThreadType::SIMULATION) {
+                if (thread_type == ThreadType::MAIN || thread_type == ThreadType::COMPUTE) {
                     m_priority_queue.push(std::move(t));
                 } else {
                     m_task_queues[thread_type].push(std::move(t));

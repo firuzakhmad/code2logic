@@ -1,4 +1,4 @@
-#include "algorithms/json_algorithm_base.hpp"
+#include "algorithms/core/json_algorithm_base.hpp"
 #include "core/json_config_manager/json_config_manager.hpp"
 #include "algorithms/managers/algorithm_manager.hpp"
 
@@ -65,6 +65,10 @@ namespace c2l::algorithms
         AlgorithmType type
     ) const
     {
+	    // Loading algorithm
+	    manager.load_algorithm_config(type).get();
+
+	    // Fetching loaded algorithm information from its json file.
         auto algorithm_config = manager.get_algorithm_config(type);
 
         if (algorithm_config.empty())
@@ -618,5 +622,11 @@ namespace c2l::algorithms
 
         return {};
     }
-    	
+
+    const IAlgorithmMetadata*
+    JsonAlgorithmBase::metadata() const noexcept
+	{
+	    return this;
+	}
+
 } // namespace c2l::algorithms

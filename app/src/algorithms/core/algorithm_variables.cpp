@@ -2,7 +2,7 @@
 // Created by Akhmad on 1/2/26.
 //
 
-#include "algorithms/algorithm_variable.hpp"
+#include "algorithms/core/algorithm_variable.hpp"
 
 #include <unordered_map>
 #include <string>

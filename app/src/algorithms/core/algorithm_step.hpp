@@ -5,8 +5,8 @@
 #ifndef CODE2LOGIC_ALGORITHM_STEP_HPP
 #define CODE2LOGIC_ALGORITHM_STEP_HPP
 
-#include "algorithms/algorithm_variable.hpp"
-#include "algorithm_step_operation.hpp"
+#include "algorithms/core/algorithm_variable.hpp"
+#include "algorithms/core/algorithm_step_operation.hpp"
 #include "core/utils/logger/logger.hpp"
 
 #include <vector>

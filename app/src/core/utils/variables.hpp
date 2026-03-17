@@ -12,8 +12,13 @@ namespace c2l::core
 #define ICON_BUTTON_WIDTH           20.0f
 #define ICON_BUTTON_HEIGHT          20.0f
 
+#define BUTTON_WIDTH                80.0f
+
 #define PROGRESS_BAR_WIDTH          20.0f
 #define PROGRESS_BAR_HEIGHT         20.0f
+
+#define ALGORITHM_COMPUTATION_MIN_STEEP 0.1f
+#define ALGORITHM_COMPUTATION_MAX_STEEP 20.f
 
 #define SLIDER_WIDTH                100.0f
 #define SLIDER_HEIGHT               20.0f

@@ -11,7 +11,7 @@ namespace c2l::core
     {
         switch (type) {
             case ThreadType::MAIN:          return "MAIN";
-            case ThreadType::SIMULATION:    return "SIMULATION";
+            case ThreadType::COMPUTE:       return "COMPUTE";
             case ThreadType::IO:            return "IO";
             case ThreadType::BACKGROUND:    return "BACKGROUND";
 
@@ -257,11 +257,11 @@ namespace c2l::core
             return task;
         }
 
-        // 3. Checking SIMULATION queue
-        if (!m_task_queues[ThreadType::SIMULATION].empty())
+        // 3. Checking COMPUTE queue
+        if (!m_task_queues[ThreadType::COMPUTE].empty())
         {
-            Task task = std::move(m_task_queues[ThreadType::SIMULATION].front());
-            m_task_queues[ThreadType::SIMULATION].pop();
+            Task task = std::move(m_task_queues[ThreadType::COMPUTE].front());
+            m_task_queues[ThreadType::COMPUTE].pop();
             --m_total_queued_tasks;
             return task;
         }
@@ -314,11 +314,11 @@ namespace c2l::core
             return task;
         }
 
-        // 3. Checking SIMULATION queue
-        if (!m_task_queues[ThreadType::SIMULATION].empty())
+        // 3. Checking COMPUTE queue
+        if (!m_task_queues[ThreadType::COMPUTE].empty())
         {
-            Task task = std::move(m_task_queues[ThreadType::SIMULATION].front());
-            m_task_queues[ThreadType::SIMULATION].pop();
+            Task task = std::move(m_task_queues[ThreadType::COMPUTE].front());
+            m_task_queues[ThreadType::COMPUTE].pop();
             --m_total_queued_tasks;
             return task;
         }
@@ -674,7 +674,7 @@ namespace c2l::core
     {
         std::shared_lock<std::shared_mutex> lock(m_queue_mutex);
 
-        if (thread_type == ThreadType::MAIN || thread_type == ThreadType::SIMULATION)
+        if (thread_type == ThreadType::MAIN || thread_type == ThreadType::COMPUTE)
         {
             // Counting tasks in priority queue
             size_t count = 0;
@@ -822,7 +822,7 @@ namespace c2l::core
     {
         return {
             ThreadType::MAIN,
-            ThreadType::SIMULATION,
+            ThreadType::COMPUTE,
             ThreadType::IO,
             ThreadType::BACKGROUND
         };

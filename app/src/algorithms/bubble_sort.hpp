@@ -5,9 +5,9 @@
 #ifndef CODE2LOGIC_BUBBLE_SORT_ALGORITHM_HPP
 #define CODE2LOGIC_BUBBLE_SORT_ALGORITHM_HPP
 
-#include "algorithms/json_algorithm_base.hpp"
-#include "algorithms/algorithm_state_tracker.hpp"
-#include "algorithms/algorithm_step_operation.hpp"
+#include "algorithms/core/json_algorithm_base.hpp"
+#include "algorithms/core/algorithm_state_tracker.hpp"
+#include "algorithms/core/algorithm_step_operation.hpp"
 #include "core/json_config_manager/json_config_manager.hpp"
 
 namespace c2l::algorithms

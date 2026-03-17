@@ -1,5 +1,5 @@
 #include "scenes/algorithm_visualizer_scene.hpp"
-#include "algorithms/algorithm_types.hpp"
+#include "algorithms/core/algorithm_types.hpp"
 #include "core/utils/utils.hpp"
 #include "core/utils/logger/logger.hpp"
 #include "core/utils/variables.hpp"
@@ -12,19 +12,21 @@ namespace c2l::scenes
         graphics::Renderer& renderer,
         core::ThreadManager& thread_manager,
         core::JsonConfigManager& json_config_manager,
+        algorithms::AlgorithmRegistry& algorithm_registry,
         core::resources::ResourceManager& resource_manager,
         c2l::ui::managers::IconManager& icon_manager)
         : BaseScene(
             renderer, 
             thread_manager, 
-            json_config_manager, 
+            json_config_manager,
+            algorithm_registry,
             resource_manager, 
             icon_manager
         )
         , m_algorithm_manager{
             std::make_unique<algorithms::AlgorithmManager>(
                 thread_manager, 
-                json_config_manager
+                algorithm_registry
             )
         }
     {
@@ -44,8 +46,7 @@ namespace c2l::scenes
         m_algorithm_manager->generate_and_set_random_data();
 
         // Cache categorized algorithms
-        m_cached_categorized_algorithms = 
-            m_algorithm_manager->get_available_categorized_algorithms();
+        m_cached_categorized_algorithms = m_algorithm_registry.get_available_categorized_algorithms();
 
         LOG_INFO("AlgorithmVisualizerScene initialized");
     }
@@ -193,30 +194,78 @@ namespace c2l::scenes
     void AlgorithmVisualizerScene::setup_main_menu()
     {
        std::vector<ui::components::MainMenu::MenuItem> view_items = {
-            {"Algorithm Selector", [this]() { 
-                m_show_algorithm_selector_panel = !m_show_algorithm_selector_panel; 
-            }, nullptr, "F1"},
-            {"Visualization", [this]() { 
-                m_show_algorithm_visualization_panel = !m_show_algorithm_visualization_panel; 
-            }, nullptr, "F2"},
-            {"Controls", [this]() { 
-                m_show_algorithm_control_panel = !m_show_algorithm_control_panel; 
-            }, nullptr, "F3"},
-            {"Code Panel", [this]() { 
-                m_show_algorithm_code_panel = !m_show_algorithm_code_panel; 
-            }, nullptr, "F4"},
-            {"Description", [this]() { 
-                m_show_algorithm_description_panel = !m_show_algorithm_description_panel; 
-            }, nullptr, "F5"},
-            {"Statistics", [this]() { 
-                m_show_algorithm_stats_panel = !m_show_algorithm_stats_panel; 
-            }, nullptr, "F6"},
-            {"Variable Inspector", [this]() { 
-                m_show_algorithm_variable_inspector_panel = !m_show_algorithm_variable_inspector_panel; 
-            }, nullptr, "F7"},
-            {"Thread Info", [this]() { 
-                m_show_thread_info_panel = !m_show_thread_info_panel; 
-            }, nullptr, "F8"},
+            {
+                "Algorithm Selector", 
+                [this]() 
+                { 
+                    m_show_algorithm_selector_panel = !m_show_algorithm_selector_panel; 
+                }, 
+                nullptr, 
+                "F1"
+            },
+            {
+                "Visualization", 
+                [this]() 
+                { 
+                    m_show_algorithm_visualization_panel = !m_show_algorithm_visualization_panel; 
+                },
+                nullptr, 
+                "F2"
+            },
+            {
+                "Controls", 
+                [this]() 
+                { 
+                    m_show_algorithm_control_panel = !m_show_algorithm_control_panel; 
+                }, 
+                nullptr, 
+                "F3"
+            },
+            {
+                "Code Panel", 
+                [this]() 
+                { 
+                    m_show_algorithm_code_panel = !m_show_algorithm_code_panel; 
+                }, 
+                nullptr, 
+                "F4"
+            },
+            {
+                "Description", 
+                [this]() 
+                { 
+                    m_show_algorithm_description_panel = !m_show_algorithm_description_panel; 
+                }, 
+                nullptr, 
+                "F5"
+            },
+            {
+                "Statistics", 
+                [this]() 
+                { 
+                    m_show_algorithm_stats_panel = !m_show_algorithm_stats_panel; 
+                }, 
+                nullptr, 
+                "F6"
+            },
+            {
+                "Variable Inspector", 
+                [this]() 
+                { 
+                    m_show_algorithm_variable_inspector_panel = !m_show_algorithm_variable_inspector_panel; 
+                }, 
+                nullptr, 
+                "F7"
+            },
+            {
+                "Thread Info", 
+                [this]() 
+                { 
+                    m_show_thread_info_panel = !m_show_thread_info_panel; 
+                }, 
+                nullptr, 
+                "F8"
+            },
         };
 
         m_main_menu->add_menu("View", std::move(view_items));
@@ -224,6 +273,11 @@ namespace c2l::scenes
 
     void AlgorithmVisualizerScene::render_algorithm_selector_panel()
     {
+        ImGui::SetNextWindowSize(
+            DEFAULT_WINDOW_SIZE, 
+            ImGuiCond_FirstUseEver
+        );
+
         ImGui::Begin(
             "Algorithm Selector", 
             &m_show_algorithm_selector_panel, 
@@ -235,8 +289,12 @@ namespace c2l::scenes
 
         // Search box
         static char search_buffer[128] = "";
-        ImGui::InputTextWithHint("##Search", "Search algorithms...", 
-                                search_buffer, std::size(search_buffer));
+        ImGui::InputTextWithHint(
+            "##Search", 
+            "Search algorithms...", 
+            search_buffer, 
+            std::size(search_buffer)
+        );
         ImGui::Separator();
 
         // Algorithm categories
@@ -244,11 +302,13 @@ namespace c2l::scenes
         {
             std::string category_id = std::string(category_name) + "_category";
             
-            if (ImGui::TreeNodeEx(category_id.c_str(), 
-                                 ImGuiTreeNodeFlags_DefaultOpen, 
-                                 "%s (%zu)", 
-                                 std::string(category_name).c_str(), 
-                                 algorithms.size()))
+            if (ImGui::TreeNodeEx(
+                    category_id.c_str(), 
+                    ImGuiTreeNodeFlags_DefaultOpen, 
+                    "%s (%zu)", 
+                    std::string(category_name).c_str(), 
+                    algorithms.size())
+                )
             {
                 for (const auto* algorithm : algorithms)
                 {
@@ -259,10 +319,18 @@ namespace c2l::scenes
                         std::string lower_name = name;
                         std::string lower_search = search_buffer;
                         
-                        std::transform(lower_name.begin(), lower_name.end(), 
-                                     lower_name.begin(), ::tolower);
-                        std::transform(lower_search.begin(), lower_search.end(), 
-                                     lower_search.begin(), ::tolower);
+                        std::transform(
+                            lower_name.begin(), 
+                            lower_name.end(), 
+                            lower_name.begin(), 
+                            ::tolower
+                        );
+                        std::transform(
+                            lower_search.begin(), 
+                            lower_search.end(), 
+                            lower_search.begin(), 
+                            ::tolower
+                        );
                                      
                         if (lower_name.find(lower_search) == std::string::npos)
                             continue;
@@ -275,13 +343,17 @@ namespace c2l::scenes
                     ImGui::PushID(algorithm->id.data());
                     
                     if (is_current)
+                    {
                         ImGui::PushStyleColor(
                             ImGuiCol_Text, 
                             ImVec4(0.2f, 0.8f, 0.2f, 1.0f)
                         );
-
-                    if (ImGui::Selectable(std::string(algorithm->display_name).c_str(), 
-                                         is_current))
+                    }
+                        
+                    if (ImGui::Selectable(
+                            std::string(algorithm->display_name).c_str(), 
+                            is_current)
+                        )
                     {
                         m_algorithm_manager->load_algorithm(algorithm->type);
                     }
@@ -298,10 +370,14 @@ namespace c2l::scenes
                     //     if (metadata)
                     //     {
                     //         ImGui::BeginTooltip();
-                    //         ImGui::TextColored(ImVec4(1,1,0,1), "%s", 
-                    //                           metadata->get_display_name().c_str());
+                    //         ImGui::TextColored(
+                    //             ImVec4(1,1,0,1), "%s", 
+                    //             metadata->get_display_name().c_str()
+                    //         );
                     //         ImGui::Separator();
-                    //         ImGui::TextWrapped("%s", metadata->get_description().brief.c_str());
+                    //         ImGui::TextWrapped(
+                    //             "%s", metadata->get_description().brief.c_str()
+                    //         );
                     //         ImGui::EndTooltip();
                     //     }
                     // }
@@ -317,6 +393,11 @@ namespace c2l::scenes
 
     void AlgorithmVisualizerScene::render_algorithm_code_panel()
     {
+        ImGui::SetNextWindowSize(
+            DEFAULT_WINDOW_SIZE, 
+            ImGuiCond_FirstUseEver
+        );
+
         ImGui::Begin(
             "Pseudocode", 
             &m_show_algorithm_code_panel, 
@@ -329,8 +410,11 @@ namespace c2l::scenes
         if (metadata)
         {
             // Header with algorithm name and complexity
-            ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "%s", 
-                             metadata->get_display_name().c_str());
+            ImGui::TextColored(
+                ImVec4(0.6f, 0.8f, 1.0f, 1.0f), 
+                "%s", 
+                metadata->get_display_name().c_str()
+            );
             ImGui::SameLine();
             
             ImGui::Separator();
@@ -349,15 +433,22 @@ namespace c2l::scenes
             ImGuiTableFlags_ScrollY |
             ImGuiTableFlags_BordersInnerV))
         {
-            ImGui::TableSetupColumn("#", ImGuiTableColumnFlags_WidthFixed, 40.0f);
-            ImGui::TableSetupColumn("Code", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn(
+                "#", ImGuiTableColumnFlags_WidthFixed, 
+                40.0f
+            );
+            ImGui::TableSetupColumn(
+                "Code", 
+                ImGuiTableColumnFlags_WidthStretch
+            );
 
             for (size_t i = 0; i < display.lines.size(); ++i)
             {
                 size_t line_number = i + 1;
-                bool highlighted = std::find(display.highlighted_lines.begin(),
-                                           display.highlighted_lines.end(),
-                                           line_number) != display.highlighted_lines.end();
+                bool highlighted = std::find(
+                    display.highlighted_lines.begin(),
+                    display.highlighted_lines.end(),
+                    line_number) != display.highlighted_lines.end();
 
                 auto it = display.line_index_values.find(line_number);
                 const auto* vars = (it != display.line_index_values.end()) 
@@ -377,10 +468,17 @@ namespace c2l::scenes
         {
             ImGui::Spacing();
             ImGui::Separator();
-            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Current Operation");
+            ImGui::TextColored(
+                ImVec4(1.0f, 0.8f, 0.2f, 1.0f), 
+                "Current Operation"
+            );
             ImGui::Spacing();
 
-            ImGui::BeginChild("OperationDetails", ImVec2(0, 0), true);
+            ImGui::BeginChild(
+                "OperationDetails", 
+                ImVec2(0, 0), 
+                true
+            );
 
             for (const auto& h : highlights)
             {
@@ -392,7 +490,10 @@ namespace c2l::scenes
                 // Variable values
                 if (!h.index_variables.empty())
                 {
-                    ImGui::TextColored(ImVec4(0.3f, 0.9f, 0.3f, 1.0f), "Indices:");
+                    ImGui::TextColored(
+                        ImVec4(0.3f, 0.9f, 0.3f, 1.0f), 
+                        "Indices:"
+                    );
                     ImGui::Indent();
                     for (const auto& [k, v] : h.index_variables)
                         ImGui::Text("%s = %s", k.c_str(), v.c_str());
@@ -401,7 +502,10 @@ namespace c2l::scenes
 
                 if (!h.variable_values.empty())
                 {
-                    ImGui::TextColored(ImVec4(0.3f, 0.9f, 0.3f, 1.0f), "Values:");
+                    ImGui::TextColored(
+                        ImVec4(0.3f, 0.9f, 0.3f, 1.0f), 
+                        "Values:"
+                    );
                     ImGui::Indent();
                     for (const auto& [k, v] : h.variable_values)
                         ImGui::Text("%s = %s", k.c_str(), v.c_str());
@@ -410,7 +514,10 @@ namespace c2l::scenes
 
                 // Code line
                 ImGui::Spacing();
-                ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "Code:");
+                ImGui::TextColored(
+                    ImVec4(0.6f, 0.8f, 1.0f, 1.0f), 
+                    "Code:"
+                );
                 ImGui::Indent();
                 ImGui::Text("%s", h.code_line.c_str());
                 ImGui::Unindent();
@@ -457,7 +564,11 @@ namespace c2l::scenes
             {
                 if (ImGui::BeginTabItem("Detailed Analysis"))
                 {
-                    ImGui::BeginChild("DetailedScroll", ImVec2(0, 300), true);
+                    ImGui::BeginChild(
+                        "DetailedScroll", 
+                        ImVec2(0, 300), 
+                        true
+                    );
                     
                     for (const auto& line : metadata->get_description().detailed)
                     {
@@ -478,7 +589,11 @@ namespace c2l::scenes
                         else if (line.find(":") != std::string::npos && 
                                  line.length() < 30)
                         {
-                            ImGui::TextColored(ImVec4(1,1,0,1), "%s", line.c_str());
+                            ImGui::TextColored(
+                                ImVec4(1,1,0,1), 
+                                "%s", 
+                                line.c_str()
+                            );
                         }
                         else
                         {
@@ -549,6 +664,11 @@ namespace c2l::scenes
         
         if (!algorithm || !metadata) return;
 
+        ImGui::SetNextWindowSize(
+            DEFAULT_WINDOW_SIZE, 
+            ImGuiCond_FirstUseEver
+        );
+
         ImGui::Begin(
             "Variable Inspector", 
             &m_show_algorithm_variable_inspector_panel
@@ -583,30 +703,49 @@ namespace c2l::scenes
                     std::stoi(var_info.color.substr(1, 2), nullptr, 16),
                     std::stoi(var_info.color.substr(3, 2), nullptr, 16),
                     std::stoi(var_info.color.substr(5, 2), nullptr, 16),
-                    255);
+                    255
+                );
                     
-                ImGui::ColorButton("##color", ImColor(color), 
-                                 ImGuiColorEditFlags_NoTooltip | 
-                                 ImGuiColorEditFlags_NoBorder, 
-                                 ImVec2(16, 16));
+                ImGui::ColorButton(
+                    "##color", 
+                    ImColor(color), 
+                    ImGuiColorEditFlags_NoTooltip | 
+                    ImGuiColorEditFlags_NoBorder, 
+                    ImVec2(16, 16)
+                );
                 ImGui::SameLine();
             }
 
-            ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), "%s:", 
-                             var_info.display_name.c_str());
+            ImGui::TextColored(
+                ImVec4(0.8f, 0.8f, 0.8f, 1.0f), 
+                "%s:", 
+                var_info.display_name.c_str()
+            );
             ImGui::SameLine();
-            ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "%s", 
-                             value_str.c_str());
+            ImGui::TextColored(
+                ImVec4(0.2f, 1.0f, 0.2f, 1.0f), 
+                "%s", 
+                value_str.c_str()
+            );
 
             // Tooltip with description
             if (ImGui::IsItemHovered() && !var_info.description.empty())
             {
                 ImGui::BeginTooltip();
-                ImGui::TextColored(ImVec4(1,1,0,1), "%s", 
-                                  var_info.display_name.c_str());
+                ImGui::TextColored(
+                    ImVec4(1,1,0,1), 
+                    "%s", 
+                    var_info.display_name.c_str()
+                );
                 ImGui::Separator();
-                ImGui::TextWrapped("%s", var_info.description.c_str());
-                ImGui::Text("Type: %s", var_info.type.c_str());
+                ImGui::TextWrapped(
+                    "%s", 
+                    var_info.description.c_str()
+                );
+                ImGui::Text(
+                    "Type: %s", 
+                    var_info.type.c_str()
+                );
                 ImGui::EndTooltip();
             }
 
@@ -628,7 +767,9 @@ namespace c2l::scenes
         
         if (metadata)
         {
-            core::utils::heading_colored_text(metadata->get_display_name().c_str());
+            core::utils::heading_colored_text(
+                metadata->get_display_name().c_str()
+            );
                 
             ImGui::SameLine();
             ImGui::TextDisabled(
@@ -638,7 +779,9 @@ namespace c2l::scenes
         }
         else
         {
-            core::utils::heading_colored_text("Algorithm Selector");
+            core::utils::heading_colored_text(
+                "Algorithm Selector"
+            );
         }
     }
 
@@ -648,8 +791,11 @@ namespace c2l::scenes
         ImGui::Text("Complexity");
         ImGui::Separator();
 
-        if (ImGui::BeginTable("ComplexityBadges", 2, 
-            ImGuiTableFlags_SizingStretchSame))
+        if (ImGui::BeginTable(
+                "ComplexityBadges", 
+                2, 
+                ImGuiTableFlags_SizingStretchSame)
+            )
         {
             ImGui::TableNextRow();
             
@@ -694,8 +840,10 @@ namespace c2l::scenes
 
         const auto& props = properties.get_as_key_value();
         
-        if (ImGui::BeginTable("PropertiesTable", 2, 
-            ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit))
+        if (ImGui::BeginTable(
+                "PropertiesTable", 2, 
+                ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit)
+            )
         {
             for (const auto& [name, value] : props)
             {
@@ -732,13 +880,21 @@ namespace c2l::scenes
 
         if (highlighted)
         {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.2f, 0.2f, 0.0f, 0.3f));
+            ImGui::PushStyleColor(
+                ImGuiCol_Text, 
+                ImVec4(1.0f, 1.0f, 0.0f, 1.0f)
+            );
+            ImGui::PushStyleColor(
+                ImGuiCol_ChildBg, 
+                ImVec4(0.2f, 0.2f, 0.0f, 0.3f)
+            );
             
-            ImGui::BeginChild(ImGui::GetID(line.c_str()), 
-                            ImVec2(0, ImGui::GetTextLineHeightWithSpacing()), 
-                            false, 
-                            ImGuiWindowFlags_NoScrollbar);
+            ImGui::BeginChild(
+                ImGui::GetID(line.c_str()), 
+                ImVec2(0, ImGui::GetTextLineHeightWithSpacing()), 
+                false, 
+                ImGuiWindowFlags_NoScrollbar
+            );
         }
 
         ImGui::Text("%s", line.c_str());
@@ -751,7 +907,10 @@ namespace c2l::scenes
             for (const auto& [k, v] : *vars)
             {
                 ImGui::SameLine();
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.9f, 0.3f, 1.0f));
+                ImGui::PushStyleColor(
+                    ImGuiCol_Text, 
+                    ImVec4(0.3f, 0.9f, 0.3f, 1.0f)
+                );
                 ImGui::Text("  %s=%s", k.c_str(), v.c_str());
                 ImGui::PopStyleColor();
             }
@@ -766,19 +925,34 @@ namespace c2l::scenes
 
     void AlgorithmVisualizerScene::render_algorithm_visualization_panel()
     {
-        const auto* current_algorithm = m_algorithm_manager->get_current_algorithm();
+        const auto* current_algorithm = 
+            m_algorithm_manager->get_current_algorithm();
         if (!current_algorithm) return;
 
-        ImGui::Begin("Algorithm Visualization", &m_show_algorithm_visualization_panel);
+        ImGui::SetNextWindowSize(
+            DEFAULT_WINDOW_SIZE, 
+            ImGuiCond_FirstUseEver
+        );
+
+        ImGui::Begin(
+            "Algorithm Visualization", 
+            &m_show_algorithm_visualization_panel
+        );
 
         // Visualization part - render below the controls
-        auto* current_visualizer = m_algorithm_manager->get_current_visualizer();
+        auto* current_visualizer = 
+            m_algorithm_manager->get_current_visualizer();
         if (current_visualizer)
         {
             ImGui::Separator();
-            m_icon_manager.render_icon(ui::managers::IconType::ARRAY, {25, 25});
+            m_icon_manager.render_icon(
+                ui::managers::IconType::ARRAY, 
+                {25, 25}
+            );
             ImGui::SameLine();
-            core::utils::heading_colored_text("Array Visualization");
+            core::utils::heading_colored_text(
+                "Array Visualization"
+            );
 
             current_visualizer->render();
         }
@@ -793,7 +967,14 @@ namespace c2l::scenes
 
         if (!algorithm || !metadata) return;
 
-        ImGui::Begin("Algorithm Statistics", &m_show_algorithm_stats_panel);
+        ImGui::SetNextWindowSize(
+            DEFAULT_WINDOW_SIZE, 
+            ImGuiCond_FirstUseEver
+        );
+
+        ImGui::Begin(
+            "Algorithm Statistics", 
+            &m_show_algorithm_stats_panel);
 
         ImGui::TextColored(ImVec4(0, 1, 0, 1), "Statistics");
         ImGui::Separator();
@@ -803,7 +984,8 @@ namespace c2l::scenes
         ImGui::Text("Algorithm: %s", metadata->get_display_name().c_str());
         ImGui::Text(
             "Category: %s",
-            std::string(algorithms::algorithm_display_category(metadata->get_type())).c_str()
+            std::string(algorithms::algorithm_display_category(
+                metadata->get_type())).c_str()
         );
 
         ImGui::Text("Current Step: %zu / %zu",
@@ -824,11 +1006,16 @@ namespace c2l::scenes
         ImGui::Text("Space Complexity: %s",
             complexity.space.c_str());
 
-        if (metadata->get_category() == algorithms::AlgorithmCategory::SORTING) {
-            ImGui::Text("Estimated Comparisons: %zu",
-                current_step.visualization.comparisons);
-            ImGui::Text("Estimated Swaps: %zu",
-                current_step.visualization.swaps);
+        if (metadata->get_category() == algorithms::AlgorithmCategory::SORTING) 
+        {
+            ImGui::Text(
+                "Estimated Comparisons: %zu",
+                current_step.visualization.comparisons
+            );
+            ImGui::Text(
+                "Estimated Swaps: %zu",
+                current_step.visualization.swaps
+            );
         }
 
         ImGui::End();
@@ -836,7 +1023,7 @@ namespace c2l::scenes
 
     void AlgorithmVisualizerScene::setup_shortcuts_tooltip()
     {
-
+        // Todo
     }
 
     void AlgorithmVisualizerScene::render_algorithm_control_panel()
@@ -844,7 +1031,15 @@ namespace c2l::scenes
         auto* current_algorithm = m_algorithm_manager->get_current_algorithm();
         if (!current_algorithm) return;
         
-        ImGui::Begin("Playback Controls", &m_show_algorithm_control_panel);
+        ImGui::SetNextWindowSize(
+            DEFAULT_WINDOW_SIZE, 
+            ImGuiCond_FirstUseEver
+        );
+
+        ImGui::Begin(
+            "Playback Controls", 
+            &m_show_algorithm_control_panel
+        );
 
         // Play/Pause button
         auto play_pause_icon = m_algorithm_manager->is_playing()
@@ -855,13 +1050,15 @@ namespace c2l::scenes
             "play_pause_btn",
             play_pause_icon,
             [this]()
+            {
+                if (m_algorithm_manager->is_playing()) 
                 {
-                    if (m_algorithm_manager->is_playing()) {
-                        m_algorithm_manager->pause();
-                    } else {
-                        m_algorithm_manager->play();
-                    }
+                    m_algorithm_manager->pause();
+                } 
+                else {
+                    m_algorithm_manager->play();
                 }
+            }
         );
 
         ImGui::SameLine();
@@ -928,7 +1125,15 @@ namespace c2l::scenes
 
     void AlgorithmVisualizerScene::render_algorithm_data_control_panel()
     {
-        ImGui::Begin("Data Controls", &m_show_algorithm_data_control_panel);
+        ImGui::SetNextWindowSize(
+            DEFAULT_WINDOW_SIZE, 
+            ImGuiCond_FirstUseEver
+        );
+
+        ImGui::Begin(
+            "Data Controls", 
+            &m_show_algorithm_data_control_panel
+        );
         
         if (ImGui::Button("Generate Random Data")) {
             m_algorithm_manager->generate_and_set_random_data();
@@ -985,25 +1190,46 @@ namespace c2l::scenes
 
     void AlgorithmVisualizerScene::render_thread_info_panel()
     {
-        ImGui::Begin("Thread Information", &m_show_thread_info_panel);
+        ImGui::SetNextWindowSize(
+            DEFAULT_WINDOW_SIZE, 
+            ImGuiCond_FirstUseEver
+        );
+        
+        ImGui::Begin(
+            "Thread Information", 
+            &m_show_thread_info_panel
+        );
 
         ImGui::Text("Threading System:");
         ImGui::Separator();
 
         // Thread manager status
-        if (m_thread_manager.is_running()) {
-            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Thread Manager: ACTIVE");
-        } else {
-            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Thread Manager: INACTIVE");
+        if (m_thread_manager.is_running()) 
+        {
+            ImGui::TextColored(
+                ImVec4(0.0f, 1.0f, 0.0f, 1.0f), 
+                "Thread Manager: ACTIVE"
+            );
+        } else 
+        {
+            ImGui::TextColored(
+                ImVec4(1.0f, 0.0f, 0.0f, 1.0f), 
+                "Thread Manager: INACTIVE"
+            );
         }
 
         // Algorithm execution status
-        if (m_algorithm_manager) {
-            ImGui::Text("Background Execution: %s",
-                m_algorithm_manager->is_executing() ? "ACTIVE" : "INACTIVE");
+        if (m_algorithm_manager) 
+        {
+            ImGui::Text(
+                "Background Execution: %s",
+                m_algorithm_manager->is_executing() ? "ACTIVE" : "INACTIVE"
+            );
 
-            ImGui::Text("Playback: %s",
-                m_algorithm_manager->is_playing() ? "PLAYING" : "PAUSED");
+            ImGui::Text(
+                "Playback: %s",
+                m_algorithm_manager->is_playing() ? "PLAYING" : "PAUSED"
+            );
 
             ImGui::Text(
                 "Speed: %.1fx",  
@@ -1014,8 +1240,10 @@ namespace c2l::scenes
             ImGui::Separator();
             ImGui::Text("Performance:");
             ImGui::Text("UI Thread: Main");
-            ImGui::Text("Algorithm Thread: %s",
-                m_algorithm_manager->is_executing() ? "Background" : "Main");
+            ImGui::Text(
+                "Algorithm Thread: %s",
+                m_algorithm_manager->is_executing() ? "Background" : "Main"
+            );
         }
 
         // Controls

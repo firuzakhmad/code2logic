@@ -1,15 +1,16 @@
 #ifndef CODE2LOGIC_I_ALGORITHM_VISUALIZER_HPP
 #define CODE2LOGIC_I_ALGORITHM_VISUALIZER_HPP
 
-#include "algorithms/i_simple_algorithm.hpp"
-#include "algorithm_types.hpp"
-#include "algorithms/i_algorithm_metadata.hpp"
+#include "algorithms/core/i_simple_algorithm.hpp"
+#include "algorithms/core/algorithm_types.hpp"
+#include "algorithms/core/i_algorithm_metadata.hpp"
 
 namespace c2l::algorithms
 {
 	class IAlgorithmVisualizer
 	{
 	public:
+		explicit IAlgorithmVisualizer() = default;
 		virtual ~IAlgorithmVisualizer() = default;
 
 		virtual void initialize(

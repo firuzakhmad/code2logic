@@ -8,18 +8,22 @@ namespace c2l::scenes
 		graphics::Renderer& renderer,
 		core::ThreadManager& thread_manager,
 		core::JsonConfigManager& json_config_manager,
+		algorithms::AlgorithmRegistry& algorithm_registry,
 		core::resources::ResourceManager& resource_manager,
 		ui::managers::IconManager& icon_manager)
     : IScene(
 		renderer, 
 		thread_manager, 
-		json_config_manager, 
+		json_config_manager,
+		algorithm_registry,
 		resource_manager, 
 		icon_manager)
     , m_ui_manager{std::make_unique<ui::managers::UIManager>()}
     {
 	    setup_docking_layout();
-		m_main_menu = m_ui_manager->register_component<ui::components::MainMenu>();
+		m_main_menu = m_ui_manager->register_component<
+			ui::components::MainMenu
+		>();
 	}
 
 	BaseScene::~BaseScene() {}

@@ -3,7 +3,7 @@
 
 #include "core/file_system/i_file_system.hpp"
 #include "core/utils/thread_manager/thread_manager.hpp"
-#include "algorithms/algorithm_types.hpp"
+#include "algorithms/core/algorithm_types.hpp"
 
 #include <nlohmann/json.hpp>
 #include <filesystem>
@@ -172,6 +172,15 @@ namespace c2l::core
         );
 
         /**
+         * @brief Loads available algorithms based on id
+         */
+        std::future<LoadResult> load_available_algorithms_config(
+        const std::filesystem::path& path =
+            std::filesystem::path{"resources"} / "algorithms" / "available_algorithms.json",
+            bool async = true
+        );
+
+        /**
          * @brief Loads a custom configuration file
          */
         std::future<LoadResult> load_config(
@@ -258,16 +267,9 @@ namespace c2l::core
             const algorithms::AlgorithmType& algorithm_type) const;
 
         /**
-         * @brief Gets algorithm time complexity
+         * @brief Gets available algorithm configuration
          */
-        std::string get_algorithm_time_complexity(
-            const algorithms::AlgorithmType& algorithm_type) const;
-
-        /**
-         * @brief Gets algorithm space complexity
-         */
-        std::string get_algorithm_space_complexity(
-            const algorithms::AlgorithmType& algorithm_type) const;
+        nlohmann::json get_available_algorithms_config() const;
 
         /**
          * @brief Gets theme configuration
@@ -419,11 +421,6 @@ namespace c2l::core
         
         std::filesystem::path resolve_config_path(
             const std::filesystem::path& relative_path
-        ) const;
-
-        std::optional<std::reference_wrapper<const nlohmann::json>> find_json_pointer(
-            const nlohmann::json& config,
-            const std::string& json_pointer
         ) const;
 
         /**

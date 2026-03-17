@@ -5,13 +5,13 @@
 #ifndef CODE2LOGIC_ALGORITHM_MANAGER_HPP
 #define CODE2LOGIC_ALGORITHM_MANAGER_HPP
 
-#include "algorithms/json_algorithm_base.hpp"
+#include "algorithms/core/json_algorithm_base.hpp"
 #include "core/utils/thread_manager/thread_manager.hpp"
-#include "algorithms/algorithm_variable.hpp"
-#include "algorithms/algorithm_types.hpp"
-#include "algorithms/algorithm_observer.hpp"
-#include "algorithms/code_highlight.hpp"
-#include "algorithms/i_algorithm_visualizer.hpp"
+#include "algorithms/core/algorithm_variable.hpp"
+#include "algorithms/core/algorithm_types.hpp"
+#include "algorithms/core/algorithm_observer.hpp"
+#include "algorithms/core/code_highlight.hpp"
+#include "algorithms/visualizers/i_algorithm_visualizer.hpp"
 #include "core/json_config_manager/json_config_manager.hpp"
 
 #include <memory>
@@ -21,6 +21,7 @@
 #include <string>
 #include <optional>
 
+#include "algorithms/core/algorithm_registry.hpp"
 
 
 namespace c2l::algorithms
@@ -35,19 +36,14 @@ namespace c2l::algorithms
     {
     public:
         using AlgorithmPtr = std::unique_ptr<ISimpleAlgorithm>;
+        using VisualizerPtr = std::unique_ptr<IAlgorithmVisualizer>;
         using MetadataPtr = IAlgorithmMetadata*;
-        using VisualizaterPtr = std::unique_ptr<IAlgorithmVisualizer>;
 
-        using CategorizedAlgorithms = std::unordered_map<
-            std::string_view, 
-            std::vector<const AlgorithmInfo*>
-        >;
-
-        struct AlgorithmContext 
+        struct AlgorithmContext
         {
-            ISimpleAlgorithm* execution         {nullptr};
-            IAlgorithmMetadata* metadata        {nullptr};
-            IAlgorithmVisualizer* visualizer    {nullptr};
+            AlgorithmPtr execution;
+            VisualizerPtr visualizer;
+            const IAlgorithmMetadata *metadata  {nullptr};
             std::string name;
             AlgorithmType type                  {AlgorithmType::UNKNOWN};
 
@@ -58,9 +54,17 @@ namespace c2l::algorithms
 
             void reset()
             {
-                execution = nullptr;
+                if (execution)
+                {
+                    execution->reset();
+                }
+
+                if (visualizer)
+                {
+                    visualizer.reset();
+                }
+
                 metadata = nullptr;
-                visualizer = nullptr;
                 name.clear();
                 type = AlgorithmType::UNKNOWN;
             }
@@ -70,7 +74,7 @@ namespace c2l::algorithms
 
         explicit AlgorithmManager(
             core::ThreadManager& thread_manager,
-            core::JsonConfigManager& json_config_manager);
+            AlgorithmRegistry& algorithm_registry);
 
         ~AlgorithmManager() override;
 
@@ -78,23 +82,6 @@ namespace c2l::algorithms
         AlgorithmManager& operator=(const AlgorithmManager&) = delete;
         AlgorithmManager(AlgorithmManager&&) noexcept = delete;
         AlgorithmManager& operator=(AlgorithmManager&&) noexcept = delete;
-
-
-        // Algorithm registration
-        void register_algorithm(
-            AlgorithmType type,
-            std::unique_ptr<ISimpleAlgorithm> algorithm,
-            const VisualizationConfig& visualization_config = {}
-        );
-
-        void register_algorithm(
-            const std::string& name,
-            std::unique_ptr<ISimpleAlgorithm> algorithm,
-            const VisualizationConfig& visualization_config = {}
-        );
-
-        void unregister_algorithm(AlgorithmType type);
-        void unregister_algorithm(const std::string& name);
 
         // Algorithm control
         bool load_algorithm(AlgorithmType type);
@@ -124,7 +111,6 @@ namespace c2l::algorithms
         // Step management
         void on_step_changed() override;
 
-
         // Getters (thread-safe)
         /**
          * @brief Get code highlights for current step using JSON-driven highlighting
@@ -136,21 +122,13 @@ namespace c2l::algorithms
          */
         [[nodiscard]] const PseudocodeDisplay& get_current_pseudocode_with_highlights() const;
 
-        // Algorithm lists
-        [[nodiscard]] const std::vector<AlgorithmType>& get_available_algorithm_types() const;
-        [[nodiscard]] const std::vector<std::string>& get_available_algorithm_names() const;
-        [[nodiscard]] CategorizedAlgorithms get_available_categorized_algorithms() const;
-        
         // Current algorithm state
         // [[nodiscard]] const AlgorithmContext& get_current_context() const noexcept;
         [[nodiscard]] ISimpleAlgorithm* get_current_algorithm() const;
-        [[nodiscard]] IAlgorithmMetadata* get_current_metadata() const;
+        [[nodiscard]] const IAlgorithmMetadata *get_current_metadata() const;
         [[nodiscard]] IAlgorithmVisualizer* get_current_visualizer() const;
         [[nodiscard]] const std::string& get_current_algorithm_name() const;
         [[nodiscard]] AlgorithmType get_current_algorithm_type() const noexcept;
-
-        // Metadata queries
-        [[nodiscard]] std::vector<AlgorithmType> get_algorithm_types_by_category(AlgorithmCategory category) const;
 
         // Playback state
         [[nodiscard]] bool is_playing() const;
@@ -159,15 +137,6 @@ namespace c2l::algorithms
         [[nodiscard]] float get_speed() const;
 
     private:
-        void initialize_algorithms();
-
-        /**
-         * @brief Create appropriate visualizer for algorithm type
-         */
-        std::unique_ptr<IAlgorithmVisualizer> create_visualizer(
-            AlgorithmType type,
-            const VisualizationConfig& config);
-
         // Background execution
         void background_execution_loop();
         void safe_step_forward() const;
@@ -175,19 +144,10 @@ namespace c2l::algorithms
 
         void update_highlight_cache();
 
-
         core::ThreadManager& m_thread_manager;
-        core::JsonConfigManager& m_json_config_manager;
-
-        std::unordered_map<AlgorithmType, std::unique_ptr<ISimpleAlgorithm>> m_algorithms;
-        std::unordered_map<std::string, AlgorithmType> m_name_to_type_map;
-        std::vector<AlgorithmType> m_algorithm_types;
-        std::vector<std::string> m_algorithm_names;
+        AlgorithmRegistry& m_algorithm_registry;
 
         AlgorithmContext m_current_context;
-
-        // Visualization system
-        std::unordered_map<AlgorithmType, std::unique_ptr<IAlgorithmVisualizer>> m_visualizers;
 
         std::atomic<bool> m_is_playing          {false};
         std::atomic<bool> m_is_paused           {false};

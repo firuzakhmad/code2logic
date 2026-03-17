@@ -9,6 +9,7 @@
 #include "core/resources/resource_manager.hpp"
 #include "ui/managers/icon_manager.hpp"
 #include "core/json_config_manager/json_config_manager.hpp"
+#include <algorithms/core/algorithm_registry.hpp>
 
 #include <memory>
 
@@ -35,6 +36,7 @@ namespace c2l
 		std::unique_ptr<core::ThreadManager> m_thread_manager;
 		std::unique_ptr<core::filesystem::IFileSystem> m_file_system;
 		std::unique_ptr<core::JsonConfigManager> m_json_config_manager;
+		std::unique_ptr<algorithms::AlgorithmRegistry> m_algorithm_registry;
 		std::unique_ptr<core::resources::ResourceManager> m_resource_manager;
 		std::unique_ptr<c2l::ui::managers::IconManager> m_icon_manager;
 		std::unique_ptr<scenes::SceneManager> m_scene_manager;

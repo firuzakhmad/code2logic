@@ -5,7 +5,7 @@
 #include "algorithm_manager.hpp"
 #include "algorithms/bubble_sort.hpp"
 #include "algorithms/quick_sort.hpp"
-#include "algorithms/array_based_visualizer.hpp"
+#include "algorithms/visualizers/array_based_visualizer.hpp"
 #include "core/utils/logger/logger.hpp"
 
 #include <utility>
@@ -19,16 +19,10 @@ namespace c2l::algorithms
 {
     AlgorithmManager::AlgorithmManager(
         core::ThreadManager& thread_manager,
-        core::JsonConfigManager& json_config_manager)
+        AlgorithmRegistry& algorithm_registry)
         : m_thread_manager{thread_manager}
-        , m_json_config_manager{json_config_manager}
-    {
-        initialize_algorithms();
-        LOG_INFO(
-            "AlgorithmManager initialized with {} algorithms", 
-            m_algorithms.size()
-        );
-    }
+        , m_algorithm_registry{algorithm_registry}
+    {}
 
     AlgorithmManager::~AlgorithmManager()
     {
@@ -38,222 +32,87 @@ namespace c2l::algorithms
         LOG_DEBUG("AlgorithmManager destroyed");
     }
 
-
-    void AlgorithmManager::initialize_algorithms()
-    {
-        // Registering JSON-driven algorithms
-        register_algorithm(
-            AlgorithmType::BUBBLE_SORT, 
-            std::make_unique<BubbleSort>(m_json_config_manager)
-        );
-
-        register_algorithm(
-            AlgorithmType::QUICK_SORT, 
-            std::make_unique<QuickSort>(m_json_config_manager)
-        );
-
-        LOG_INFO(
-            "Registered {} algorithms from JSON configuration", 
-            m_algorithms.size()
-        );
-    }
-
-    std::unique_ptr<IAlgorithmVisualizer> AlgorithmManager::create_visualizer(
-        AlgorithmType type,
-        const VisualizationConfig&)
-    {
-        auto category = algorithm_category(type);
-
-        switch (category) {
-            case AlgorithmCategory::SORTING:
-            case AlgorithmCategory::SEARCHING:
-                return std::make_unique<ArrayBasedVisualizer>();
-                
-            case AlgorithmCategory::GRAPH:
-                // return std::make_unique<GraphBasedVisualizer>(config);
-                
-            case AlgorithmCategory::TREE:
-                // return std::make_unique<TreeBasedVisualizer>(config);
-                
-            default:
-                return std::make_unique<ArrayBasedVisualizer>();
-        }
-    }
-
-    void AlgorithmManager::register_algorithm(
-        AlgorithmType type, 
-        std::unique_ptr<ISimpleAlgorithm> algorithm,
-        const VisualizationConfig& visualization_config)
-    {
-        std::unique_lock lock(m_algorithm_mutex);
-
-        if (m_algorithms.find(type) != m_algorithms.end())
-        {
-            LOG_WARNING(
-                "Algorithm type '{}' already registered, overwriting",
-                algorithm_display_name(type)
-            );
-        }
-
-        m_algorithms[type] = std::move(algorithm);
-
-        // Updating available types list
-        if (std::find(m_algorithm_types.begin(), 
-                      m_algorithm_types.end(), 
-                      type) == m_algorithm_types.end())
-        {
-            m_algorithm_types.push_back(type);
-        }
-
-        // Updating name mapping for backward compatibility
-        std::string name = std::string(algorithm_id(type));
-        m_name_to_type_map[name] = type;
-
-        // Updating legacy names list
-        if (std::find(m_algorithm_names.begin(), 
-                      m_algorithm_names.end(), 
-                      name) == m_algorithm_names.end())
-        {
-            m_algorithm_names.push_back(name);
-        }
-
-        // Creating visualizer for the registered algorithm
-        m_visualizers[type] = create_visualizer(type, visualization_config);
-
-        LOG_DEBUG(
-            "Registered algorithm: {} (Type: {})", 
-            name, 
-            static_cast<int>(type)
-        );
-    }
-
-    void AlgorithmManager::register_algorithm(
-        const std::string &id,
-        std::unique_ptr<ISimpleAlgorithm> algorithm,
-        const VisualizationConfig& visualization_config)
-    {
-        AlgorithmType type = id_to_algorithm_type(id);
-        register_algorithm(
-            type, 
-            std::move(algorithm), 
-            visualization_config
-        );
-    }
-
-    void AlgorithmManager::unregister_algorithm(AlgorithmType type)
-    {
-        std::unique_lock lock(m_algorithm_mutex);
-
-        if (m_current_context.metadata &&
-            m_current_context.metadata->get_type() == type)
-        {
-            unload_current_algorithm();
-        }
-
-        if (m_algorithms.find(type) != m_algorithms.end())
-        {
-            m_algorithms.erase(type);
-
-            // Removing from types list
-            auto type_it = std::find(m_algorithm_types.begin(), m_algorithm_types.end(), type);
-            if (type_it != m_algorithm_types.end())
-            {
-                m_algorithm_types.erase(type_it);
-            }
-
-            // Removing from legacy names
-            std::string name = std::string(algorithm_id(type));
-            auto name_it = std::find(m_algorithm_names.begin(), m_algorithm_names.end(), name);
-            if (name_it != m_algorithm_names.end())
-            {
-                m_algorithm_names.erase(name_it);
-            }
-
-            // Remove from name mapping
-            m_name_to_type_map.erase(name);
-
-            LOG_DEBUG("Unregistered algorithm: {} (Type: {})", name, static_cast<int>(type));
-        }
-    }
-
-    void AlgorithmManager::unregister_algorithm(const std::string &name)
-    {
-        AlgorithmType type = id_to_algorithm_type(name);
-        unregister_algorithm(type);
-    }
-
     bool AlgorithmManager::load_algorithm(AlgorithmType type)
     {
         stop_background_execution();
-
-        {
-            std::shared_lock lock(m_algorithm_mutex);
-
-            if (m_algorithms.find(type) == m_algorithms.end())
-            {
-                LOG_ERROR(
-                    "Algorithm type '{}' not registered", 
-                    algorithm_display_name(type)
-                );
-                return false;
-            }
-        }
 
         unload_current_algorithm();
 
         {
             std::unique_lock lock(m_algorithm_mutex);
 
-            auto alg_it = m_algorithms.find(type);
-            if (alg_it == m_algorithms.end()) 
+            // Check if algorithm exists in registry
+            if (!m_algorithm_registry.has_algorithm(type))
             {
                 LOG_ERROR(
-                    "Algorithm type '{}' disappeared during load", 
+                    "Algorithm type '{}' not registered in registry",
                     algorithm_display_name(type)
                 );
                 return false;
             }
 
+            // Creating new algorithm instance using registry
+            auto new_context = AlgorithmContext{};
+            new_context.execution = m_algorithm_registry.create_algorithm(type);
+            new_context.visualizer = m_algorithm_registry.create_visualizer(type);
 
-            m_current_context.execution = alg_it->second.get();
-            m_current_context.metadata = dynamic_cast<IAlgorithmMetadata*>(alg_it->second.get());
-
-            auto viz_it = m_visualizers.find(type);
-            if (viz_it != m_visualizers.end())
+            if (!new_context.execution || !new_context.visualizer)
             {
-                m_current_context.visualizer = viz_it->second.get();
-                m_current_context.visualizer->initialize(
-                    m_current_context.execution,
-                    m_current_context.metadata
+                LOG_ERROR(
+                    "Failed to create algorithm/visualizer instance for type: {}",
+                    algorithm_display_name(type)
                 );
-            }
-
-            m_current_context.type = type;
-            m_current_context.name = algorithm_display_name(type);
-
-            if (!m_current_context.metadata)
-            {
-                LOG_ERROR("Algorithm does not implement IAlgorithmMetadata");
                 return false;
             }
 
-            if (!m_current_context.metadata->is_valid())
+            new_context.metadata = new_context.execution->metadata();
+            new_context.type = type;
+            new_context.name = algorithm_display_name(type);
+
+            // Validate metadata
+            if (!new_context.metadata)
             {
-                LOG_ERROR("Algorithm metadata is invalid");
+                LOG_ERROR("Algorithm does not provide metadata");
+                return false;
+            }
+
+            if (!new_context.metadata->is_valid())
+            {
+                LOG_ERROR(
+                    "Algorithm metadata is invalid for: {}",
+                    new_context.name)
+                ;
                 return false;
             }
 
             // Attaching observer
-            if (m_current_context.execution)
+            new_context.execution->add_observer(this);
+
+            // Initializing visualizer
+            if (new_context.visualizer)
             {
-                m_current_context.execution->add_observer(this);
+                new_context.visualizer->initialize(
+                    new_context.execution.get(),
+                    new_context.metadata
+                );
             }
 
-            // Initializing random data
-            auto default_data = generate_random_data();
-            m_current_context.execution->initialize(default_data);
+            // Initialize with random data
+            try
+            {
+                auto default_data = generate_random_data();
+                new_context.execution->initialize(default_data);
+            }
+            catch (const std::exception& e)
+            {
+                LOG_ERROR("Failed to initialize algorithm: {}", e.what());
+                return false;
+            }
 
-            LOG_INFO("Loaded algorithm: {} (v{})", 
+            // Move new context into current context
+            m_current_context = std::move(new_context);
+
+            LOG_INFO("Loaded algorithm: {} (v{})",
                 m_current_context.name,
                 m_current_context.metadata->get_complexity().is_valid() ? "JSON" : "Legacy"
             );
@@ -276,13 +135,13 @@ namespace c2l::algorithms
         stop_background_execution();
 
         std::unique_lock lock(m_algorithm_mutex);
+
         if (m_current_context.execution)
         {
             LOG_DEBUG(
                 "Resetting current algorithm: {}", 
                 m_current_context.name
             );
-
 
             m_current_context.execution->remove_observer(this);
             m_current_context.execution->reset();
@@ -498,7 +357,7 @@ namespace c2l::algorithms
 
                         if (m_current_context.is_valid())
                         {
-                            algorithm = m_current_context.execution;
+                            algorithm = m_current_context.execution.get();
                         }
                     }
 
@@ -507,7 +366,7 @@ namespace c2l::algorithms
                         std::unique_lock lock(m_algorithm_mutex);
 
                         // Ensure algorithm wasn't swapped/unloaded meanwhile
-                        if (m_current_context.execution == algorithm)
+                        if (m_current_context.execution.get() == algorithm)
                         {
                             algorithm->step_forward();
                             m_accumulated_time -= step_interval;
@@ -605,7 +464,7 @@ namespace c2l::algorithms
             return;
 
         auto* json_algorithm = dynamic_cast<JsonAlgorithmBase*>(
-            m_current_context.execution
+            m_current_context.execution.get()
         );
 
         if (!json_algorithm)
@@ -701,13 +560,6 @@ namespace c2l::algorithms
         return m_cached_pseudocode_display;
     }
 
-
-    const std::vector<AlgorithmType>& AlgorithmManager::get_available_algorithm_types() const
-    {
-        std::shared_lock lock(m_algorithm_mutex);
-        return m_algorithm_types;
-    }
-
     AlgorithmType AlgorithmManager::get_current_algorithm_type() const noexcept
     {
         std::shared_lock lock(m_algorithm_mutex);
@@ -724,49 +576,16 @@ namespace c2l::algorithms
     IAlgorithmVisualizer* AlgorithmManager::get_current_visualizer() const
     {
         std::shared_lock lock(m_algorithm_mutex);
-        return m_current_context.visualizer;
-    }
-
-
-    std::vector<AlgorithmType> AlgorithmManager::get_algorithm_types_by_category(
-        const AlgorithmCategory category) const
-    {
-        std::shared_lock lock(m_algorithm_mutex);
-        std::vector<AlgorithmType> result;
-
-        for (auto type : m_algorithm_types)
-        {
-            if (algorithm_category(type) == category)
-            {
-                result.push_back(type);
-            }
-        }
-
-        return result;
-    }
-
-    AlgorithmManager::CategorizedAlgorithms
-    AlgorithmManager::get_available_categorized_algorithms() const
-    {
-        CategorizedAlgorithms result;
-
-        for (AlgorithmType type : m_algorithm_types)
-        {
-            if (const auto* info = algorithms::get_algorithm_info(type))
-                result[info->display_category].push_back(info);
-        }
-
-        return result;
+        return m_current_context.visualizer.get();
     }
 
     ISimpleAlgorithm* AlgorithmManager::get_current_algorithm() const
     {
         std::shared_lock lock(m_algorithm_mutex);
-        return m_current_context.execution;
+        return m_current_context.execution.get();
     }
 
-
-    IAlgorithmMetadata* AlgorithmManager::get_current_metadata() const 
+    const IAlgorithmMetadata *AlgorithmManager::get_current_metadata() const
     {
         return m_current_context.metadata;
     }
@@ -776,13 +595,6 @@ namespace c2l::algorithms
         std::shared_lock lock(m_algorithm_mutex);
         return m_current_context.metadata->get_display_name();
     }
-
-    const std::vector<std::string>& AlgorithmManager::get_available_algorithm_names() const
-    {
-        std::shared_lock lock(m_algorithm_mutex);
-        return m_algorithm_names;
-    }
-
 
     bool AlgorithmManager::is_playing() const
     {
