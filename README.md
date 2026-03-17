@@ -33,7 +33,7 @@ Code2Logic is a cross-platform algorithm visualization tool built with modern C+
     alt="Code2Logic" width="400" 
   />
   <img 
-    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/screenshot/screenshot_3.png" 
+    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/screenshot/screenshot_4.png" 
     alt="Code2Logic" width="400" 
   />
 </p>
