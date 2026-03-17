@@ -6,7 +6,7 @@
 #include "ui/components/main_menu.hpp"
 #include "ui/managers/icon_manager.hpp"
 #include "scenes/scene_manager.hpp"
-#include "algorithms/algorithm_types.hpp"
+#include "algorithms/core/algorithm_types.hpp"
 
 namespace c2l::scenes
 {
@@ -33,20 +33,26 @@ namespace c2l::scenes
 		 * Scenes may request navigation, but SceneManager
 		 * remains the sole authority that performs transitions.
 		 */
-		using NavigationCallback = std::function<void(const scenes::SceneType& scene_type)>;
+		using NavigationCallback = std::function<
+			void(const scenes::SceneType& scene_type)
+		>;
 		using ScenePopCallback = std::function<void()>;
 
-		BaseScene(graphics::Renderer& renderer,
-				  core::ThreadManager& thread_manager,
-				  core::JsonConfigManager& json_config_manager,
-				  core::resources::ResourceManager& resource_manager,
-				  ui::managers::IconManager& icon_manager);
+		BaseScene(
+			graphics::Renderer& renderer,
+			core::ThreadManager& thread_manager,
+			core::JsonConfigManager& json_config_manager,
+			algorithms::AlgorithmRegistry& algorithm_registry,
+			core::resources::ResourceManager& resource_manager,
+			ui::managers::IconManager& icon_manager
+		);
 		virtual ~BaseScene() override;
 
 		void set_navigation_callbacks(
 			NavigationCallback push_callback,
 			NavigationCallback switch_callback,
-			ScenePopCallback pop_callback);
+			ScenePopCallback pop_callback
+		);
 
 		void request_scene_push(const SceneType&  scene_name);
 		void request_scene_switch(const SceneType&  scene_name);
@@ -91,7 +97,10 @@ namespace c2l::scenes
 		NavigationCallback m_switch_callback;
 		ScenePopCallback m_pop_callback;
 
-		std::unordered_map<std::string_view, std::vector<const algorithms::AlgorithmInfo*>> m_available_categorized_algorithms;
+		std::unordered_map<
+			std::string_view, 
+			std::vector<const algorithms::AlgorithmInfo*>
+		> m_available_categorized_algorithms;
 
 	private:
 		bool m_show_demo_window				{false};

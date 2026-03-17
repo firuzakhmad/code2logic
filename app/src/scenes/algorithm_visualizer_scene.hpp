@@ -3,9 +3,13 @@
 
 #include "scenes/base_scene.hpp"
 #include "scenes/scene_manager.hpp"
-#include "algorithms/i_simple_algorithm.hpp"
+#include "algorithms/core/i_simple_algorithm.hpp"
 #include "algorithms/managers/algorithm_manager.hpp"
 #include "core/json_config_manager/json_config_manager.hpp"
+#include "algorithms/core/algorithm_registry.hpp"
+
+#include  <unordered_map>
+#include <string>
 
 namespace c2l::scenes
 {
@@ -22,6 +26,7 @@ namespace c2l::scenes
             graphics::Renderer& renderer,
             core::ThreadManager& thread_manager,
             core::JsonConfigManager& json_config_manager,
+            algorithms::AlgorithmRegistry& algorithm_registry,
             core::resources::ResourceManager& resource_manager,
             ui::managers::IconManager& icon_manager);
         ~AlgorithmVisualizerScene() override = default;
@@ -92,10 +97,6 @@ namespace c2l::scenes
             const std::unordered_map<std::string, std::string>* vars = nullptr
         );
 
-        void render_comparison_analysis(const c2l::algorithms::AlgorithmStep& step);
-        void render_performance_metrics();
-
-
         void setup_main_menu() override;
         void setup_shortcuts_tooltip();
 
@@ -118,7 +119,10 @@ namespace c2l::scenes
         float m_ui_scale                                {1.0f};
 
         // Cached data
-        algorithms::AlgorithmManager::CategorizedAlgorithms m_cached_categorized_algorithms;
+        std::unordered_map<
+            std::string,
+            std::vector<const algorithms::AlgorithmInfo*>
+        > m_cached_categorized_algorithms;
     };
 
 }

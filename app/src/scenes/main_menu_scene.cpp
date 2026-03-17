@@ -4,12 +4,22 @@
 
 namespace c2l::scenes
 {
-    MainMenuScene::MainMenuScene(graphics::Renderer& renderer,
-                                 core::ThreadManager& thread_manager,
-                                 core::JsonConfigManager& json_config_manager,
-                                 core::resources::ResourceManager& resource_manager,
-                                 ui::managers::IconManager& icon_manager)
-        : BaseScene{renderer, thread_manager, json_config_manager, resource_manager, icon_manager}
+    MainMenuScene::MainMenuScene(
+        graphics::Renderer& renderer,
+        core::ThreadManager& thread_manager,
+        core::JsonConfigManager& json_config_manager,
+        algorithms::AlgorithmRegistry& algorithm_registry,
+        core::resources::ResourceManager& resource_manager,
+        ui::managers::IconManager& icon_manager
+    )
+        : BaseScene{
+            renderer,
+            thread_manager,
+            json_config_manager,
+            algorithm_registry,
+            resource_manager,
+            icon_manager
+        }
     {
 
     }
@@ -37,7 +47,8 @@ namespace c2l::scenes
         m_ui_manager->hide_all_widgets();
     }
 
-    void MainMenuScene::process_input(const core::InputHandler &input)
+    void MainMenuScene::process_input(
+        const core::InputHandler &input)
     {
         if (input.is_key_just_pressed(GLFW_KEY_BACKSPACE))
         {
