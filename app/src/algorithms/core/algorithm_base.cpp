@@ -2,7 +2,7 @@
 // Created by Akhmad on 1/5/26.
 //
 
-#include "algorithms/algorithm_base.hpp"
+#include "algorithms/core/algorithm_base.hpp"
 
 #include <algorithm>
 

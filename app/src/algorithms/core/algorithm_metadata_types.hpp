@@ -1,13 +1,13 @@
 #ifndef CODE2LOGIC_ALGORITHM_METADATA_TYPES_HPP
 #define CODE2LOGIC_ALGORITHM_METADATA_TYPES_HPP
 
-#include "algorithms/algorithm_types.hpp"
+#include "algorithms/core/algorithm_types.hpp"
 
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <optional>
-#include <stddef.h>
+#include <cstddef>
 
 #include <imgui.h>
 

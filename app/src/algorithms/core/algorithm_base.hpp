@@ -1,10 +1,7 @@
 #ifndef CODE2LOGIC_ALGORITHM_BASE_HPP
 #define CODE2LOGIC_ALGORITHM_BASE_HPP
 
-#include "i_simple_algorithm.hpp"
-#include "algorithm_types.hpp"
-#include "core/utils/logger/logger.hpp"
-#include "algorithms/algorithm_step.hpp"
+#include "algorithms/core/i_simple_algorithm.hpp"
 #include"core/json_config_manager/json_config_manager.hpp"
 
 #include <optional>

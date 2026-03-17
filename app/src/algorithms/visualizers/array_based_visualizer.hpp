@@ -1,7 +1,9 @@
 #ifndef CODE2LOGIC_ARRAY_BASED_VISUALIZER_HPP
 #define CODE2LOGIC_ARRAY_BASED_VISUALIZER_HPP
 
-#include "i_algorithm_visualizer.hpp"
+#include "algorithms/visualizers/i_algorithm_visualizer.hpp"
+#include "algorithms/core/algorithm_metadata_types.hpp"
+
 #include <imgui.h>
 
 namespace c2l::algorithms
@@ -9,7 +11,9 @@ namespace c2l::algorithms
 	class ArrayBasedVisualizer final : public IAlgorithmVisualizer
 	{
 	public:
-		ArrayBasedVisualizer() = default;
+		explicit ArrayBasedVisualizer(
+			const VisualizationConfig& visualization_config = {}
+		);
 		~ArrayBasedVisualizer() override = default;
 
 		void initialize(
@@ -51,6 +55,7 @@ namespace c2l::algorithms
 		const ISimpleAlgorithm* m_execution 	{nullptr};
     	const IAlgorithmMetadata* m_metadata 	{nullptr};
 		int m_visualization_style 				{0};
+		const VisualizationConfig& m_visualization_config;
 		
 		std::vector<Particle> m_particles;
 		double m_last_update_time = 0.0;

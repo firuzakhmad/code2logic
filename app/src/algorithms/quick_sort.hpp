@@ -1,8 +1,8 @@
 #ifndef CODE2LOGIC_QUICK_SORT_HPP
 #define CODE2LOGIC_QUICK_SORT_HPP
 
-#include "algorithms/json_algorithm_base.hpp"
-#include "algorithms/algorithm_step.hpp"
+#include "algorithms/core/json_algorithm_base.hpp"
+#include "algorithms/core/algorithm_step.hpp"
 #include <stack>
 
 namespace c2l::algorithms

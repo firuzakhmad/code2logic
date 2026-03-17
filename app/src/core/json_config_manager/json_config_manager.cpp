@@ -32,10 +32,6 @@ namespace c2l::core
             start_hot_reload_monitor();
         }
 
-        load_icon_config().get();
-        load_algorithm_config(algorithms::AlgorithmType::BUBBLE_SORT).get();
-        load_algorithm_config(algorithms::AlgorithmType::QUICK_SORT).get();
-
         LOG_INFO("JsonConfigManager initialized");
     }
 
@@ -65,13 +61,22 @@ namespace c2l::core
     {
         std::string algorithm_filename =
             std::string(algorithms::algorithm_id(algorithm_type)) + ".json";
-        std::filesystem::path path = std::filesystem::path{"resources"} / "algorithms" / algorithm_filename;
+        std::filesystem::path path =
+            std::filesystem::path{"resources"} / "algorithms" / algorithm_filename;
         return load_config(
             std::string(algorithms::algorithm_id(algorithm_type)), 
             path, 
             async,
             true
         );
+    }
+
+    std::future<JsonConfigManager::LoadResult>
+    JsonConfigManager::load_available_algorithms_config(
+        const std::filesystem::path &path,
+        bool async)
+    {
+        return load_config("available_algorithms_config", path, async, true);
     }
 
     std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_theme_config(
@@ -255,7 +260,8 @@ namespace c2l::core
                 m_config.loader_thread_type,
                 std::move(load_func)
             );
-        } else 
+        }
+        else
         {
             std::promise<std::vector<LoadResult>> promise;
             promise.set_value(load_func());
@@ -315,6 +321,12 @@ namespace c2l::core
         return get<nlohmann::json>(
             std::string(algorithms::algorithm_id(algorithm_type)))
                     .value_or(nlohmann::json{});
+    }
+
+    nlohmann::json JsonConfigManager::get_available_algorithms_config() const
+    {
+        return get<nlohmann::json>("available_algorithms_config")
+            .value_or(nlohmann::json{});
     }
 
     nlohmann::json JsonConfigManager::get_theme_config(

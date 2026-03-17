@@ -1,13 +1,17 @@
 #include "array_based_visualizer.hpp"
 #include "core/utils/logger/logger.hpp"
 
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 
 #include "core/utils/utils.hpp"
 
 namespace c2l::algorithms
 {
+    ArrayBasedVisualizer::ArrayBasedVisualizer(
+        const VisualizationConfig& visualization_config)
+            : m_visualization_config{visualization_config}
+    {}
 	void ArrayBasedVisualizer::initialize(
         const ISimpleAlgorithm* execution,
         const IAlgorithmMetadata* metadata)

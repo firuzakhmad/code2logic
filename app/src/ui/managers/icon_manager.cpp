@@ -360,6 +360,9 @@ namespace c2l::ui::managers
 
     void IconManager::load_default_icons()
     {
+        // Loading icon json file
+        m_json_config_manager.load_icon_config().get();
+
         auto icon_config = m_json_config_manager.get_icon_config();
 
         if (icon_config.empty() || !icon_config.contains("icons"))

@@ -5,8 +5,8 @@
 #include <vector>
 #include <optional>
 
-#include "algorithms/algorithm_types.hpp"
-#include "algorithms/algorithm_metadata_types.hpp"
+#include "algorithms/core/algorithm_types.hpp"
+#include "algorithms/core/algorithm_metadata_types.hpp"
 
 namespace c2l::algorithms
 {

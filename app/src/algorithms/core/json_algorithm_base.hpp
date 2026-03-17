@@ -1,10 +1,10 @@
 #ifndef CODE2LOGIC_JSON_ALGORITHM_BASE_HPP
 #define CODE2LOGIC_JSON_ALGORITHM_BASE_HPP
 
-#include "algorithms/algorithm_base.hpp"
-#include "algorithms/i_algorithm_metadata.hpp"
-#include "algorithms/algorithm_metadata_types.hpp"
-#include "algorithms/code_highlight.hpp"
+#include "algorithms/core/algorithm_base.hpp"
+#include "algorithms/core/i_algorithm_metadata.hpp"
+#include "algorithms/core/algorithm_metadata_types.hpp"
+#include "algorithms/core/code_highlight.hpp"
 
 #include <string>
 #include <vector>
@@ -33,7 +33,11 @@ namespace c2l::algorithms
         JsonAlgorithmBase(JsonAlgorithmBase&&) noexcept = delete;
         JsonAlgorithmBase& operator=(JsonAlgorithmBase&&) noexcept = delete;
 
-        // IAlgorithmMetadata implementation
+        // ISimpleAlgorithm implementation
+	    [[nodiscard]] const IAlgorithmMetadata*
+	    metadata() const noexcept override;
+
+	    // IAlgorithmMetadata implementation
 		[[nodiscard]] const std::string& get_id() const noexcept override;
         [[nodiscard]] const std::string& get_display_name() const noexcept override;
         [[nodiscard]] AlgorithmCategory get_category() const noexcept override;

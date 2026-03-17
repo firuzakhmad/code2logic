@@ -1,4 +1,4 @@
-#include "algorithms/algorithm_metadata_types.hpp"
+#include "algorithms/core/algorithm_metadata_types.hpp"
 
 #include <algorithm>
 
