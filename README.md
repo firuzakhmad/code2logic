@@ -19,11 +19,24 @@ Code2Logic is a cross-platform algorithm visualization tool built with modern C+
 - Visual comparison of elements during algorithm execution
 <p>
   <img 
-    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/screenshot/screenshot.png" 
+    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/screenshot/screenshot_1.png" 
+    alt="Code2Logic" width="400" 
+  />
+  <img 
+    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/screenshot/screenshot_2.png" 
     alt="Code2Logic" width="400" 
   />
 </p>
-
+<p>
+  <img 
+    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/screenshot/screenshot_3.png" 
+    alt="Code2Logic" width="400" 
+  />
+  <img 
+    src="https://github.com/firuzakhmad/code2logic/blob/main/resources/screenshot/screenshot_3.png" 
+    alt="Code2Logic" width="400" 
+  />
+</p>
 
 ## Getting Started
 
@@ -72,10 +85,13 @@ After building, launch the application from:
 
 ### Contributing
 
-We welcome contributions! Please see our Contribution Guidelines.
+Contributions, ideas, and feedback are always welcome.
 
-Support
-For help, please open an issue.
+You can:
+- Open an issue for bugs or feature requests
+- Reach out directly via email for collaboration
+
+**firuzakhmad.contribution@gmail.com**
 
 
 ### License

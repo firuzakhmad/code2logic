@@ -22,19 +22,23 @@ set(CODE2LOGIC_SOURCES
         src/ui/components/docking_layout.cpp
         src/core/resources/texture_resource.cpp
         src/core/resources/shader_resource.cpp
-        src/algorithms/algorithm_base.cpp
+        src/algorithms/core/algorithm_base.cpp
         src/scenes/algorithm_visualizer_scene.cpp
         src/algorithms/bubble_sort.cpp
         src/algorithms/quick_sort.cpp
         src/algorithms/managers/algorithm_manager.cpp
         src/core/utils/thread_manager/thread_manager.cpp
-        src/algorithms/array_based_visualizer.cpp
+        src/algorithms/visualizers/array_based_visualizer.cpp
         src/ui/managers/icon_manager.cpp
         src/scenes/algorithm_comparison_scene.cpp
-        src/algorithms/algorithm_variables.cpp
+        src/algorithms/core/algorithm_variables.cpp
         src/core/json_config_manager/json_config_manager.cpp
-        src/algorithms/algorithm_metadata_types.cpp
-        src/algorithms/json_algorithm_base.cpp
+        src/algorithms/core/algorithm_metadata_types.cpp
+        src/algorithms/core/json_algorithm_base.cpp
+        src/algorithms/managers/parallel_comparison_manager.cpp
+        src/algorithms/visualizers/side_by_side_visualizer.cpp
+        src/algorithms/core/algorithm_registry.cpp
+
 
 
 )
@@ -75,28 +79,34 @@ set(CODE2LOGIC_HEADERS
         src/core/resources/shader_loader.hpp
         src/core/resources/shader_types.hpp
         src/scenes/algorithm_visualizer_scene.hpp
-        src/algorithms/i_simple_algorithm.hpp
-        src/algorithms/algorithm_observer.hpp
-        src/algorithms/algorithm_step.hpp
-        src/algorithms/algorithm_step_operation.hpp
-        src/algorithms/algorithm_state_tracker.hpp
-        src/algorithms/algorithm_base.hpp
+        src/algorithms/core/i_simple_algorithm.hpp
+        src/algorithms/core/algorithm_observer.hpp
+        src/algorithms/core/algorithm_step.hpp
+        src/algorithms/core/algorithm_step_operation.hpp
+        src/algorithms/core/algorithm_state_tracker.hpp
+        src/algorithms/core/algorithm_base.hpp
         src/algorithms/bubble_sort.hpp
         src/algorithms/quick_sort.hpp
         src/algorithms/managers/algorithm_manager.hpp
         src/core/utils/thread_manager/thread_manager.hpp
-        src/algorithms/i_algorithm_visualizer.hpp
-        src/algorithms/code_highlight.hpp
-        src/algorithms/array_based_visualizer.hpp
+        src/algorithms/visualizers/i_algorithm_visualizer.hpp
+        src/algorithms/core/code_highlight.hpp
+        src/algorithms/visualizers/array_based_visualizer.hpp
         src/ui/managers/icon_manager.hpp
         src/scenes/algorithm_comparison_scene.hpp
-        src/algorithms/algorithm_variable.hpp
+        src/algorithms/core/algorithm_variable.hpp
         src/core/json_config_manager/json_config_manager.hpp
         src/core/utils/utils.hpp
         src/core/utils/variables.hpp
-        src/algorithms/i_algorithm_metadata.hpp
-        src/algorithms/algorithm_metadata_types.hpp
-        src/algorithms/json_algorithm_base.hpp
+        src/algorithms/core/i_algorithm_metadata.hpp
+        src/algorithms/core/algorithm_metadata_types.hpp
+        src/algorithms/core/json_algorithm_base.hpp
+        src/algorithms/core/atomic_performance_metrics.hpp
+        src/algorithms/managers/parallel_comparison_manager.hpp
+        src/algorithms/visualizers/side_by_side_visualizer.hpp
+        src/algorithms/core/algorithm_registry.hpp
+
+
 
 )
 
