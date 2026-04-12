@@ -70,6 +70,29 @@ namespace c2l::core::utils
             ImGui::SetWindowFontScale(1.0f);
     }
 
+    inline ImVec4 hex_to_vec4(const std::string& hex)
+    {
+        if (hex.size() != 7 || hex[0] != '#')
+            return ImVec4(1, 1, 1, 1); // fallback white
+
+        int r = std::stoi(hex.substr(1, 2), nullptr, 16);
+        int g = std::stoi(hex.substr(3, 2), nullptr, 16);
+        int b = std::stoi(hex.substr(5, 2), nullptr, 16);
+
+        return ImVec4(
+            r / 255.0f,
+            g / 255.0f,
+            b / 255.0f,
+            1.0f
+        );
+    }
+
+    inline ImU32 hex_to_u32(const std::string& hex)
+    {
+        ImVec4 v = hex_to_vec4(hex);
+        return ImGui::ColorConvertFloat4ToU32(v);
+    }
+
 } // namespace c2l::core::utils
 
 #endif // CORE_UTILS_UTILS_HPP

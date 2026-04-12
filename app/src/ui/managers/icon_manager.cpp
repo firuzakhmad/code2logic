@@ -572,6 +572,142 @@ namespace c2l::ui::managers
         }
     }
 
+    bool IconManager::render_icon_text_button(
+        const char *str_id,
+        IconType type,
+        const char *label,
+        float font_scale,
+        const ImVec2 &size,
+        const ImVec4 &tint,
+        const char *tooltip)
+    {
+        std::shared_ptr<CacheEntry> entry;
+
+        {
+            std::shared_lock lock(m_cache_mutex);
+            entry = find_entry(type);
+        }
+
+        if (!entry)
+        {
+            load_icon(type, true);
+            render_loading_indicator(size);
+            return false;
+        }
+
+        entry->data.last_access = std::chrono::steady_clock::now();
+
+        if (entry->data.state != IconState::READY || !entry->data.texture_id)
+        {
+            render_loading_indicator(size);
+            return false;
+        }
+
+        ImGuiStyle& style = ImGui::GetStyle();
+        const float padding =  style.FramePadding.y;
+
+        const char* safe_id = str_id ? str_id : "icon_btn";
+        const char* safe_label = label ? label : "";
+
+        ImVec2 text_size = ImGui::CalcTextSize(safe_label);
+
+        ImVec2 avail = ImGui::GetContentRegionAvail();
+        const float height = (size.y > 0.0f)
+            ? size.y
+            : ImGui::GetFrameHeight();
+
+        // Icon is square based on height
+        const float icon_size = height - padding * 2.0f;
+
+        // Auto width: icon + spacing + text + padding
+        float width;
+        if (size.x > 0.0f)
+        {
+            width = size.x;
+        }
+        else
+        {
+            width = icon_size + style.ItemInnerSpacing.x + text_size.x + padding * 2.0f;
+
+            // Optional: clamp to available space
+            width = std::min(width, avail.x);
+        }
+
+        ImVec2 button_size(width, height);
+
+        const std::string id = std::string("##") + safe_id;
+        const bool clicked = ImGui::Button(id.c_str(), button_size);
+
+        ImVec2 pos = ImGui::GetItemRectMin();
+        ImVec2 max = ImGui::GetItemRectMax();
+
+        float total_width = icon_size;
+        if (safe_label[0] != '\0')
+        {
+            total_width += style.ItemInnerSpacing.x + text_size.x;
+        }
+
+        float start_x = pos.x + (button_size.x - total_width) * 0.5f;
+        float center_y = pos.y + button_size.y * 0.5f;
+
+        ImVec2 icon_min = ImVec2(start_x, center_y - icon_size * 0.5f);
+        ImVec2 icon_max = ImVec2(icon_min.x + icon_size, icon_min.y + icon_size);
+
+        ImVec2 text_pos = ImVec2(
+            icon_max.x + (safe_label[0] ? (style.ItemInnerSpacing.x + 10) : 0.0f),
+            center_y - text_size.y * 0.7f
+        );
+
+
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+        bool hovered = ImGui::IsItemHovered();
+        bool active  = ImGui::IsItemActive();
+
+        ImVec4 final_tint = tint;
+
+        if (active)
+        {
+            final_tint.x *= 0.8f;
+            final_tint.y *= 0.8f;
+            final_tint.z *= 0.8f;
+        }
+        else if (hovered)
+        {
+            final_tint.x *= 1.1f;
+            final_tint.y *= 1.1f;
+            final_tint.z *= 1.1f;
+        }
+
+        draw_list->AddImage(
+            entry->data.texture_id,
+            icon_min,
+            icon_max,
+            entry->config.uv0,
+            entry->config.uv1,
+            ImGui::ColorConvertFloat4ToU32(final_tint)
+        );
+
+        if (font_scale != 1.0f)
+            ImGui::SetWindowFontScale(font_scale);
+
+        draw_list->PushClipRect(pos, max, true);
+        draw_list->AddText(text_pos, IM_COL32_WHITE, safe_label);
+        draw_list->PopClipRect();
+
+        if (font_scale != 1.0f)
+            ImGui::SetWindowFontScale(1.0f);
+
+        if (tooltip && hovered)
+        {
+            ImGui::BeginTooltip();
+            ImGui::TextUnformatted(tooltip);
+            ImGui::EndTooltip();
+        }
+
+        return clicked;
+    }
+
 
 
     void IconManager::render_loading_indicator(const ImVec2& size)
@@ -1053,7 +1189,8 @@ namespace c2l::ui::managers
             "EXPAND", "COLLAPSE", "CLOSE", "INFO", "WARNING", "ERROR", "SUCCESS",
             "MENU", "GRID", "LIST", "SEARCH", "FILTER", "DOWNLOAD", "UPLOAD",
             "SAVE", "TRASH", "EDIT", "COPY", "PASTE", "UNDO", "REDO", "ARRAY",
-            "ALGORITHM", "STATISTIC", "STEPS", "UNKNOWN"
+            "ALGORITHM", "STATISTIC", "STEPS", "ALGORITHM_VISUALIZATION",
+            "ALGORITHM_COMPARISON", "EXIT", "UNKNOWN"
         };
 
         size_t index = static_cast<size_t>(type);
@@ -1071,7 +1208,8 @@ namespace c2l::ui::managers
             "EXPAND", "COLLAPSE", "CLOSE", "INFO", "WARNING", "ERROR", "SUCCESS",
             "MENU", "GRID", "LIST", "SEARCH", "FILTER", "DOWNLOAD", "UPLOAD",
             "SAVE", "TRASH", "EDIT", "COPY", "PASTE", "UNDO", "REDO", "ARRAY",
-            "ALGORITHM", "STATISTIC", "STEPS","UNKNOWN"
+            "ALGORITHM", "STATISTIC", "STEPS", "ALGORITHM_VISUALIZATION",
+            "ALGORITHM_COMPARISON", "EXIT", "UNKNOWN"
         };
 
         for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); ++i)

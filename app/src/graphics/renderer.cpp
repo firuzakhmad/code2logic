@@ -10,7 +10,8 @@ namespace c2l::graphics
 {
 
 	Renderer::Renderer(core::GLFWWindow& window)
-		: m_window{window}, m_imgui_manager{std::make_shared<ImGuiManager>(window)}
+		: m_window{window}
+		, m_imgui_manager{std::make_shared<ImGuiManager>(window)}
 	{}
 	
 	Renderer::~Renderer()

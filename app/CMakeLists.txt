@@ -38,6 +38,11 @@ set(CODE2LOGIC_SOURCES
         src/algorithms/managers/parallel_comparison_manager.cpp
         src/algorithms/visualizers/side_by_side_visualizer.cpp
         src/algorithms/core/algorithm_registry.cpp
+        src/algorithms/merge_sort.cpp
+        src/algorithms/insertion_sort.cpp
+        src/algorithms/selection_sort.cpp
+        src/algorithms/heap_sort.cpp
+        src/algorithms/visualizers/visualization_style.cpp
 
 
 
@@ -105,6 +110,11 @@ set(CODE2LOGIC_HEADERS
         src/algorithms/managers/parallel_comparison_manager.hpp
         src/algorithms/visualizers/side_by_side_visualizer.hpp
         src/algorithms/core/algorithm_registry.hpp
+        src/algorithms/merge_sort.hpp
+        src/algorithms/insertion_sort.hpp
+        src/algorithms/selection_sort.hpp
+        src/algorithms/heap_sort.hpp
+        src/algorithms/visualizers/visualization_style.hpp
 
 
 

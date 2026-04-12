@@ -1,0 +1,378 @@
+{
+  "algorithm": {
+    "id": "selection_sort",
+    "name": "Selection Sort",
+    "display_type": "Selection Sort",
+    "category": "Sorting",
+    "version": "1.0.0",
+    "last_updated": "2026-04-02",
+    
+    "complexity": {
+      "time_best": "O(n²)",
+      "time_average": "O(n²)",
+      "time_worst": "O(n²)",
+      "space": "O(1)",
+      "explanation": "Selection sort has quadratic time complexity in all cases because it always performs n(n-1)/2 comparisons regardless of the initial order. However, it minimizes the number of swaps to at most n-1."
+    },
+    
+    "properties": {
+      "stable": false,
+      "in_place": true,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+    
+    "description": {
+      "brief": "A simple comparison-based sorting algorithm that divides the input list into a sorted and an unsorted region. It repeatedly selects the minimum element from the unsorted region and swaps it with the first element of the unsorted region.",
+      
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(n²) - even when array is already sorted",
+        "• Average case: O(n²) - always performs n(n-1)/2 comparisons",
+        "• Worst case:   O(n²) - maximum number of comparisons",
+        "",
+        "Space Complexity: O(1) - in-place sorting",
+        "",
+        "Key Characteristics:",
+        "• Simple and intuitive implementation",
+        "• Performs minimum number of swaps (at most n-1)",
+        "• Useful when memory writes are expensive",
+        "• Not adaptive - always performs all comparisons",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: n(n-1)/2 ≈ O(n²) in all cases",
+        "• Swaps: At most n-1 (minimum among O(n²) algorithms)",
+        "• Memory: Constant O(1) auxiliary space",
+        "",
+        "Comparison with Other O(n²) Algorithms:",
+        "• Bubble Sort: More swaps but can be adaptive",
+        "• Insertion Sort: Better for nearly sorted data",
+        "• Selection Sort: Minimal swaps, predictable performance"
+      ],
+      
+      "pseudocode": [
+        "void selection_sort(std::vector<int>& arr)",
+        "{",
+        "       size_t n = arr.size();",
+        "",
+        "       for (size_t i = 0; i < n - 1; ++i)",
+        "       {",
+        "               size_t min_idx = i;",
+        "",
+        "               for (size_t j = i + 1; j < n; ++j)",
+        "               {",
+        "                       if (arr[j] < arr[min_idx])",
+        "                       {",
+        "                               min_idx = j;",
+        "                       }",
+        "               }",
+        "",
+        "               if (min_idx != i)",
+        "               {",
+        "                       std::swap(arr[i], arr[min_idx]);",
+        "               }",
+        "",
+        "       }",
+        "}"
+      ],
+      
+      "optimizations": [
+        "Bidirectional selection sort (also known as cocktail sort)",
+        "Heap sort (improved selection using heap data structure)",
+        "Stable selection sort variant using insertion",
+        "Tournament sort for parallel selection"
+      ],
+      
+      "use_cases": [
+        "When memory writes are expensive (flash memory, EEPROM)",
+        "Small datasets (n < 100)",
+        "When minimizing swap operations is critical",
+        "Educational purposes to demonstrate selection concept",
+        "When array is mostly sorted in reverse (still O(n²) but minimal swaps)"
+      ],
+      
+      "disadvantages": [
+        "Always O(n²) time complexity, even on sorted data",
+        "Not stable (relative order of equal elements may change)",
+        "Not adaptive - doesn't take advantage of existing order",
+        "Inefficient for large datasets",
+        "More comparisons than insertion sort in practice"
+      ],
+      
+      "related_algorithms": [
+        "Insertion Sort",
+        "Bubble Sort",
+        "Heap Sort",
+        "Cocktail Shaker Sort",
+        "Tournament Sort"
+      ]
+    },
+    
+    "variables": [
+      {
+        "name": "i",
+        "display_name": "Boundary Index",
+        "type": "size_t",
+        "description": "Marks the boundary between sorted (left) and unsorted (right) portions. Elements before i are already sorted.",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "boundary"
+        }
+      },
+      {
+        "name": "j",
+        "display_name": "Scan Index",
+        "type": "size_t",
+        "description": "Current scanning position within the unsorted portion looking for the minimum element.",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "scan"
+        }
+      },
+      {
+        "name": "min_idx",
+        "display_name": "Minimum Index",
+        "type": "size_t",
+        "description": "Index of the current minimum element found in the unsorted portion during scanning.",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "minimum"
+        }
+      },
+      {
+        "name": "min_value",
+        "display_name": "Minimum Value",
+        "type": "int",
+        "description": "Current minimum value found during scanning (displayed for clarity).",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "min_value"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of element comparisons performed so far.",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "swaps",
+        "display_name": "Swaps",
+        "type": "size_t",
+        "description": "Total number of element swaps performed so far.",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "swap_count"
+        }
+      },
+      {
+        "name": "sorted_count",
+        "display_name": "Sorted Elements",
+        "type": "size_t",
+        "description": "Number of elements that are already in their final sorted position.",
+        "visualization": {
+          "color": "#06D6A0",
+          "icon": "sorted"
+        }
+      },
+      {
+        "name": "selected_for_swap",
+        "display_name": "Selected for Swap",
+        "type": "bool",
+        "description": "Indicates whether the current element at boundary will be swapped with the minimum found.",
+        "visualization": {
+          "color": "#E67E22",
+          "icon": "selected"
+        }
+      }
+    ],
+    
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "outer_loop",
+        "name": "Outer Loop",
+        "description": "Beginning of a new pass - moving boundary forward",
+        "tags": ["loop", "iteration", "boundary"],
+        "icon": "outer_loop"
+      },
+      {
+        "id": "min_selected",
+        "name": "Minimum Selected",
+        "description": "Initial minimum element selected at current boundary",
+        "tags": ["selection", "minimum"],
+        "icon": "min_selected"
+      },
+      {
+        "id": "inner_loop",
+        "name": "Inner Loop",
+        "description": "Scanning through unsorted portion to find minimum",
+        "tags": ["loop", "iteration", "scan"],
+        "icon": "inner_loop"
+      },
+      {
+        "id": "compare",
+        "name": "Comparison",
+        "description": "Comparing current element with current minimum",
+        "tags": ["comparison", "decision"],
+        "icon": "compare"
+      },
+      {
+        "id": "update_min",
+        "name": "Update Minimum",
+        "description": "Found a new minimum element",
+        "tags": ["update", "minimum"],
+        "icon": "update"
+      },
+      {
+        "id": "swap",
+        "name": "Swap",
+        "description": "Swapping boundary element with the minimum element found",
+        "tags": ["modification", "swap"],
+        "icon": "swap"
+      },
+      {
+        "id": "no_swap",
+        "name": "No Swap",
+        "description": "Minimum already at correct position, no swap needed",
+        "tags": ["skip", "no_swap"],
+        "icon": "skip"
+      },
+      {
+        "id": "pass_complete",
+        "name": "Pass Complete",
+        "description": "Completed one selection pass - one element placed in sorted position",
+        "tags": ["completion", "pass"],
+        "icon": "check"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm completed - array is fully sorted",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+    
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void selection_sort(std::vector<int>& arr)",
+        "description_template": "Initializing Selection Sort algorithm on array of size {size}",
+        "extract_variables": ["size"],
+        "tags": ["initialization"]
+      },
+      "outer_loop": {
+        "pseudocode_line": 5,
+        "code_line": 6,
+        "code_line_content": "for (size_t i = 0; i < n - 1; ++i)",
+        "description_template": "Starting outer loop iteration i = {i}. Sorted portion: indices [0, {i-1}], unsorted: [{i}, {n-1}]",
+        "extract_variables": ["i", "n"],
+        "tags": ["outer_loop", "boundary"]
+      },
+      "min_selected": {
+        "pseudocode_line": 7,
+        "code_line": 8,
+        "code_line_content": "size_t min_idx = i;",
+        "description_template": "Initializing min_idx = {i} (value = {arr[i]}) at boundary position",
+        "extract_variables": ["i", "arr[i]"],
+        "tags": ["selection", "minimum"]
+      },
+      "inner_loop": {
+        "pseudocode_line": 9,
+        "code_line": 10,
+        "code_line_content": "for (size_t j = i + 1; j < n; ++j)",
+        "description_template": "Starting inner loop iteration i = {i}, j = {j}",
+        "extract_variables": ["i", "j", "n"],
+        "tags": ["inner_loop", "scan"]
+      },
+      "compare": {
+        "pseudocode_line": 11,
+        "code_line": 11,
+        "code_line_content": "if (arr[j] < arr[min_idx])",
+        "description_template": "Comparing arr[{j}] = {arr[j]} with current minimum arr[{min_idx}] = {arr[min_idx]}",
+        "extract_variables": ["j", "min_idx", "arr[j]", "arr[min_idx]"],
+        "tags": ["comparison", "decision"]
+      },
+      "update_min": {
+        "pseudocode_line": 13,
+        "code_line": 13,
+        "code_line_content": "min_idx = j;",
+        "description_template": "Found new minimum! Updating min_idx from {old_min_idx} to {j} (value {arr[j]} < {arr[old_min_idx]})",
+        "extract_variables": ["j", "old_min_idx", "arr[j]", "arr[min_idx]"],
+        "tags": ["update", "minimum"]
+      },
+      "swap": {
+        "pseudocode_line": 19,
+        "code_line": 18,
+        "code_line_content": "std::swap(arr[i], arr[min_idx]);",
+        "description_template": "Swapping arr[{i}] ({arr[i]}) with arr[{min_idx}] ({arr[min_idx]}) - placing minimum at boundary",
+        "extract_variables": ["i", "min_idx", "arr[i]", "arr[min_idx]"],
+        "tags": ["swap", "modification"]
+      },
+      "no_swap": {
+        "pseudocode_line": 15,
+        "code_line": 17,
+        "code_line_content": "if (min_idx != i)",
+        "description_template": "Minimum already at position {i}, no swap needed",
+        "extract_variables": ["i", "min_idx"],
+        "tags": ["skip", "no_swap"]
+      },
+      "pass_complete": {
+        "pseudocode_line": 21,
+        "code_line": 22,
+        "code_line_content": "} // end of outer loop iteration",
+        "description_template": "Pass {i} complete. Element at position {i} is now in its final sorted position (value {arr[i]}). Sorted count = {sorted_count}",
+        "extract_variables": ["i", "arr[i]", "sorted_count"],
+        "tags": ["pass_complete"]
+      },
+      "completed": {
+        "pseudocode_line": 23,
+        "code_line": 24,
+        "code_line_content": "} // end of function",
+        "description_template": "Selection Sort completed! Array fully sorted after {comparisons} comparisons and {swaps} swaps.",
+        "extract_variables": ["comparisons", "swaps"],
+        "tags": ["completed"]
+      }
+    },
+    
+    "visualization": {
+      "default_style": "bars",
+      "highlight_colors": {
+        "boundary": "#FF6B6B",
+        "scanning": "#4ECDC4",
+        "minimum": "#FFD166",
+        "sorted": "#06D6A0",
+        "swap_candidate": "#9B59B6",
+        "compared": "#3498DB",
+        "unsorted": "#E67E22"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true,
+      "sorting_animation": {
+        "swap_duration": 300,
+        "compare_duration": 200,
+        "scan_duration": 100
+      }
+    }
+  }
+}

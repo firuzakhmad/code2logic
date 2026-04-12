@@ -64,23 +64,51 @@ namespace c2l::scenes
     void MainMenuScene::render()
     {
         m_renderer.render();
-
         m_ui_manager->render();
 
-        ImGui::Begin("Scene Navigation Test");
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
 
+        ImGui::SetNextWindowPos(viewport->Pos);
+        ImGui::SetNextWindowSize(viewport->Size);
 
-        if (ImGui::Button("Algorithm Visualizer", ImVec2(250, 40)))
+        ImGui::Begin(
+            "MainMenu",
+            nullptr,
+            ImGuiWindowFlags_NoDecoration
+        );
+
+        ImVec2 window_size = ImGui::GetWindowSize();
+
+        float button_width = window_size.x * 0.25f;
+        float button_height = 45.0f;
+        float spacing = 15.0f;
+
+        float total_height = (button_height * 3) + (spacing * 2);
+
+        ImGui::SetCursorPosY((window_size.y - total_height) * 0.5f);
+
+        auto center_button = [&](const char* label)
+        {
+            float cursor_x = (window_size.x - button_width) * 0.5f;
+            ImGui::SetCursorPosX(cursor_x);
+            return ImGui::Button(label, ImVec2(button_width, button_height));
+        };
+
+        if (center_button("Algorithm Visualizer"))
         {
             request_scene_push(SceneType::ALGORITHM_VISUALIZER);
         }
 
-        if (ImGui::Button("Algorithm Comparison", ImVec2(250, 40)))
+        ImGui::Dummy(ImVec2(0, spacing));
+
+        if (center_button("Algorithm Comparison"))
         {
             request_scene_push(SceneType::ALGORITHM_COMPARISON);
         }
 
-        if (ImGui::Button("Exist", ImVec2(250, 40)))
+        ImGui::Dummy(ImVec2(0, spacing));
+
+        if (center_button("Exit"))
         {
             m_renderer.get_window().set_should_close(true);
         }
@@ -88,7 +116,6 @@ namespace c2l::scenes
         ImGui::End();
 
         render_common_ui();
-
         m_renderer.clear();
     }
 

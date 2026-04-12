@@ -5,9 +5,13 @@
 #include "algorithm_registry.hpp"
 #include "algorithms/bubble_sort.hpp"
 #include "algorithms/quick_sort.hpp"
+#include "algorithms/merge_sort.hpp"
+#include "algorithms/selection_sort.hpp"
+#include "algorithms/heap_sort.hpp"
 
 #include <algorithm>
 
+#include "algorithms/insertion_sort.hpp"
 #include "algorithms/visualizers/array_based_visualizer.hpp"
 
 
@@ -92,7 +96,9 @@ namespace c2l::algorithms
 
         if (const auto* info = get_algorithm_info(entry.type))
         {
-            auto it = m_available_categorized_algorithms.find(std::string(info->display_category));
+            auto it = m_available_categorized_algorithms.find(
+                std::string(info->display_category)
+            );
             if (it != m_available_categorized_algorithms.end())
             {
                 auto& vec = it->second;
@@ -215,6 +221,14 @@ namespace c2l::algorithms
 
                         case AlgorithmType::QUICK_SORT:
                             return std::make_unique<QuickSort>(m_json_config_manager);
+                        case AlgorithmType::MERGE_SORT:
+                            return std::make_unique<MergeSort>(m_json_config_manager);
+                        case AlgorithmType::INSERTION_SORT:
+                            return std::make_unique<InsertionSort>(m_json_config_manager);
+                        case AlgorithmType::SELECTION_SORT: 
+                            return std::make_unique<SelectionSort>(m_json_config_manager);
+                        case AlgorithmType::HEAP_SORT: 
+                            return std::make_unique<HeapSort>(m_json_config_manager);
 
                         default:
                             return nullptr;

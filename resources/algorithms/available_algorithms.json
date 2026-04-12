@@ -8,6 +8,22 @@
     {
       "id": "quick_sort",
       "type": "QUICK_SORT"
+    },
+    {
+      "id": "merge_sort",
+      "type": "MERGE_SORT"
+    },
+    {
+      "id": "insertion_sort",
+      "type": "INSERTION_SORT"
+    },
+    {
+      "id": "selection_sort",
+      "type": "SELECTION_SORT"
+    },
+    {
+      "id": "heap_sort",
+      "type": "HEAP_SORT"
     }
   ]
 }

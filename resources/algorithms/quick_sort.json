@@ -340,7 +340,7 @@
     },
     
     "visualization": {
-      "default_style": "bars",
+      "default_style": "enhanced_bars",
       "highlight_colors": {
         "current": "#FF6B6B",
         "compared": "#4ECDC4",

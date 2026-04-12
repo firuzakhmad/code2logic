@@ -61,9 +61,11 @@ namespace c2l::ui::managers
         ALGORITHM,
         STATISTIC,
         STEPS,
+        ALGORITHM_VISUALIZATION,
+        ALGORITHM_COMPARISON,
+        EXIT,
+
         UNKNOWN,
-
-
         COUNT = 64
     };
 
@@ -103,7 +105,7 @@ namespace c2l::ui::managers
         IconConfig() = default;
 
         IconConfig(
-            std::string  path,
+            std::string path,
             const IconQuality quality = IconQuality::MEDIUM,
             const bool preload = true)
             : path(std::move(path))
@@ -193,6 +195,15 @@ namespace c2l::ui::managers
             const ImVec2& size,
             const ImVec4& tint = {-1, 0, 0, 0},
             const char* tooltip = nullptr);
+        bool render_icon_text_button(
+            const char* str_id,
+            IconType type,
+            const char* label,
+            float font_scale,
+            const ImVec2& size,
+            const ImVec4& tint,
+            const char* tooltip = nullptr
+        );
 
         void render_loading_indicator(const ImVec2& size = {});
         void render_error_icon(const ImVec2& size = {}, const char* text = "!");
@@ -258,7 +269,8 @@ namespace c2l::ui::managers
             const ImVec4& tint = {-1, 0, 0, 0},
             bool as_button = false,
             const char* button_id = nullptr,
-            const char* tooltip = nullptr);
+            const char* tooltip = nullptr
+        );
 
         // Thread-safe cache access
         std::shared_ptr<CacheEntry> get_or_create_entry(const IconType& type);

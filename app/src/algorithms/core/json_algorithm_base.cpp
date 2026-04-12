@@ -1,6 +1,7 @@
 #include "algorithms/core/json_algorithm_base.hpp"
 #include "core/json_config_manager/json_config_manager.hpp"
 #include "algorithms/managers/algorithm_manager.hpp"
+#include "core/utils/utils.hpp"
 
 namespace c2l::algorithms
 {
@@ -345,18 +346,145 @@ namespace c2l::algorithms
 
         const auto& v = j["visualization"];
 
-        m_metadata.visualization.default_style = v.value("default_style", "bars");
+        m_metadata.visualization.default_style = string_to_style(
+            v.value("default_style", "bars")
+        );
         
         if (v.contains("highlight_colors"))
         {
             const auto& colors = v["highlight_colors"];
-            m_metadata.visualization.highlight_colors.current = colors.value("current", "#FF6B6B");
-            m_metadata.visualization.highlight_colors.compared = colors.value("compared", "#4ECDC4");
-            m_metadata.visualization.highlight_colors.swapped = colors.value("swapped", "#FFD166");
-            m_metadata.visualization.highlight_colors.sorted = colors.value("sorted", "#06D6A0");
-            m_metadata.visualization.highlight_colors.pivot = colors.value("pivot", "#9B59B6");
-            m_metadata.visualization.highlight_colors.visited = colors.value("visited", "#3498DB");
-            m_metadata.visualization.highlight_colors.frontier = colors.value("frontier", "#E67E22");
+
+            auto& hc = m_metadata.visualization.highlight_colors;
+            hc.current = c2l::core::utils::hex_to_u32(
+                colors.value("current", "#FF6B6B")
+            );
+            hc.compared = c2l::core::utils::hex_to_u32(
+                colors.value("compared", "#4ECDC4")
+            );
+            hc.swapped = c2l::core::utils::hex_to_u32(
+                colors.value("swapped", "#FFD166")
+            );
+            hc.sorted = c2l::core::utils::hex_to_u32(
+                colors.value("sorted", "#06D6A0")
+            );
+            hc.pivot = c2l::core::utils::hex_to_u32(
+                colors.value("pivot", "#9B59B6")
+            );
+            hc.visited = c2l::core::utils::hex_to_u32(
+                colors.value("visited", "#3498DB")
+            );
+            hc.frontier = c2l::core::utils::hex_to_u32(
+                colors.value("frontier", "#E67E22")
+            );
+            hc.partition_low = c2l::core::utils::hex_to_u32(
+                colors.value("partition_low", "#3498DB")
+            );
+
+            hc.partition_high = c2l::core::utils::hex_to_u32(
+                colors.value("partition_high", "#E67E22")
+            );
+
+            hc.less_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("less_than_pivot", "#88B04B")
+            );
+
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("greater_than_pivot", "#F7DC6F")
+            );
+
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("boundary", "#FF6B6B")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("scanning", "#4ECDC4")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("minimum", "#FFD166")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("swap_candidate", "#9B59B6")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("unsorted", "#E67E22")
+            );
+
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("left_subarray", "#3498DB")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("right_subarray", "#E67E22")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("merged", "#06D6A0")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("left_pointer", "#FFD166")
+            ); 
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("right_pointer", "#9B59B6")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("target", "#88B04B")
+            );
+
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("shifted", "#FFD166")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("key", "#9B59B6")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("insert_position", "#3498DB")
+            );
+
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("heap_root", "#FF6B6B")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("heapify_current", "#4ECDC4")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("largest_child", "#FFD166")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("left", "#9B59B6")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("right", "#88B04B")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("sorted_portion", "#06D6A0")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("heap_boundary", "#3498DB")
+            );
+
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("left_boundary", "#4ECDC4")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("right_boundary", "#FFD166")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("mid_point", "#9B59B6")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("searched_region", "#3498DB")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("eliminated_left", "#E67E22")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("eliminated_right", "#E67E22")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("found", "#06D6A0")
+            );
+            hc.greater_than_pivot = c2l::core::utils::hex_to_u32(
+                colors.value("not_found", "#EF476F")
+            );
+
+
         }
 
         m_metadata.visualization.animation_speed = v.value("animation_speed", 1.0);

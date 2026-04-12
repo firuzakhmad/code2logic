@@ -24,29 +24,40 @@ namespace c2l
         m_renderer = std::make_unique<graphics::Renderer>(*m_window);
 
         m_thread_manager = std::make_unique<core::ThreadManager>();
-
         m_file_system = std::make_unique<core::filesystem::StdFileSystem>();
-        m_json_config_manager = std::make_unique<core::JsonConfigManager>(*m_file_system, *m_thread_manager);
-        m_algorithm_registry = std::make_unique<algorithms::AlgorithmRegistry>(*m_json_config_manager);
+        m_json_config_manager = std::make_unique<core::JsonConfigManager>(
+            *m_file_system,
+            *m_thread_manager
+        );
+        m_json_config_manager->initialize();
 
-        m_resource_manager = std::make_unique<core::resources::ResourceManager>(*m_file_system, *m_thread_manager);
+        m_algorithm_registry = std::make_unique<algorithms::AlgorithmRegistry>(
+            *m_json_config_manager
+        );
+
+        m_resource_manager = std::make_unique<core::resources::ResourceManager>(
+            *m_file_system,
+            *m_thread_manager
+        );
         m_resource_manager->set_memory_budget(64 * 1024 * 1024);
         m_resource_manager->enable_hot_reloading(false);  // Disabling for debugging
+        const auto preload_list = m_json_config_manager->get_preload_resources();
+        m_resource_manager->preload_resources(preload_list);
 
         m_icon_manager = std::make_unique<c2l::ui::managers::IconManager>(
-            *m_thread_manager,
-            *m_resource_manager,
-            *m_json_config_manager);
-
-
+        *m_thread_manager,
+        *m_resource_manager,
+        *m_json_config_manager
+        );
 
         m_scene_manager = std::make_unique<scenes::SceneManager>(
-            *m_renderer,
-            *m_thread_manager,
-            *m_json_config_manager,
-            *m_algorithm_registry,
-            *m_resource_manager,
-            *m_icon_manager);
+        *m_renderer,
+        *m_thread_manager,
+        *m_json_config_manager,
+        *m_algorithm_registry,
+        *m_resource_manager,
+        *m_icon_manager
+        );
 
 
         LOG_INFO("Application initialization complete");
@@ -59,6 +70,7 @@ namespace c2l
         m_scene_manager.reset();
         m_icon_manager.reset();
         m_resource_manager.reset();
+        m_algorithm_registry.reset();
         m_json_config_manager.reset();
         m_file_system.reset();
         m_thread_manager.reset();

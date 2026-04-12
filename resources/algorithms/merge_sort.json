@@ -1,0 +1,529 @@
+{
+  "algorithm": {
+    "id": "merge_sort",
+    "name": "Merge Sort",
+    "display_type": "Merge Sort",
+    "category": "Sorting",
+    "version": "1.0.0",
+    "last_updated": "2026-03-26",
+
+    "complexity": {
+      "time_best": "O(n log n)",
+      "time_average": "O(n log n)",
+      "time_worst": "O(n log n)",
+      "space": "O(n)",
+      "explanation": "Merge Sort is a divide-and-conquer algorithm that divides the array into halves, recursively sorts them, and then merges the sorted halves. It guarantees O(n log n) performance regardless of input."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": true,
+      "parallelizable": true,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "A stable, divide-and-conquer sorting algorithm that divides the array into halves, recursively sorts them, and merges the sorted halves.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(n log n) - always",
+        "• Average case: O(n log n) - always",
+        "• Worst case:   O(n log n) - always",
+        "",
+        "Space Complexity: O(n) - requires auxiliary array for merging",
+        "",
+        "Key Characteristics:",
+        "• Stable sort (maintains relative order of equal elements)",
+        "• Guaranteed O(n log n) performance",
+        "• Well-suited for linked lists",
+        "• Parallelizable (can merge independently)",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: n log n",
+        "• Copies: n log n",
+        "• Memory: O(n) auxiliary space"
+      ],
+
+      "pseudocode": [
+        "void merge_sort(std::vector<int>& arr, int left, int right)",
+        "{",
+        "     if (left >= right)",
+        "     {",
+        "         return;",
+        "     }",
+        "",
+        "     int mid = left + (right - left) / 2;",
+        "     ",
+        "     merge_sort(arr, left, mid);",
+        "     merge_sort(arr, mid + 1, right);",
+        "     ",
+        "     merge(arr, left, mid, right);",
+        "}",
+        "",
+        "void merge(std::vector<int>& arr, int left, int mid, int right)",
+        "{",
+        "     int n1 = mid - left + 1;",
+        "     int n2 = right - mid;",
+        "     ",
+        "     vector<int> left_arr(n1), right_arr(n2);",
+        "     ",
+        "     for (int i = 0; i < n1; i++)",
+        "         left_arr[i] = arr[left + i];",
+        "     for (int j = 0; j < n2; j++)",
+        "         right_arr[j] = arr[mid + 1 + j];",
+        "     ",
+        "     int i = 0, j = 0, k = left;",
+        "     ",
+        "     while (i < n1 && j < n2)",
+        "     {",
+        "         if (left_arr[i] <= right_arr[j])",
+        "         {",
+        "             arr[k] = left_arr[i];",
+        "             i++;",
+        "         }",
+        "         else",
+        "         {",
+        "             arr[k] = right_arr[j];",
+        "             j++;",
+        "         }",
+        "         k++;",
+        "     }",
+        "     ",
+        "     while (i < n1)",
+        "     {",
+        "         arr[k] = left_arr[i];",
+        "         i++; k++;",
+        "     }",
+        "     ",
+        "     while (j < n2)",
+        "     {",
+        "         arr[k] = right_arr[j];",
+        "         j++; k++;",
+        "     }",
+        "}"
+      ],
+
+      "optimizations": [
+        "Bottom-up iterative merge sort",
+        "Use insertion sort for small subarrays (size < 15)",
+        "In-place merge (reduces space complexity, but increases time)",
+        "Parallel merge sort for multicore processors",
+        "Tim Sort hybrid (used in Python, Java)"
+      ],
+
+      "use_cases": [
+        "Large datasets requiring guaranteed O(n log n) performance",
+        "Linked list sorting",
+        "External sorting (when data doesn't fit in memory)",
+        "Stable sorting requirements",
+        "Parallel processing environments"
+      ],
+
+      "disadvantages": [
+        "Requires O(n) auxiliary space",
+        "Not in-place (requires extra memory)",
+        "More overhead than Quick Sort for small datasets",
+        "Not adaptive (always O(n log n) even for sorted data)"
+      ],
+
+      "related_algorithms": [
+        "Quick Sort",
+        "Tim Sort",
+        "Heap Sort",
+        "External Merge Sort"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "size",
+        "display_name": "Merge Size",
+        "type": "size_t",
+        "description": "Current size of subarrays being merged (doubles each pass)",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "size"
+        }
+      },
+      {
+        "name": "left",
+        "display_name": "Left Index",
+        "type": "size_t",
+        "description": "Start index of left subarray being merged",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "left_boundary"
+        }
+      },
+      {
+        "name": "right",
+        "display_name": "Right Index",
+        "type": "size_t",
+        "description": "End index of right subarray being merged",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "right_boundary"
+        }
+      },
+      {
+        "name": "mid",
+        "display_name": "Middle Index",
+        "type": "size_t",
+        "description": "End index of left subarray (mid+1 is start of right)",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "mid_boundary"
+        }
+      },
+      {
+        "name": "pass",
+        "display_name": "Current Pass",
+        "type": "size_t",
+        "description": "Current merge pass number (log2(n) passes total)",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "pass"
+        }
+      },
+
+      {
+        "name": "left_val",
+        "display_name": "Left Value",
+        "type": "size_t",
+        "description": "Left value in left subarray during merge",
+        "visualization": {
+          "color": "#92A8D1",
+          "icon": "left_val"
+        }
+      },
+      {
+        "name": "right_val",
+        "display_name": "Right Value",
+        "type": "size_t",
+        "description": "Right value in right subarray during merge",
+        "visualization": {
+          "color": "#F7DC6F",
+          "icon": "right_val"
+        }
+      },
+      {
+        "name": "target_idx",
+        "display_name": "Target Pointer",
+        "type": "size_t",
+        "description": "Current position in merged array",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "target"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of element comparisons performed",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "copies",
+        "display_name": "Copies",
+        "type": "size_t",
+        "description": "Total number of element copies performed",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "copy_count"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "merge_start"
+      },
+      {
+        "id": "check_base_case",
+        "name": "Check Base Case",
+        "description": "Checking if subarray size <= 1 (left: {left}, right: {right})",
+        "tags": ["recursion", "check"],
+        "icon": "search"
+      },
+      {
+        "id": "base_case_hit",
+        "name": "Base Case Reached",
+        "description": "Subarray [{left}, {right}] has size 1 or less. Recursion stops here.",
+        "tags": ["recursion", "base_case"],
+        "icon": "stop"
+      },
+      {
+        "id": "divide",
+        "name": "Divide",
+        "description": "Splitting subarray [{left}, {right}] at mid = {mid}",
+        "tags": ["divide", "recursion"],
+        "icon": "split"
+      },
+      {
+        "id": "recurse_left",
+        "name": "Recurse Left",
+        "description": "Recursively sorting left half [{left}, {mid}]",
+        "tags": ["recursion", "left"],
+        "icon": "arrow_left"
+      },
+      {
+        "id": "recurse_right",
+        "name": "Recurse Right",
+        "description": "Recursively sorting right half [{mid+1}, {right}]",
+        "tags": ["recursion", "right"],
+        "icon": "arrow_right"
+      },
+      {
+        "id": "return_recursion_left",
+        "name": "Return from Recursion",
+        "description": "Returning from recursive call for subarray [{left}, {right}]",
+        "tags": ["recursion", "return"],
+        "icon": "return_recursion_left"
+      },
+      {
+        "id": "return_recursion_right",
+        "name": "Return from Recursion",
+        "description": "Returning from recursive call for subarray [{left}, {right}]",
+        "tags": ["recursion", "return"],
+        "icon": "return_recursion_right"
+      },
+      {
+        "id": "merge_start",
+        "name": "Merge Start",
+        "description": "Starting to merge two sorted subarrays",
+        "tags": ["merge", "combine"],
+        "icon": "merge"
+      },
+      {
+        "id": "setup",
+        "name": "Merge Setup",
+        "description": "Initializing pointers for merging [{left}, {mid}] and [{mid+1}, {right}]",
+        "tags": ["merge", "setup"],
+        "icon": "setup"
+      },
+      {
+        "id": "compare",
+        "name": "Merge Compare",
+        "description": "Comparing elements from left and right subarrays",
+        "tags": ["comparison", "decision"],
+        "icon": "compare"
+      },
+      {
+        "id": "take_left",
+        "name": "Take from Left",
+        "description": "{left_val} ≤ {right_val}, copying from left",
+        "tags": ["decision", "left"],
+        "icon": "arrow_left"
+      },
+      {
+        "id": "take_right",
+        "name": "Take from Right",
+        "description": "{right_val} < {left_val}, copying from right",
+        "tags": ["decision", "right"],
+        "icon": "arrow_right"
+      },
+      {
+        "id": "copy_left_remaining",
+        "name": "Copy Left Remaining",
+        "description": "Copying remaining elements from one subarray",
+        "tags": ["copy", "remaining"],
+        "icon": "copy"
+      },
+      {
+        "id": "copy_right_remaining",
+        "name": "Copy Right Remaining",
+        "description": "Copying remaining elements from one subarray",
+        "tags": ["copy", "remaining"],
+        "icon": "copy"
+      },
+      {
+        "id": "merge_complete",
+        "name": "Merge Complete",
+        "description": "Finished merging subarrays",
+        "tags": ["merge", "merge_complete"],
+        "icon": "check"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm completed - array is fully sorted",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void merge_sort(std::vector<int>& arr, int left, int right)",
+        "description_template": "Initializing Merge Sort with array of size {size}",
+        "extract_variables": ["size"],
+        "tags": ["initialization"]
+      },
+      "check_base_case": {
+        "pseudocode_line": 3,
+        "code_line": 3,
+        "code_line_content": "if (left >= right)",
+        "description_template": "Checking if subarray size <= 1 (left: {left}, right: {right})",
+        "extract_variables": ["right", "left"],
+        "tags": ["check_base_case"]
+      },
+      "base_case_hit": {
+        "pseudocode_line": 5,
+        "code_line": 5,
+        "code_line_content": "return;",
+        "description_template": "Subarray [{left}, {right}] has size 1 or less. Recursion stops here.",
+        "extract_variables": ["right", "left"],
+        "tags": ["base_case_hit"]
+      },
+      "divide": {
+        "pseudocode_line": 8,
+        "code_line": 8,
+        "code_line_content": "int mid = left + (right - left) / 2;",
+        "description_template": "Splitting subarray [{left}, {right}] at mid = {mid}",
+        "extract_variables": ["right", "left", "mid"],
+        "tags": ["divide"]
+      },
+      "recurse_left": {
+        "pseudocode_line": 10,
+        "code_line": 10,
+        "code_line_content": "merge_sort(arr, left, mid);",
+        "description_template": "Recursively sorting left half [{left}, {mid}]",
+        "extract_variables": ["mid", "left"],
+        "tags": ["recurse_left"]
+      },
+      "recurse_right": {
+        "pseudocode_line": 11,
+        "code_line": 11,
+        "code_line_content": "merge_sort(arr, mid + 1, right);",
+        "description_template": "Recursively sorting right half [{mid+1}, {right}]",
+        "extract_variables": ["mid", "right"],
+        "tags": ["recurse_right"]
+      },
+      "return_recursion_left": {
+        "pseudocode_line": 10,
+        "code_line": 10,
+        "code_line_content": "-",
+        "description_template": "Returning from left recursive call for subarray [{left}, {mid}]",
+        "extract_variables": ["mid", "left"],
+        "tags": ["return_recursion_left"]
+      },
+      "return_recursion_right": {
+        "pseudocode_line": 11,
+        "code_line": 11,
+        "code_line_content": "-",
+        "description_template": "Returning from right recursive call for subarray [{mid+1}, {right}]",
+        "extract_variables": ["right", "mid+1"],
+        "tags": ["return_recursion_right"]
+      },
+      "merge_start": {
+        "pseudocode_line": 16,
+        "code_line": 16,
+        "code_line_content": "void merge(std::vector<int>& arr, int left, int mid, int right)",
+        "description_template": "Merging subarrays [{left}, {mid}] and [{mid+1}, {right}], depth: {depth}",
+        "extract_variables": ["depth", "right", "mid", "left"],
+        "tags": ["merge", "merge_start"]
+      },
+      "setup": {
+        "pseudocode_line": 30,
+        "code_line": 30,
+        "code_line_content": "while (i < n1 && j < n2)",
+        "description_template": "Initializing pointers for merging [{left}, {mid}] and [{mid+1}, {right}]",
+        "extract_variables": ["left", "mid", "right", "mid+1"],
+        "tags": ["merge", "setup"]
+      },
+      "compare": {
+        "pseudocode_line": 32,
+        "code_line": 32,
+        "code_line_content": "if (left_arr[i] <= right_arr[j])",
+        "description_template": "Comparing {left_val} (left) with {right_val} (right)",
+        "extract_variables": ["right_val", "left_val"],
+        "tags": ["comparison"]
+      },
+      "take_left": {
+        "pseudocode_line": 34,
+        "code_line": 34,
+        "code_line_content": "arr[k] = left_arr[i];",
+        "description_template": "{left_val} ≤ {right_val}, copying from left",
+        "extract_variables": ["left_val", "right_val"],
+        "tags": ["take_left"]
+      },
+      "take_right": {
+        "pseudocode_line": 39,
+        "code_line": 39,
+        "code_line_content": "arr[k] = right_arr[j];",
+        "description_template": "{right_val} < {left_val}, copying from right",
+        "extract_variables": ["right_val", "left_val"],
+        "tags": ["take_right"]
+      },
+      "copy_left_remaining": {
+        "pseudocode_line": 47,
+        "code_line": 47,
+        "code_line_content": "arr[k] = left_arr[i];",
+        "description_template": "Copying remaining element {left_val} from left subarray",
+        "extract_variables": ["right_val", "left_val"],
+        "tags": ["copy_left_remaining"]
+      },
+      "copy_right_remaining": {
+        "pseudocode_line": 53,
+        "code_line": 53,
+        "code_line_content": "arr[k] = right_arr[j];",
+        "description_template": "Copying remaining element {right_val} from right subarray",
+        "extract_variables": ["right_val", "left_val"],
+        "tags": ["copy_right_remaining"]
+      },
+      "merge_complete": {
+        "pseudocode_line": 56,
+        "code_line": 56,
+        "code_line_content": "return",
+        "description_template": "Merge complete. Subarray [{left}, {right}] now sorted",
+        "extract_variables": ["left", "right"],
+        "tags": ["merge", "merge_complete"]
+      },
+      "completed": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void merge_sort(...)",
+        "description_template": "Merge Sort completed. Comparisons: {comparisons}, Copies: {copies}",
+        "extract_variables": ["comparisons", "copies"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "bars",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "compared": "#4ECDC4",
+        "left_subarray": "#3498DB",
+        "right_subarray": "#E67E22",
+        "merged": "#06D6A0",
+        "left_pointer": "#FFD166",
+        "right_pointer": "#9B59B6",
+        "target": "#88B04B",
+        "sorted": "#2ECC71"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true,
+      "show_auxiliary": true
+    }
+  }
+}

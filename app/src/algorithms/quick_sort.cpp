@@ -15,8 +15,11 @@ namespace c2l::algorithms
         reset();
         generate_all_steps();
         
-        LOG_INFO("QuickSort initialized with {} elements. Generated {} steps.",
-                data.size(), m_steps.size());
+        LOG_INFO(
+            "QuickSort initialized with {} elements. Generated {} steps.",
+            data.size(), 
+            m_steps.size()
+        );
     }
 
     bool QuickSort::step_forward()
@@ -113,7 +116,11 @@ namespace c2l::algorithms
         // Only sort if more than 1 element
         if (state.data.size() > 1)
         {
-            Subarray initial{0, state.data.size() - 1, 0};
+            Subarray initial{
+                0, 
+                state.data.size() - 1, 
+                0
+            };
             state.stack.push(initial);
 
             // Process stack iteratively
@@ -123,13 +130,17 @@ namespace c2l::algorithms
                 state.stack.pop();
                 
                 // Validate subarray bounds
-                if (current.low >= current.high || current.high >= state.data.size())
+                if (current.low >= current.high || 
+                    current.high >= state.data.size())
                 {
                     continue;
                 }
                 
                 state.current_subarray = current;
-                state.max_depth = std::max(state.max_depth, current.depth);
+                state.max_depth = std::max(
+                    state.max_depth, 
+                    current.depth
+                );
                 
                 // Check if low < high
                 if (current.low < current.high)
@@ -158,15 +169,24 @@ namespace c2l::algorithms
                     // quick_sort(arr, pi + 1, high)
                     if (result.pivot_index + 1 < current.high)
                     {
-                        Subarray right{result.pivot_index + 1, current.high, current.depth + 1};
+                        Subarray right{
+                            result.pivot_index + 1, 
+                            current.high, 
+                            current.depth + 1
+                        };
                         state.stack.push(right);
                         push_step(state, "recursive_call_right");
                     }
 
                     // quick_sort(arr, low, pi - 1) 
-                    if (current.low < result.pivot_index && result.pivot_index > 0)
+                    if (current.low < result.pivot_index && 
+                        result.pivot_index > 0)
                     {
-                        Subarray left{current.low, result.pivot_index - 1, current.depth + 1};
+                        Subarray left{
+                            current.low, 
+                            result.pivot_index - 1, 
+                            current.depth + 1
+                        };
                         state.stack.push(left);
                         push_step(state, "recursive_call");
                     }
@@ -177,7 +197,10 @@ namespace c2l::algorithms
         // Final step
         push_step(state, "completed");
 
-        LOG_DEBUG("Generated {} steps for Quick Sort", m_steps.size());
+        LOG_DEBUG(
+            "Generated {} steps for Quick Sort", 
+            m_steps.size()
+        );
     }
 
     QuickSort::PartitionResult QuickSort::lomuto_partition(
@@ -245,7 +268,11 @@ namespace c2l::algorithms
         total_swaps++;
         state.swaps = total_swaps;
 
-        return PartitionResult{pivot_pos, total_comparisons, total_swaps};
+        return PartitionResult{
+            pivot_pos, 
+            total_comparisons, 
+            total_swaps
+        };
     }
 
     void QuickSort::push_step(
@@ -272,26 +299,7 @@ namespace c2l::algorithms
         step.description = format_step_description(operation_id, step);
         
         // Set operation type for backward compatibility
-        if (operation_id == "init") 
-            step.metadata.operation_type = AlgorithmStepOperation::INIT;
-        else if (operation_id == "partition_start") 
-            step.metadata.operation_type = AlgorithmStepOperation::PARTITION_START;
-        else if (operation_id == "pivot_selected") 
-            step.metadata.operation_type = AlgorithmStepOperation::PIVOT_SELECTED;
-        else if (operation_id == "partition_scan") 
-            step.metadata.operation_type = AlgorithmStepOperation::PARTITION_SCAN;
-        else if (operation_id == "partition_swap") 
-            step.metadata.operation_type = AlgorithmStepOperation::PARTITION_SWAP;
-        else if (operation_id == "partition_complete") 
-            step.metadata.operation_type = AlgorithmStepOperation::PARTITION_COMPLETE;
-        else if (operation_id == "recursive_call") 
-            step.metadata.operation_type = AlgorithmStepOperation::RECURSIVE_CALL;
-        else if (operation_id == "recursive_call_right") 
-            step.metadata.operation_type = AlgorithmStepOperation::RECURSIVE_CALL_RIGHT;
-        else if (operation_id == "completed") 
-            step.metadata.operation_type = AlgorithmStepOperation::COMPLETED;
-        else 
-            step.metadata.operation_type = AlgorithmStepOperation::NONE;
+        step.metadata.operation_id = operation_id;
 
         // Update visualization
         update_visualization_data(step, state, operation_id);
@@ -305,33 +313,93 @@ namespace c2l::algorithms
         const std::string& operation_id) const
     {
         // Core indices
-        step.metadata.set("low", state.current_subarray.low, "Low boundary");
-        step.metadata.set("high", state.current_subarray.high, "High boundary");
-        step.metadata.set("depth", state.current_subarray.depth, "Recursion depth");
-        step.metadata.set("size", state.data.size(), "Array size");
+        step.metadata.set(
+            "low", 
+            state.current_subarray.low, 
+            "Low boundary"
+        );
+        step.metadata.set(
+            "high", 
+            state.current_subarray.high, 
+            "High boundary"
+        );
+        step.metadata.set(
+            "depth", 
+            state.current_subarray.depth, 
+            "Recursion depth"
+        );
+        step.metadata.set(
+            "size", 
+            state.data.
+            size(), "Array size"
+        );
         // Partition variables
         if (state.i != static_cast<size_t>(-1))
         {
-            step.metadata.set("i", static_cast<int>(state.i), "Partition index");
-            step.metadata.set("i+1", static_cast<int>(state.i + 1), "i + 1");
+            step.metadata.set(
+                "i", 
+                static_cast<int>(state.i), 
+                "Partition index"
+            );
+            step.metadata.set(
+                "i+1", 
+                static_cast<int>(state.i + 1), 
+                "i + 1"
+            );
         }
         else
         {
-            step.metadata.set("i", -1, "Partition index (initial)");
-            step.metadata.set("i+1", 0, "i + 1");
+            step.metadata.set(
+                "i", 
+                -1, 
+                "Partition index (initial)"
+            );
+            step.metadata.set(
+                "i+1",
+                 0, 
+                 "i + 1"
+             );
         }
         
-        step.metadata.set("j", state.j, "Scan index");
-        step.metadata.set("pivot", state.pivot, "Pivot value");
-        step.metadata.set("pivot_index", state.pivot_index, "Final pivot position");
+        step.metadata.set(
+            "j", 
+            state.j, 
+            "Scan index"
+        );
+        step.metadata.set(
+            "pivot", 
+            state.pivot, 
+            "Pivot value"
+        );
+        step.metadata.set(
+            "pivot_index", 
+            state.pivot_index, 
+            "Final pivot position"
+        );
         
         // For description templates that need i+1
-        step.metadata.set("i+1", state.i + 1, "i + 1");
+        step.metadata.set(
+            "i+1",
+             state.i + 1, 
+             "i + 1"
+         );
         
         // Metrics
-        step.metadata.set("comparisons", state.comparisons, "Total comparisons");
-        step.metadata.set("swaps", state.swaps, "Total swaps");
-        step.metadata.set("max_depth", state.max_depth, "Maximum recursion depth");
+        step.metadata.set(
+            "comparisons", 
+            state.comparisons, 
+            "Total comparisons"
+        );
+        step.metadata.set(
+            "swaps", 
+            state.swaps, 
+            "Total swaps"
+        );
+        step.metadata.set(
+            "max_depth", 
+            state.max_depth, 
+            "Maximum recursion depth"
+        );
         
         // Subarray size
         size_t subarray_size = 0;
@@ -340,25 +408,39 @@ namespace c2l::algorithms
         {
             subarray_size = state.current_subarray.high - state.current_subarray.low + 1;
         }
-        step.metadata.set("size", subarray_size, "Subarray size");
+        step.metadata.set(
+            "size", 
+            subarray_size, 
+            "Subarray size"
+        );
 
         // Array values with bounds checking
         if (state.j < state.data.size())
         {
-            step.metadata.set("arr[j]", state.data[state.j], 
-                            std::string("Value at index ") + std::to_string(state.j));
+            step.metadata.set(
+                "arr[j]", 
+                state.data[state.j], 
+                std::string("Value at index ") + std::to_string(state.j)
+            );
         }
         
-        if (state.i != static_cast<size_t>(-1) && state.i < state.data.size())
+        if (state.i != static_cast<size_t>(-1) && 
+            state.i < state.data.size())
         {
-            step.metadata.set("arr[i]", state.data[state.i],
-                            std::string("Value at index ") + std::to_string(state.i));
+            step.metadata.set(
+                "arr[i]", 
+                state.data[state.i],
+                std::string("Value at index ") + std::to_string(state.i)
+            );
         }
         
         if (state.pivot_index < state.data.size())
         {
-            step.metadata.set("arr[pivot]", state.data[state.pivot_index],
-                            std::string("Value at pivot index"));
+            step.metadata.set(
+                "arr[pivot]", 
+                state.data[state.pivot_index],
+                std::string("Value at pivot index")
+            );
         }
 
         // Special handling for partition_complete
@@ -378,7 +460,8 @@ namespace c2l::algorithms
                 step.metadata.set(
                     "arr[high]", 
                     state.data[state.current_subarray.high],
-                    std::string("Value at high index ") + std::to_string(state.current_subarray.high));
+                    std::string("Value at high index ") + std::to_string(state.current_subarray.high)
+                );
             }
         }
 

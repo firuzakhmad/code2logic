@@ -5,16 +5,17 @@
 #include <stdexcept>
 #include <fstream>
 #include <sstream>
+#include <utility>
 
 namespace c2l::core
 {
     JsonConfigManager::JsonConfigManager(
         filesystem::IFileSystem &filesystem,
         ThreadManager &thread_manager,
-        const JsonConfigManagerConfig &config)
+        JsonConfigManagerConfig config)
             : m_file_system{filesystem}
             , m_thread_manager{thread_manager}
-            , m_config{config}
+            , m_config{std::move(config)}
     {
         // Ensuring config directory exists
         auto config_path = m_file_system.resolve_path(m_config.config_base_path);
@@ -25,14 +26,6 @@ namespace c2l::core
                 m_config.config_base_path.string()
             );
         }
-
-        // Starting hot reload monitor if enabled
-        if (m_config.enable_hot_reloading)
-        {
-            start_hot_reload_monitor();
-        }
-
-        LOG_INFO("JsonConfigManager initialized");
     }
 
     JsonConfigManager::~JsonConfigManager()
@@ -46,6 +39,24 @@ namespace c2l::core
         unload_all();
 
         LOG_DEBUG("JsonConfigManager destroyed");
+    }
+
+    void JsonConfigManager::initialize()
+    {
+        LOG_INFO("JsonConfigManager initializing...");
+
+        auto app_future = load_app_config();
+        app_future.get();
+
+        auto preload_future = load_preload_resources();
+        preload_future.get();
+
+        if (m_config.enable_hot_reloading)
+        {
+            start_hot_reload_monitor();
+        }
+
+        LOG_INFO("JsonConfigManager initialization complete");
     }
 
     std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_app_config(
@@ -73,10 +84,16 @@ namespace c2l::core
 
     std::future<JsonConfigManager::LoadResult>
     JsonConfigManager::load_available_algorithms_config(
-        const std::filesystem::path &path,
         bool async)
     {
-        return load_config("available_algorithms_config", path, async, true);
+        auto path = get_path_from_app_config("available_algorithms");
+
+        if (!path)
+        {
+            return make_failed_future("Failed to load available_algorithms path.");
+        }
+
+        return load_config("available_algorithms", *path, async, true);
     }
 
     std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_theme_config(
@@ -88,10 +105,29 @@ namespace c2l::core
     }
 
     std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_icon_config(
-        const std::filesystem::path& path,
         bool async)
     {
-        return load_config("icon_config", path, async, true);
+        const auto path = get_path_from_app_config("icon_config");
+
+        if (!path)
+        {
+            return make_failed_future("Failed to load icon_config path.");
+        }
+
+        return load_config("icon_config", *path, async, true);
+    }
+
+    std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_preload_resources(
+    bool async)
+    {
+        const auto path = get_path_from_app_config("preload_resources");
+
+        if (!path)
+        {
+            return make_failed_future("Failed to load icon_config path.");
+        }
+
+        return load_config("preload_resources", *path, async, true);
     }
 
     std::future<JsonConfigManager::LoadResult> JsonConfigManager::load_config(
@@ -107,15 +143,9 @@ namespace c2l::core
         {
             LOG_ERROR("Config file not found: {}", path_str);
 
-            std::promise<LoadResult> promise;
-            promise.set_value(LoadResult{
-                false,
-                "File not found: " + path_str,
-                std::chrono::steady_clock::now(),
-                0
-            });
-
-            return promise.get_future();
+            return make_failed_future(
+                "File not found: " + path_str
+            );
         }
 
         // Checking if already loaded
@@ -314,6 +344,10 @@ namespace c2l::core
         return value ? *value : default_value;
     }
 
+    nlohmann::json JsonConfigManager::get_app_config() const
+    {
+        return get<nlohmann::json>("app_config").value_or(nlohmann::json{});
+    }
 
     nlohmann::json JsonConfigManager::get_algorithm_config(
         const algorithms::AlgorithmType& algorithm_type) const
@@ -325,7 +359,7 @@ namespace c2l::core
 
     nlohmann::json JsonConfigManager::get_available_algorithms_config() const
     {
-        return get<nlohmann::json>("available_algorithms_config")
+        return get<nlohmann::json>("available_algorithms")
             .value_or(nlohmann::json{});
     }
 
@@ -347,6 +381,30 @@ namespace c2l::core
     nlohmann::json JsonConfigManager::get_icon_config() const
     {
         return get<nlohmann::json>("icon_config").value_or(nlohmann::json{});
+    }
+
+    std::vector<std::string> JsonConfigManager::get_preload_resources() const
+    {
+        auto json = get<nlohmann::json>("preload_resources")
+                    .value_or(nlohmann::json{});
+
+        if (!json.contains("preload_resources") || !json["preload_resources"].is_array())
+        {
+            LOG_ERROR("Invalid preload_resources format");
+            return {};
+        }
+
+        std::vector<std::string> result;
+
+        for (const auto& item : json["preload_resources"])
+        {
+            if (item.is_string())
+            {
+                result.push_back(item.get<std::string>());
+            }
+        }
+
+        return result;
     }
 
     std::optional<std::filesystem::path> JsonConfigManager::get_icon_path(
@@ -1027,6 +1085,50 @@ namespace c2l::core
         }
 
         LOG_DEBUG("Hot reload thread exiting");
+    }
+
+    std::future<JsonConfigManager::LoadResult>
+    JsonConfigManager::make_failed_future(
+        const std::string& message
+    ) const
+    {
+        std::promise<LoadResult> promise;
+        promise.set_value(LoadResult{
+            false,
+            message,
+            std::chrono::steady_clock::now(),
+            0
+        });
+        return promise.get_future();
+    }
+
+    std::optional<std::string> JsonConfigManager::get_path_from_app_config(
+        const std::string& key
+    ) const
+    {
+        auto app_config = get_app_config();
+
+        if (app_config.empty())
+        {
+            LOG_ERROR("App config is empty.");
+            return std::nullopt;
+        }
+
+        if (!app_config.contains(key))
+        {
+            LOG_ERROR("{} key is missing in app config.", key);
+            return std::nullopt;
+        }
+
+        const auto& section = app_config[key];
+
+        if (!section.contains("path") || !section["path"].is_string())
+        {
+            LOG_ERROR("Missing or invalid 'path' for key: {}", key);
+            return std::nullopt;
+        }
+
+        return section["path"].get<std::string>();
     }
 
  } // namespace c2l::core
