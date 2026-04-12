@@ -1,0 +1,455 @@
+{
+  "algorithm": {
+    "id": "heap_sort",
+    "name": "Heap Sort",
+    "display_type": "Heap Sort",
+    "category": "Sorting",
+    "version": "1.0.0",
+    "last_updated": "2026-04-02",
+    
+    "complexity": {
+      "time_best": "O(n log n)",
+      "time_average": "O(n log n)",
+      "time_worst": "O(n log n)",
+      "space": "O(1)",
+      "explanation": "Heap sort has guaranteed O(n log n) time complexity in all cases. It uses a binary heap data structure to efficiently find the maximum element. The heap construction phase takes O(n) time, while each extraction takes O(log n) time."
+    },
+    
+    "properties": {
+      "stable": false,
+      "in_place": true,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+    
+    "description": {
+      "brief": "A comparison-based sorting algorithm that uses a binary heap data structure. It first builds a max heap from the input data, then repeatedly extracts the maximum element and rebuilds the heap.",
+      
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(n log n) - consistent performance",
+        "• Average case: O(n log n) - heap operations are logarithmic",
+        "• Worst case:   O(n log n) - guaranteed upper bound",
+        "",
+        "Space Complexity: O(1) - in-place sorting",
+        "",
+        "Key Characteristics:",
+        "• Guaranteed O(n log n) performance",
+        "• In-place sorting (no extra array needed)",
+        "• Not stable (relative order may change)",
+        "• Optimal for systems with limited memory",
+        "• Combines advantages of merge sort and insertion sort",
+        "",
+        "Heap Operations:",
+        "• Build Heap: O(n) - Floyd's algorithm",
+        "• Heapify: O(log n) - maintains heap property",
+        "• Extract Max: O(log n) - removes root and reheapifies",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: ~2n log n average",
+        "• Swaps: ~n log n average",
+        "• Memory: Constant O(1) auxiliary space",
+        "",
+        "Comparison with Other O(n log n) Algorithms:",
+        "• Quick Sort: Usually faster but O(n²) worst case",
+        "• Merge Sort: Stable but requires O(n) extra space",
+        "• Heap Sort: Guaranteed O(n log n) and in-place"
+      ],
+      
+  	"pseudocode": [
+	    "void heap_sort(std::vector<int>& arr)",
+	    "{",
+	    "    size_t n = arr.size();",
+	    "    ",
+	    "    // Build max heap (rearrange array)",
+	    "    for (size_t i = n / 2; i-- > 0;)",
+	    "    {",
+	    "        heapify(arr, n, i);",
+	    "    }",
+	    "    ",
+	    "    // One by one extract elements from heap",
+	    "    for (size_t i = n; i-- > 1;)",
+	    "    {",
+	    "        // Move current root to end",
+	    "        std::swap(arr[0], arr[i]);",
+	    "        ",
+	    "        // Call max heapify on the reduced heap",
+	    "        heapify(arr, i, 0);",
+	    "    }",
+	    "}",
+	    "",
+	    "void heapify(std::vector<int>& arr, size_t heap_size, size_t root)",
+	    "{",
+	    "    size_t current = root;",
+	    "    ",
+	    "    while (true)",
+	    "    {",
+	    "        size_t largest = current;",
+	    "        size_t left = 2 * current + 1;",
+	    "        size_t right = 2 * current + 2;",
+	    "        ",
+	    "        // If left child is larger than current largest",
+	    "        if (left < heap_size && arr[left] > arr[largest])",
+	    "        {",
+	    "            largest = left;",
+	    "        }",
+	    "        ",
+	    "        // If right child is larger than current largest",
+	    "        if (right < heap_size && arr[right] > arr[largest])",
+	    "        {",
+	    "            largest = right;",
+	    "        }",
+	    "        ",
+	    "        // If largest is not current, swap and continue",
+	    "        if (largest == current)",
+	    "        {",
+	    "            break;",
+	    "        }",
+	    "        ",
+	    "        std::swap(arr[current], arr[largest]);",
+	    "        current = largest;",
+	    "    }",
+	    "}"
+	],
+      
+      "optimizations": [
+        "Iterative heapify to avoid recursion overhead",
+        "Bottom-up heap construction (Floyd's algorithm)",
+        "In-place heap sort with optimized heapify",
+        "Weak heap sort variant",
+        "Hybrid with insertion sort for small heaps"
+      ],
+      
+      "use_cases": [
+        "Real-time systems requiring guaranteed O(n log n) performance",
+        "Embedded systems with limited memory",
+        "When stable sorting is not required",
+        "Priority queue implementations",
+        "Large datasets where worst-case performance matters",
+        "Systems where merge sort's memory overhead is prohibitive"
+      ],
+      
+      "disadvantages": [
+        "Not stable - equal elements may change order",
+        "Poor cache performance due to non-sequential access patterns",
+        "Slower than well-implemented quicksort in practice",
+        "Not adaptive - doesn't benefit from partially sorted input",
+        "Recursive heapify may cause stack overflow for large arrays"
+      ],
+      
+      "related_algorithms": [
+        "Quick Sort",
+        "Merge Sort",
+        "Smooth Sort",
+        "Tournament Sort",
+        "Weak Heap Sort",
+        "Intro Sort (hybrid with heap sort)"
+      ]
+    },
+    
+    "variables": [
+      {
+        "name": "heap_size",
+        "display_name": "Heap Size",
+        "type": "size_t",
+        "description": "Current size of the heap (unsorted portion). Elements beyond this are already sorted.",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "heap_boundary"
+        }
+      },
+      {
+        "name": "root",
+        "display_name": "Root Index",
+        "type": "size_t",
+        "description": "Current root index being heapified in the heapify operation.",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "root"
+        }
+      },
+      {
+        "name": "largest",
+        "display_name": "Largest Index",
+        "type": "size_t",
+        "description": "Index of the largest element among root, left child, and right child during heapify.",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "largest"
+        }
+      },
+      {
+        "name": "left",
+        "display_name": "Left Child",
+        "type": "size_t",
+        "description": "Index of the left child in the binary heap (2*root + 1).",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "left"
+        }
+      },
+      {
+        "name": "right",
+        "display_name": "Right Child",
+        "type": "size_t",
+        "description": "Index of the right child in the binary heap (2*root + 2).",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "right"
+        }
+      },
+      {
+        "name": "build_heap_index",
+        "display_name": "Build Heap Index",
+        "type": "size_t",
+        "description": "Current index during the heap construction phase.",
+        "visualization": {
+          "color": "#92A8D1",
+          "icon": "build_index"
+        }
+      },
+      {
+        "name": "extract_index",
+        "display_name": "Extract Index",
+        "type": "size_t",
+        "description": "Current index during the extraction phase where max element is moved to sorted portion.",
+        "visualization": {
+          "color": "#F7DC6F",
+          "icon": "extract"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of element comparisons performed so far.",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "swaps",
+        "display_name": "Swaps",
+        "type": "size_t",
+        "description": "Total number of element swaps performed so far.",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "swap_count"
+        }
+      },
+      {
+        "name": "phase",
+        "display_name": "Phase",
+        "type": "string",
+        "description": "Current phase of the algorithm: 'build_heap' or 'extraction'",
+        "visualization": {
+          "color": "#E67E22",
+          "icon": "phase"
+        }
+      }
+    ],
+    
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "build_heap_start",
+        "name": "Build Heap Start",
+        "description": "Beginning the heap construction phase",
+        "tags": ["build_heap", "phase_start"],
+        "icon": "build_start"
+      },
+      {
+        "id": "heapify_start",
+        "name": "Heapify Start",
+        "description": "Starting heapify operation on a subtree",
+        "tags": ["heapify", "maintain_heap"],
+        "icon": "heapify"
+      },
+      {
+        "id": "compare_left",
+        "name": "Compare Left",
+        "description": "Comparing root with left child",
+        "tags": ["comparison", "heap_property"],
+        "icon": "compare"
+      },
+      {
+        "id": "compare_right",
+        "name": "Compare Right",
+        "description": "Comparing largest so far with right child",
+        "tags": ["comparison", "heap_property"],
+        "icon": "compare"
+      },
+      {
+        "id": "swap_heapify",
+        "name": "Swap During Heapify",
+        "description": "Swapping root with larger child to maintain heap property",
+        "tags": ["swap", "heapify"],
+        "icon": "swap"
+      },
+      {
+        "id": "build_heap_complete",
+        "name": "Build Heap Complete",
+        "description": "Heap construction phase completed",
+        "tags": ["build_heap", "phase_complete"],
+        "icon": "check"
+      },
+      {
+        "id": "extraction_start",
+        "name": "Extraction Start",
+        "description": "Beginning the extraction phase",
+        "tags": ["extraction", "phase_start"],
+        "icon": "extract"
+      },
+      {
+        "id": "swap_extract",
+        "name": "Swap Extract",
+        "description": "Swapping root (max) with last element of heap",
+        "tags": ["swap", "extraction"],
+        "icon": "swap"
+      },
+      {
+        "id": "extraction_complete",
+        "name": "Extraction Complete",
+        "description": "Extraction phase completed for current element",
+        "tags": ["extraction", "phase_complete"],
+        "icon": "check"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm completed - array is fully sorted",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+    
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void heap_sort(std::vector<int>& arr)",
+        "description_template": "Initializing Heap Sort algorithm on array of size {size}",
+        "extract_variables": ["size"],
+        "tags": ["initialization"]
+      },
+      "build_heap_start": {
+        "pseudocode_line": 6,
+        "code_line": 7,
+        "code_line_content": "for (size_t i = n / 2 - 1; i >= 0; --i)",
+        "description_template": "Starting heap construction phase. Building max heap from index {i} to 0",
+        "extract_variables": ["i", "size"],
+        "tags": ["build_heap", "phase"]
+      },
+      "heapify_start": {
+        "pseudocode_line": 8,
+        "code_line": 8,
+        "code_line_content": "void heapify(arr, n, root)",
+        "description_template": "Heapifying subtree with root at index {root}, heap size = {heap_size}",
+        "extract_variables": ["root", "heap_size"],
+        "tags": ["heapify", "subtree"]
+      },
+      "compare_left": {
+        "pseudocode_line": 33,
+        "code_line": 33,
+        "code_line_content": "if (left < n && arr[left] > arr[largest])",
+        "description_template": "Comparing arr[{left}] = {arr[left]} with arr[{largest}] = {arr[largest]}",
+        "extract_variables": ["left", "largest", "arr[left]", "arr[largest]"],
+        "tags": ["comparison", "left"]
+      },
+      "compare_right": {
+        "pseudocode_line": 39,
+        "code_line": 39,
+        "code_line_content": "if (right < n && arr[right] > arr[largest])",
+        "description_template": "Comparing arr[{right}] = {arr[right]} with arr[{largest}] = {arr[largest]}",
+        "extract_variables": ["right", "largest", "arr[right]", "arr[largest]"],
+        "tags": ["comparison", "right"]
+      },
+      "swap_heapify": {
+        "pseudocode_line": 50,
+        "code_line": 50,
+        "code_line_content": "std::swap(arr[root], arr[largest]);",
+        "description_template": "Swapping arr[{root}] ({arr[root]}) with arr[{largest}] ({arr[largest]}) to maintain heap property",
+        "extract_variables": ["root", "largest", "arr[root]", "arr[largest]"],
+        "tags": ["swap", "heapify"]
+      },
+      "build_heap_complete": {
+        "pseudocode_line": 52,
+        "code_line": 52,
+        "code_line_content": "} // end build heap",
+        "description_template": "Heap construction complete. Array now satisfies max heap property",
+        "extract_variables": ["size"],
+        "tags": ["build_heap", "phase_complete"]
+      },
+      "extraction_start": {
+        "pseudocode_line": 12,
+        "code_line": 13,
+        "code_line_content": "for (size_t i = n - 1; i > 0; --i)",
+        "description_template": "Starting extraction phase. Moving largest element to sorted portion",
+        "extract_variables": ["i", "heap_size"],
+        "tags": ["extraction", "phase"]
+      },
+      "swap_extract": {
+        "pseudocode_line": 14,
+        "code_line": 15,
+        "code_line_content": "std::swap(arr[0], arr[i]);",
+        "description_template": "Swapping heap root (max = {arr[0]}) with last heap element at index {i}",
+        "extract_variables": ["i", "arr[0]"],
+        "tags": ["swap", "extraction"]
+      },
+      "extraction_complete": {
+        "pseudocode_line": 17,
+        "code_line": 18,
+        "code_line_content": "heapify(arr, i, 0);",
+        "description_template": "Extraction complete. Element at index {i} is now in final sorted position. New heap size = {new_heap_size}",
+        "extract_variables": ["i", "new_heap_size"],
+        "tags": ["extraction", "phase_complete"]
+      },
+      "completed": {
+        "pseudocode_line": 20,
+        "code_line": 21,
+        "code_line_content": "} // end heap_sort",
+        "description_template": "Heap Sort completed! Array fully sorted after {comparisons} comparisons and {swaps} swaps.",
+        "extract_variables": ["comparisons", "swaps"],
+        "tags": ["completed"]
+      }
+    },
+    
+    "visualization": {
+      "default_style": "heap_tree",
+      "highlight_colors": {
+        "heap_root": "#FF6B6B",
+        "heapify_current": "#4ECDC4",
+        "largest_child": "#FFD166",
+        "left": "#9B59B6",
+        "right": "#88B04B",
+        "sorted_portion": "#06D6A0",
+        "heap_boundary": "#3498DB",
+        "swapped": "#F7DC6F",
+        "compared": "#E67E22"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true,
+      "heap_visualization": {
+        "show_tree": true,
+        "tree_layout": "binary",
+        "show_parent_links": true,
+        "node_radius": 20
+      }
+    }
+  }
+}

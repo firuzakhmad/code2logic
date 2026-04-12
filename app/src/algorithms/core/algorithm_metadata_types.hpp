@@ -2,6 +2,7 @@
 #define CODE2LOGIC_ALGORITHM_METADATA_TYPES_HPP
 
 #include "algorithms/core/algorithm_types.hpp"
+#include "algorithms/visualizers/visualization_style.hpp"
 
 #include <string>
 #include <vector>
@@ -119,25 +120,67 @@ namespace c2l::algorithms
 
     struct VisualizationConfig
     {
-        std::string default_style   {"bars"};
+        VisualizationStyle default_style { 
+            VisualizationStyle::CLASSIC_BARS 
+        };
         
         struct HighlightColors
         {
-            std::string current     {"#FF6B6B"};
-            std::string compared    {"#4ECDC4"};
-            std::string swapped     {"#FFD166"};
-            std::string sorted      {"#06D6A0"};
-            std::string pivot       {"#9B59B6"};
-            std::string visited     {"#3498DB"};
-            std::string frontier    {"#E67E22"};
+            ImU32 current;
+            ImU32 compared;
+            ImU32 swapped;
+            ImU32 sorted;
+            ImU32 pivot;
+            ImU32 visited;
+            ImU32 frontier;
+
+            ImU32 partition_low;
+            ImU32 partition_high;
+            ImU32 less_than_pivot;
+            ImU32 greater_than_pivot;
+
+            ImU32 boundary;
+            ImU32 scanning;
+            ImU32 minimum;
+            ImU32 swap_candidate;
+            ImU32 unsorted;
+
+            ImU32 left_subarray;
+            ImU32 right_subarray;
+            ImU32 merged;
+            ImU32 left_pointer;
+            ImU32 right_pointer;
+            ImU32 target;
+
+            ImU32 shifted;
+            ImU32 key;
+            ImU32 insert_position;
+
+            ImU32 heap_root;
+            ImU32 heapify_current;
+            ImU32 largest_child;
+            ImU32 left;
+            ImU32 right;
+            ImU32 sorted_portion;
+            ImU32 heap_boundary;
+
+            ImU32 left_boundary;
+            ImU32 right_boundary;
+            ImU32 mid_point;
+            ImU32 searched_region;
+            ImU32 eliminated_left;
+            ImU32 eliminated_right;
+            ImU32 found;
+            ImU32 not_found;
+
+
+
         } highlight_colors;
         
         double animation_speed      {1.0};
         bool show_labels            {true};
         bool show_values            {true};
         bool show_indices           {false};
-        
-        [[nodiscard]] ImU32 get_color(const std::string& key) const;
     };
 
     struct AlgorithmMetadata

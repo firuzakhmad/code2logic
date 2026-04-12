@@ -44,36 +44,6 @@ namespace c2l::algorithms
         return result;
     }
 
-    ImU32 VisualizationConfig::get_color(const std::string& key) const
-    {
-        static const std::unordered_map<std::string, std::string> color_map = {
-            {"current", highlight_colors.current},
-            {"compared", highlight_colors.compared},
-            {"swapped", highlight_colors.swapped},
-            {"sorted", highlight_colors.sorted},
-            {"pivot", highlight_colors.pivot},
-            {"visited", highlight_colors.visited},
-            {"frontier", highlight_colors.frontier}
-        };
-        
-        auto it = color_map.find(key);
-        if (it != color_map.end())
-        {
-            // Convert hex string to ImU32
-            std::string hex = it->second;
-            if (hex.length() == 7 && hex[0] == '#')
-            {
-                unsigned int r, g, b;
-                if (sscanf(hex.c_str(), "#%02x%02x%02x", &r, &g, &b) == 3)
-                {
-                    return IM_COL32(r, g, b, 255);
-                }
-            }
-        }
-        
-        return IM_COL32(255, 255, 255, 255);
-    }
-
     bool AlgorithmMetadata::has_step_mapping(const std::string& step_id) const
     {
         return step_mappings.find(step_id) != step_mappings.end();

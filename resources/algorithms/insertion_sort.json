@@ -1,0 +1,314 @@
+{
+  "algorithm": {
+    "id": "insertion_sort",
+    "name": "Insertion Sort",
+    "display_type": "Insertion Sort",
+    "category": "Sorting",
+    "version": "1.0.0",
+    "last_updated": "2026-03-30",
+
+    "complexity": {
+      "time_best": "O(n)",
+      "time_average": "O(n²)",
+      "time_worst": "O(n²)",
+      "space": "O(1)",
+      "explanation": "Insertion sort builds the final sorted array one element at a time. It has linear time complexity in the best case (already sorted array) and quadratic in the worst case (reverse sorted)."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": true,
+      "adaptive": true,
+      "comparison_based": true,
+      "online": true,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "A simple sorting algorithm that builds the final sorted array one element at a time by repeatedly inserting each element into its correct position among the previously sorted elements.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(n)   - when array is already sorted",
+        "• Average case: O(n²)  - random data",
+        "• Worst case:   O(n²)  - reverse sorted data",
+        "",
+        "Space Complexity: O(1) - in-place sorting",
+        "",
+        "Key Characteristics:",
+        "• Simple and intuitive implementation",
+        "• Efficient for small datasets (< 100 elements)",
+        "• Excellent for nearly sorted arrays",
+        "• Online algorithm - can sort as elements arrive",
+        "• Stable - maintains relative order of equal elements",
+        "• Adaptive - performs better on partially sorted data",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: n(n-1)/2 ≈ O(n²) in worst case",
+        "• Assignments: Up to n(n-1)/2 in worst case",
+        "• Memory: Constant O(1) auxiliary space",
+        "",
+        "Algorithm Steps:",
+        "1. Assume first element is already sorted",
+        "2. Pick the next element (key)",
+        "3. Compare key with elements in sorted portion",
+        "4. Shift larger elements to the right",
+        "5. Insert key into correct position",
+        "6. Repeat until all elements are sorted"
+      ],
+
+      "pseudocode": [
+        "void insertion_sort(std::vector<int>& arr)",
+        "{",
+        "    size_t n = arr.size();",
+        "    ",
+        "    for (size_t i = 1; i < n; ++i)",
+        "    {",
+        "        int key = arr[i];",
+        "        size_t j = i;",
+        "        ",
+        "        while (j > 0 && arr[j - 1] > key)",
+        "        {",
+        "            arr[j] = arr[j - 1];",
+        "            j--;",
+        "        }",
+        "        ",
+        "        arr[j] = key;",
+        "    }",
+        "}"
+      ],
+
+      "optimizations": [
+        "Binary insertion sort (binary search for insertion position)",
+        "Shell sort (generalization using gap sequences)",
+        "Hybrid with merge sort for larger datasets",
+        "Using sentinel to avoid bounds checking",
+        "Loop unrolling for small arrays"
+      ],
+
+      "use_cases": [
+        "Small datasets (n < 100)",
+        "Nearly sorted arrays",
+        "Online sorting where elements arrive one by one",
+        "Educational purposes",
+        "Part of hybrid algorithms (e.g., Timsort)"
+      ],
+
+      "disadvantages": [
+        "Quadratic time complexity for large datasets",
+        "Not suitable for reverse sorted data",
+        "Requires shifting many elements in worst case",
+        "Inefficient compared to O(n log n) algorithms for large n"
+      ],
+
+      "related_algorithms": [
+        "Selection Sort",
+        "Bubble Sort",
+        "Shell Sort",
+        "Binary Insertion Sort",
+        "Timsort"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "i",
+        "display_name": "Current Index",
+        "type": "size_t",
+        "description": "Index of the element currently being inserted into the sorted portion",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "current_element"
+        }
+      },
+      {
+        "name": "j",
+        "display_name": "Comparison Index",
+        "type": "size_t",
+        "description": "Current position being compared with the key during insertion",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "comparison_position"
+        }
+      },
+      {
+        "name": "arr[i]",
+        "display_name": "Comparison Index",
+        "type": "size_t",
+        "description": "Current position being compared with the key during insertion",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "comparison_position"
+        }
+      },
+      {
+        "name": "key",
+        "display_name": "Key Value",
+        "type": "int",
+        "description": "The value of the element being inserted",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "key"
+        }
+      },
+      {
+        "name": "shifting",
+        "display_name": "Shifting Active",
+        "type": "bool",
+        "description": "Indicates whether elements are currently being shifted to make room",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "shift"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of element comparisons performed so far",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "swaps",
+        "display_name": "Swaps/Assignments",
+        "type": "size_t",
+        "description": "Total number of element assignments/shifts performed so far",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "swap_count"
+        }
+      },
+      {
+        "name": "sorted_count",
+        "display_name": "Sorted Elements",
+        "type": "size_t",
+        "description": "Number of elements that are already in their final sorted position",
+        "visualization": {
+          "color": "#06D6A0",
+          "icon": "sorted"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "select_element",
+        "name": "Select Element",
+        "description": "Selecting the next element to insert into sorted portion",
+        "tags": ["selection", "iteration"],
+        "icon": "select"
+      },
+      {
+        "id": "compare",
+        "name": "Comparison",
+        "description": "Comparing key with element in sorted portion",
+        "tags": ["comparison", "decision"],
+        "icon": "compare"
+      },
+      {
+        "id": "shift",
+        "name": "Shift",
+        "description": "Shifting element to the right to make room",
+        "tags": ["modification", "shift"],
+        "icon": "shift"
+      },
+      {
+        "id": "insert",
+        "name": "Insert",
+        "description": "Inserting key at its correct position",
+        "tags": ["modification", "insert"],
+        "icon": "insert"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm completed - array is fully sorted",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void insertion_sort(std::vector<int>& arr)",
+        "description_template": "Initializing Insertion Sort algorithm with array of size {size}",
+        "extract_variables": ["size"],
+        "tags": ["initialization"]
+      },
+      "select_element": {
+        "pseudocode_line": 5,
+        "code_line": 5,
+        "code_line_content": "for (size_t i = 1; i < n; ++i)",
+        "description_template": "Selecting element at index {i} with value {arr[i]} to insert",
+        "extract_variables": ["i", "arr[i]"],
+        "tags": ["outer_loop", "selection"]
+      },
+      "compare": {
+        "pseudocode_line": 10,
+        "code_line": 10,
+        "code_line_content": "while (j > 0 && arr[j - 1] > key)",
+        "description_template": "Comparing key {key} with arr[{j-1}] = {arr[j-1]}",
+        "extract_variables": ["j", "arr[j-1]", "key"],
+        "tags": ["comparison", "while_condition"]
+      },
+      "shift": {
+        "pseudocode_line": 12,
+        "code_line": 12,
+        "code_line_content": "arr[j] = arr[j - 1]",
+        "description_template": "Shifting arr[{j-1}] = {arr[j-1]} to position {j}",
+        "extract_variables": ["arr[j-1]", "j"],
+        "tags": ["shift", "modification"]
+      },
+      "insert": {
+        "pseudocode_line": 16,
+        "code_line": 16,
+        "code_line_content": "arr[j] = key",
+        "description_template": "Inserting key {key} at position {j}",
+        "extract_variables": ["key", "j", "arr[j]"],
+        "tags": ["insert", "assignment"]
+      },
+      "completed": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "return",
+        "description_template": "Insertion Sort completed. Array fully sorted after {comparisons} comparisons and {swaps} assignments.",
+        "extract_variables": ["comparisons", "swaps"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "bars",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "compared": "#4ECDC4",
+        "shifted": "#FFD166",
+        "sorted": "#06D6A0",
+        "key": "#9B59B6",
+        "insert_position": "#3498DB",
+        "unsorted": "#95A5A6"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true,
+      "show_key_marker": true
+    }
+  }
+}

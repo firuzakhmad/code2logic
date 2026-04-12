@@ -246,6 +246,7 @@ namespace c2l::algorithms
         AlgorithmStep step;
 
         step.data = data;
+        step.metadata.operation_id = operation_id;
 
         populate_step_metadata(
             step,
@@ -258,23 +259,6 @@ namespace c2l::algorithms
         // Generating description using JSON template
         step.description = format_step_description(operation_id, step);
 
-        // Setting operation type (for backward compatibility)
-        if (operation_id == "init") 
-            step.metadata.operation_type = AlgorithmStepOperation::INIT;
-        else if (operation_id == "outer_loop") 
-            step.metadata.operation_type = AlgorithmStepOperation::LOOP_OUTER;
-        else if (operation_id == "inner_loop") 
-            step.metadata.operation_type = AlgorithmStepOperation::LOOP_INNER;
-        else if (operation_id == "compare") 
-            step.metadata.operation_type = AlgorithmStepOperation::COMPARE;
-        else if (operation_id == "swap") 
-            step.metadata.operation_type = AlgorithmStepOperation::SWAP;
-        else if (operation_id == "pass_complete") 
-            step.metadata.operation_type = AlgorithmStepOperation::PASS_COMPLETE;
-        else if (operation_id == "completed") 
-            step.metadata.operation_type = AlgorithmStepOperation::COMPLETED;
-        else 
-            step.metadata.operation_type = AlgorithmStepOperation::NONE;
 
         return step;
     }
@@ -334,7 +318,9 @@ namespace c2l::algorithms
 
         // Visualization
         step.visualization.highlighted_index = state.inner_loop_index;
-        if (state.inner_loop_index + 1 < state.data.size())
+        if (state.inner_loop_index + 1 < state.data.size() &&
+            operation_id == "compare" ||
+            operation_id == "swap")
             step.visualization.compared_index = state.inner_loop_index + 1;
         else
             step.visualization.compared_index = -1;

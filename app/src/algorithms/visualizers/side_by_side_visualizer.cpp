@@ -54,18 +54,36 @@ namespace c2l::algorithms
 
         // Left algorithm
         {
-            ImGui::BeginChild("LeftAlgorithm", ImVec2(left_width, height), true);
-            render_algorithm_side("Left", m_left_algorithm, m_left_metadata,
-                                  ImVec2(left_width, height), true);
+            ImGui::BeginChild(
+                "LeftAlgorithm", 
+                ImVec2(left_width, height), 
+                true
+            );
+            render_algorithm_side(
+                "Left", 
+                m_left_algorithm, 
+                m_left_metadata,
+                ImVec2(left_width, height), 
+                true
+            );
             ImGui::EndChild();
         }
 
         ImGui::SameLine();
 
         // Splitter
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImGui::PushStyleColor(
+            ImGuiCol_Button, 
+            ImVec4(0.3f, 0.3f, 0.3f, 1.0f)
+        );
+        ImGui::PushStyleColor(
+            ImGuiCol_ButtonHovered, 
+            ImVec4(0.4f, 0.4f, 0.4f, 1.0f)
+        );
+        ImGui::PushStyleColor(
+            ImGuiCol_ButtonActive, 
+            ImVec4(0.5f, 0.5f, 0.5f, 1.0f)
+        );
 
         ImGui::Button("||", ImVec2(10, height));
         if (ImGui::IsItemActive())
@@ -79,9 +97,18 @@ namespace c2l::algorithms
 
         // Right algorithm
         {
-            ImGui::BeginChild("RightAlgorithm", ImVec2(right_width, height), true);
-            render_algorithm_side("Right", m_right_algorithm, m_right_metadata,
-                                  ImVec2(right_width, height), false);
+            ImGui::BeginChild(
+                "RightAlgorithm", 
+                ImVec2(right_width, height), 
+                true
+            );
+            render_algorithm_side(
+                "Right", 
+                m_right_algorithm, 
+                m_right_metadata,
+                ImVec2(right_width, height), 
+                false
+            );
             ImGui::EndChild();
         }
     }
@@ -95,24 +122,38 @@ namespace c2l::algorithms
     {
         if (!algorithm || !metadata)
         {
-            ImGui::TextColored(ImVec4(1,0,0,1), "No algorithm selected");
+            ImGui::TextColored(
+                ImVec4(1,0,0,1), 
+                "No algorithm selected"
+            );
             return;
         }
 
         // Header
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "%s: %s",
-                          side_name, metadata->get_display_name().c_str());
+        ImGui::TextColored(
+            ImVec4(0.2f, 0.8f, 1.0f, 1.0f), 
+            "%s: %s",
+            side_name, 
+            metadata->get_display_name().c_str()
+        );
 
         // Current step info
         auto current_step = algorithm->get_current_step();
-        ImGui::Text("Step %zu/%zu", algorithm->get_current_step_index(),
-                   algorithm->get_step_count() - 1);
+        ImGui::Text(
+            "Step %zu/%zu", 
+            algorithm->get_current_step_index(),
+            algorithm->get_step_count() - 1
+        );
 
         ImGui::Separator();
 
         // Visualization area
         float viz_height = size.y - (m_show_metrics ? 150.0f : 80.0f);
-        ImGui::BeginChild("Visualization", ImVec2(0, viz_height), false);
+        ImGui::BeginChild(
+            "Visualization", 
+            ImVec2(0, viz_height), 
+            false
+        );
 
         if (is_left)
             m_left_visualizer.render();
@@ -130,19 +171,27 @@ namespace c2l::algorithms
 
             ImGui::Columns(2, nullptr, false);
 
-            ImGui::Text("Comparisons: %zu", current_step.visualization.comparisons);
+            ImGui::Text(
+                "Comparisons: %zu", 
+                current_step.visualization.comparisons
+            );
             ImGui::NextColumn();
-            ImGui::Text("Swaps: %zu", current_step.visualization.swaps);
+            ImGui::Text(
+                "Swaps: %zu", 
+                current_step.visualization.swaps
+            );
 
             ImGui::Columns(1);
 
             // Complexity info
             const auto& complexity = metadata->get_complexity();
-            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
-                              "Best: %s | Avg: %s | Worst: %s",
-                              complexity.time_best.c_str(),
-                              complexity.time_average.c_str(),
-                              complexity.time_worst.c_str());
+            ImGui::TextColored(
+                ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+                "Best: %s | Avg: %s | Worst: %s",
+                complexity.time_best.c_str(),
+                complexity.time_average.c_str(),
+                complexity.time_worst.c_str()
+            );
         }
     }
 

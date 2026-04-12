@@ -22,12 +22,12 @@ namespace c2l::core::resources
 		register_loader(std::make_unique<TextureLoader>());
 		register_loader(std::make_unique<ShaderLoader>());
 
-		// TODO: Create default respurce file (.json)
-		std::vector<std::filesystem::path> default_resources = {
-			// Fonts
-			"resources/fonts/roboto/Roboto-Black.ttf",
-		};
-		preload_resources(default_resources);
+		// TODO: Create default resource file (.json)
+		// std::vector<std::filesystem::path> default_resources = {
+		// 	// Fonts
+		// 	"resources/fonts/roboto/Roboto-Black.ttf",
+		// };
+		// preload_resources(default_resources);
 
 	}
 
@@ -345,12 +345,12 @@ namespace c2l::core::resources
 	}
 
 	void ResourceManager::preload_resources(
-		const std::vector<std::filesystem::path>& paths)
+		const std::vector<std::string>& resources)
 	{
-	    for (const auto& path : paths) 
-	    {
-	        load_internal(path);
-	    }
+		for (const auto& path : resources)
+		{
+			load_internal(path);
+		}
 	}
 
 	void ResourceManager::scan_directory(

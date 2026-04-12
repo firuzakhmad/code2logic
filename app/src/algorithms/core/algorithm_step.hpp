@@ -26,7 +26,7 @@ namespace c2l::algorithms
             std::unordered_map<std::string, AlgorithmVariable> variables;
             std::unordered_map<std::string, std::string> tags;
             std::vector<std::string> notes;
-            AlgorithmStepOperation operation_type{ AlgorithmStepOperation::NONE };
+            std::string operation_id;
 
             // Type safe variable access
             template<typename T>
@@ -87,15 +87,27 @@ namespace c2l::algorithms
             std::vector<size_t> additional_highlights;
             bool is_partition_step      {false};
             bool is_swap_step           {false};
+            bool is_complete            {false};
+
 
             // Quick Sort specific
             size_t subarray_low{0};
             size_t subarray_high{0};
             size_t recursion_depth{0};
+
+            // Heap sort
+            size_t heap_size{0};
+            size_t heapify_root{0};
+            std::vector<size_t> heap_structure;
             
             // Partition boundaries visualization
             std::vector<size_t> less_than_pivot_indices;
             std::vector<size_t> greater_than_pivot_indices;
+
+            // Merge Sort specific
+            size_t merge_boundary{0};           // Mid point between left and right subarrays
+            bool is_merge_step{false};          // Flag for merge operations
+            bool is_compare_step{false};
 
 
             // Graph-based algorithms
@@ -108,6 +120,10 @@ namespace c2l::algorithms
                 std::unordered_map<size_t, int> node_distances;
                 std::unordered_map<size_t, size_t> node_parents;
             } graph_state;
+
+            bool is_merge_complete{false};
+            bool is_insertion_step{false};
+            bool is_shift_step{false};
 
             // Tree-based algorithms
             struct TreeNode

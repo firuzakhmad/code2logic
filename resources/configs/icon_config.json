@@ -107,6 +107,39 @@
         "professional": "resources/icons/professional/reset/reset.svg"
       },
       "sizes": [16, 24, 32, 48]
+    },
+    "algorithm_comparison":
+    {
+      "description": "Algorithm Comparison icon for visualization",
+      "default_path": "resources/icons/default/algorithm_comparison/algorithm_comparison.png",
+      "type": "ALGORITHM_COMPARISON",
+      "alternatives":
+      {
+        "professional": "resources/icons/professional/algorithm_comparison/algorithm_comparison.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+    "algorithm_visualization":
+    {
+      "description": "Algorithm Visualization icon for visualization",
+      "default_path": "resources/icons/default/algorithm_visualization/algorithm_visualization.png",
+      "type": "ALGORITHM_VISUALIZATION",
+      "alternatives":
+      {
+        "professional": "resources/icons/professional/algorithm_visualization/algorithm_visualization.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+    "exit":
+    {
+      "description": "Exit icon for visualization",
+      "default_path": "resources/icons/default/exit/exit.png",
+      "type": "EXIT",
+      "alternatives":
+      {
+        "professional": "resources/icons/professional/exit/exit.svg"
+      },
+      "sizes": [16, 24, 32, 48]
     }
   }
 }

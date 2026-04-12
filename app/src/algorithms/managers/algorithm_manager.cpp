@@ -472,48 +472,11 @@ namespace c2l::algorithms
 
         auto current_step = m_current_context.execution->get_current_step();
 
-        std::string operation_id;
+        LOG_WARNING("operation_id: {}", current_step.metadata.operation_id);
 
-        switch (current_step.metadata.operation_type)
-        {
-            case AlgorithmStepOperation::INIT:          
-                operation_id = "init"; break;
-            // Bubble Sort Operations
-            case AlgorithmStepOperation::LOOP_OUTER:    
-                operation_id = "outer_loop"; break;
-            case AlgorithmStepOperation::LOOP_INNER:    
-                operation_id = "inner_loop"; break;
-            case AlgorithmStepOperation::PASS_COMPLETE: 
-                operation_id = "pass_complete"; break;
-            // Quick Sort Operations
-            case AlgorithmStepOperation::PARTITION_START:       
-                operation_id = "partition_start"; break;
-            case AlgorithmStepOperation::PIVOT_SELECTED:          
-                operation_id = "pivot_selected"; break;
-            case AlgorithmStepOperation::PARTITION_SCAN:          
-                operation_id = "partition_scan"; break;
-            case AlgorithmStepOperation::PARTITION_SWAP:          
-                operation_id = "partition_swap"; break;
-            case AlgorithmStepOperation::PARTITION_COMPLETE:          
-                operation_id = "partition_complete"; break;
-            case AlgorithmStepOperation::RECURSIVE_CALL:          
-                operation_id = "recursive_call"; break;
-            case AlgorithmStepOperation::RECURSIVE_CALL_RIGHT:          
-                operation_id = "recursive_call_right"; break;
-            // General Operations
-            case AlgorithmStepOperation::COMPARE:       
-                operation_id = "compare"; break;
-            case AlgorithmStepOperation::SWAP:          
-                operation_id = "swap"; break;
-            case AlgorithmStepOperation::COMPLETED:      
-                operation_id = "completed"; break;
-            
-            default:                                    
-                operation_id = "unknown"; break;
-        }
 
         m_cached_code_highlights =
-            json_algorithm->generate_highlights(operation_id, current_step);
+            json_algorithm->generate_highlights(current_step.metadata.operation_id, current_step);
 
         const auto& description = m_current_context.metadata->get_description();
 

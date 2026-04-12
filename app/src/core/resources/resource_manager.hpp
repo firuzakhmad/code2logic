@@ -5,6 +5,7 @@
 #include "core/resources/i_resource_loader.hpp"
 #include "core/file_system/i_file_system.hpp"
 #include "core/utils/thread_manager/thread_manager.hpp"
+#include "core/json_config_manager/json_config_manager.hpp"
 
 #include <unordered_map>
 #include <memory>
@@ -153,9 +154,11 @@ namespace c2l::core::resources
 
 	    /**
 	     * @brief Preload multiple resources 
-	     * @param path Vector of resource path to preload
+	     * @param resources list of preload resources
 	     */
-	    void preload_resources(const std::vector<std::filesystem::path>& path);
+	    void preload_resources(
+			const std::vector<std::string>& resources
+	    );
 
 	    /**
 	     * @brief Scan directory and register found resources

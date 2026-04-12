@@ -126,7 +126,7 @@ namespace c2l::core
         JsonConfigManager(
             filesystem::IFileSystem& filesystem,
             ThreadManager& thread_manager,
-            const JsonConfigManagerConfig& config = JsonConfigManagerConfig{}
+            JsonConfigManagerConfig  config = JsonConfigManagerConfig{}
         );
 
         ~JsonConfigManager();
@@ -136,6 +136,8 @@ namespace c2l::core
         JsonConfigManager& operator=(const JsonConfigManager&) = delete;
         JsonConfigManager(JsonConfigManager&&) = delete;
         JsonConfigManager& operator=(JsonConfigManager&&) = delete;
+
+        void initialize();
 
         /**
          * @brief Loads application configuration 
@@ -158,10 +160,14 @@ namespace c2l::core
          * @brief Loads icon configuration
          */
         std::future<LoadResult> load_icon_config(
-            const std::filesystem::path& path =
-                std::filesystem::path{"resources"} / "configs" / "icon_config.json",
             bool async = true
         );
+
+        /**
+         * @brief Loads preload resource configuration for ResourceManager class
+         */
+        std::future<JsonConfigManager::LoadResult>
+        load_preload_resources(bool async = true);
 
         /**
          * @brief Loads algorithm configuration
@@ -175,8 +181,6 @@ namespace c2l::core
          * @brief Loads available algorithms based on id
          */
         std::future<LoadResult> load_available_algorithms_config(
-        const std::filesystem::path& path =
-            std::filesystem::path{"resources"} / "algorithms" / "available_algorithms.json",
             bool async = true
         );
 
@@ -261,6 +265,11 @@ namespace c2l::core
         ) const;
 
         /**
+         * @brief Gets app configuration
+         */
+        nlohmann::json get_app_config() const;
+
+        /**
          * @brief Gets complete algorithm configuration
          */
         nlohmann::json get_algorithm_config(
@@ -289,6 +298,8 @@ namespace c2l::core
          * @brief Gets icon configuration
          */
         nlohmann::json get_icon_config() const;
+
+        std::vector<std::string> get_preload_resources() const;
 
         /**
          * @brief Gets icon path
@@ -449,6 +460,14 @@ namespace c2l::core
          */
         void hot_reload_loop();
 
+        std::future<LoadResult>
+        make_failed_future(
+            const std::string& message
+        ) const;
+
+        std::optional<std::string> get_path_from_app_config(
+            const std::string& key
+        ) const;
 
         filesystem::IFileSystem& m_file_system;
         ThreadManager& m_thread_manager;

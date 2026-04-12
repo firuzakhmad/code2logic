@@ -1,0 +1,16 @@
+{
+    "icon_config":
+    {
+        "path": "resources/configs/icon_config.json"
+    },
+
+    "available_algorithms":
+    {
+        "path": "resources/algorithms/available_algorithms.json"
+    },
+
+    "preload_resources":
+    {
+        "path": "resources/preload_resources/preload_resources.json"
+    }
+}

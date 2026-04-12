@@ -41,20 +41,20 @@ namespace c2l::algorithms
 
         void render_comparison_metrics();
 
-        ISimpleAlgorithm* m_left_algorithm{nullptr};
-        const IAlgorithmMetadata *m_left_metadata{nullptr};
-        ISimpleAlgorithm* m_right_algorithm{nullptr};
-        const IAlgorithmMetadata *m_right_metadata{nullptr};
+        ISimpleAlgorithm* m_left_algorithm          {nullptr};
+        const IAlgorithmMetadata *m_left_metadata   {nullptr};
+        ISimpleAlgorithm* m_right_algorithm         {nullptr};
+        const IAlgorithmMetadata *m_right_metadata  {nullptr};
 
         ArrayBasedVisualizer m_left_visualizer;
         ArrayBasedVisualizer m_right_visualizer;
 
-        float m_split_position{0.5f};
-        bool m_show_metrics{true};
-        bool m_show_labels{true};
+        float m_split_position                      {0.5f};
+        bool m_show_metrics                         {true};
+        bool m_show_labels                          {true};
 
         // Animation
-        double m_animation_time{0.0};
+        double m_animation_time                     {0.0};
     };
 
 } // namespace c2l::algorithms

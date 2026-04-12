@@ -29,7 +29,25 @@ namespace c2l::algorithms
         RECURSIVE_CALL_RIGHT,
 
 
-        MERGE,
+        PASS_START,
+
+        // Merge Sort
+        MERGE_BASE_CASE_HIT,
+        MERGE_CHECK_BASE_CASE,
+        MERGE_DIVIDE,
+        MERGE_RECURSE_LEFT,
+        MERGE_RECURSE_RIGHT,
+        MERGE_RECURSION_RETURN,
+        MERGE_START,
+        MERGE_SETUP,
+        MERGE_COMPARE,
+        MERGE_TAKE_LEFT,
+        MERGE_TAKE_RIGHT,
+        MERGE_COPY_RIGHT_REMAINING,
+        MERGE_COPY_LEFT_REMAINING,
+        MERGE_WRITE_BACK,
+        MERGE_COMPLETE,
+
 
         PASS_COMPLETE,
         COMPLETED
