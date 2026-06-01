@@ -19,24 +19,36 @@ namespace c2l::algorithms
         // Searching
         BINARY_SEARCH,
         LINEAR_SEARCH,
+        JUMP_SEARCH,
         INTERPOLATION_SEARCH,
 
         // Graph
         BFS,
         DFS,
         TOPOLOGICAL_SORT,
+        A_STAR,
+        DIJKSTRA,
+        FLOYD_WARSHALL,
+        
 
         // Path_finding
-        DIJKSTRA,
-        A_STAR,
+        GRID_DIJKSTRA,
+        GRID_A_STAR, 
+        JUMP_POINT_SEARCH,
         BELLMAN_FORD,
+        PRIMS_MST,
+        GRID_DFS, 
+        THETA_STAR, 
+        BEST_FIRST_SEARCH,
+        TRACE,
 
         // Tree
         BST_INSERT,
         BST_SEARCH,
         AVL_INSERT,
+        GRID_BFS,
 
-        UNKNOWN
+        UNKNOWN, 
     };
 
     enum class AlgorithmCategory : uint8_t
@@ -54,11 +66,12 @@ namespace c2l::algorithms
 
     enum class VisualizationType : uint8_t
     {
-        ARRAY_BASED,
-        GRAPH_BASED,
-        TREE_BASED,
-        GRID_BASED,
-        COMPARISON_BASED,
+        ARRAY_BASED_VISUALIZATION,
+        PATH_FINDING_BASED_VISUALIZATION,
+        GRAPH_BASED_VISUALIZATION,
+        TREE_BASED_VISUALIZATION,
+        GRID_BASED_VISUALIZATION,
+        COMPARISON_BASED_VISUALIZATION,
 
         UNKNOWN
     };
@@ -70,7 +83,8 @@ namespace c2l::algorithms
         AlgorithmType       type;
         AlgorithmCategory   category;
         std::string_view    display_category;
-        VisualizationType  visualization;
+        VisualizationType   visualization;
+        std::string_view    display_visualization;
     };
 
     constexpr AlgorithmInfo ALGORITHMS[] =
@@ -80,9 +94,10 @@ namespace c2l::algorithms
             "bubble_sort",      
             "Bubble Sort",      
             AlgorithmType::BUBBLE_SORT,      
-            AlgorithmCategory::SORTING,       
+            AlgorithmCategory::SORTING,
             "Sorting",      
-            VisualizationType::ARRAY_BASED 
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
         },
         { 
             "quick_sort",       
@@ -90,7 +105,8 @@ namespace c2l::algorithms
             AlgorithmType::QUICK_SORT,      
             AlgorithmCategory::SORTING,
             "Sorting",       
-            VisualizationType::ARRAY_BASED 
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
         },
         { 
             "merge_sort",       
@@ -98,7 +114,8 @@ namespace c2l::algorithms
             AlgorithmType::MERGE_SORT,     
             AlgorithmCategory::SORTING,
             "Sorting",
-            VisualizationType::ARRAY_BASED 
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
         },
         { 
             "insertion_sort",   
@@ -106,7 +123,8 @@ namespace c2l::algorithms
             AlgorithmType::INSERTION_SORT,   
             AlgorithmCategory::SORTING,
             "Sorting",       
-            VisualizationType::ARRAY_BASED 
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
         },
         { 
             "selection_sort",   
@@ -114,7 +132,8 @@ namespace c2l::algorithms
             AlgorithmType::SELECTION_SORT,
             AlgorithmCategory::SORTING,
             "Sorting",       
-            VisualizationType::ARRAY_BASED 
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
         },
         { 
             "heap_sort",        
@@ -122,7 +141,8 @@ namespace c2l::algorithms
             AlgorithmType::HEAP_SORT,      
             AlgorithmCategory::SORTING,
             "Sorting",       
-            VisualizationType::ARRAY_BASED 
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
         },
 
         // Searching
@@ -132,7 +152,8 @@ namespace c2l::algorithms
             AlgorithmType::BINARY_SEARCH,    
             AlgorithmCategory::SEARCHING,
             "Searching",     
-            VisualizationType::ARRAY_BASED 
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
         },
         { 
             "linear_search",    
@@ -140,7 +161,17 @@ namespace c2l::algorithms
             AlgorithmType::LINEAR_SEARCH,  
             AlgorithmCategory::SEARCHING,
             "Searching",     
-            VisualizationType::ARRAY_BASED 
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
+        },
+        {
+            "jump_search",
+            "Jump Search",
+            AlgorithmType::JUMP_SEARCH,
+            AlgorithmCategory::SEARCHING,
+            "Searching",
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
         },
         { 
             "interpolation_search",
@@ -148,7 +179,8 @@ namespace c2l::algorithms
             AlgorithmType::INTERPOLATION_SEARCH,
             AlgorithmCategory::SEARCHING,
             "Searching", 
-            VisualizationType::ARRAY_BASED 
+            VisualizationType::ARRAY_BASED_VISUALIZATION,
+            "Array Based Visualization"
         },
 
         // Graph
@@ -158,7 +190,8 @@ namespace c2l::algorithms
             AlgorithmType::BFS,           
             AlgorithmCategory::GRAPH,
             "Graph",
-            VisualizationType::GRAPH_BASED 
+            VisualizationType::GRAPH_BASED_VISUALIZATION,
+            "Graph Based Visualization"
         },
         { 
             "dfs",              
@@ -166,7 +199,8 @@ namespace c2l::algorithms
             AlgorithmType::DFS,          
             AlgorithmCategory::GRAPH,
             "Graph",      
-            VisualizationType::GRAPH_BASED 
+            VisualizationType::GRAPH_BASED_VISUALIZATION,
+            "Graph Based Visualization"
         },
         { 
             "topological_sort", 
@@ -174,7 +208,8 @@ namespace c2l::algorithms
             AlgorithmType::TOPOLOGICAL_SORT,
             AlgorithmCategory::GRAPH,
             "Graph",      
-            VisualizationType::GRAPH_BASED 
+            VisualizationType::GRAPH_BASED_VISUALIZATION,
+            "Graph Based Visualization"
         },
 
         // Path_finding
@@ -182,25 +217,109 @@ namespace c2l::algorithms
             "dijkstra",         
             "Dijkstra",         
             AlgorithmType::DIJKSTRA,    
-            AlgorithmCategory::PATH_FINDING,
-            "Path Finding",
-            VisualizationType::GRID_BASED 
+            AlgorithmCategory::GRAPH,
+            "Graph",
+            VisualizationType::GRAPH_BASED_VISUALIZATION,
+            "Graph Based Visualization"
+        },
+        {
+            "prim",
+            "Prim's Algorithm",
+            AlgorithmType::PRIMS_MST,
+            AlgorithmCategory::GRAPH,
+            "Graph",
+            VisualizationType::GRAPH_BASED_VISUALIZATION,
+            "Graph Based Visualization"
         },
         { 
             "a_star",           
             "A*",               
             AlgorithmType::A_STAR,          
+            AlgorithmCategory::GRAPH,
+            "Graph",  
+            VisualizationType::GRAPH_BASED_VISUALIZATION,
+            "Graph Based Visualization"
+        },
+        {
+            "grid_a_star",
+            "A*",
+            AlgorithmType::GRID_A_STAR,
             AlgorithmCategory::PATH_FINDING,
-            "Finding",  
-            VisualizationType::GRID_BASED 
+            "Path Finding",
+            VisualizationType::PATH_FINDING_BASED_VISUALIZATION,
+            "Path Finding Based Visualization"
+        },
+        {
+            "jump_point_search",
+            "Jump Point Search (JPS)",
+            AlgorithmType::JUMP_POINT_SEARCH,
+            AlgorithmCategory::PATH_FINDING,
+            "Path Finding",
+            VisualizationType::PATH_FINDING_BASED_VISUALIZATION,
+            "Path Finding Based Visualization"
+        },
+        {
+            "grid_dijkstra",
+            "Dijkstra's Algorithm",
+            AlgorithmType::GRID_DIJKSTRA,
+            AlgorithmCategory::PATH_FINDING,
+            "Path Finding",
+            VisualizationType::PATH_FINDING_BASED_VISUALIZATION,
+            "Path Finding Based Visualization"
+        },
+        {
+            "grid_bfs",
+            "Breadth-First Search",
+            AlgorithmType::GRID_BFS,
+            AlgorithmCategory::PATH_FINDING,
+            "Path Finding",
+            VisualizationType::PATH_FINDING_BASED_VISUALIZATION,
+            "Path Finding Based Visualization"
+        },
+        {
+            "grid_dfs",
+            "Depth-First Search",
+            AlgorithmType::GRID_DFS,
+            AlgorithmCategory::PATH_FINDING,
+            "Path Finding",
+            VisualizationType::PATH_FINDING_BASED_VISUALIZATION,
+            "Path Finding Based Visualization"
+        },
+        {
+            "theta_star",
+            "Theta*",
+            AlgorithmType::THETA_STAR,
+            AlgorithmCategory::PATH_FINDING,
+            "Path Finding",
+            VisualizationType::PATH_FINDING_BASED_VISUALIZATION,
+            "Path Finding Based Visualization"
+        },
+        {
+            "best_first_search",
+            "Best-First Search",
+            AlgorithmType::BEST_FIRST_SEARCH,
+            AlgorithmCategory::PATH_FINDING,
+            "Path Finding",
+            VisualizationType::PATH_FINDING_BASED_VISUALIZATION,
+            "Path Finding Based Visualization"
+        },
+        {
+            "trace",
+            "Trace",
+            AlgorithmType::TRACE,
+            AlgorithmCategory::PATH_FINDING,
+            "Path Finding",
+            VisualizationType::PATH_FINDING_BASED_VISUALIZATION,
+            "Path Finding Based Visualization"
         },
         { 
             "bellman_ford",     
             "Bellman-Ford",     
             AlgorithmType::BELLMAN_FORD,
-            AlgorithmCategory::PATH_FINDING,
-            "Finding",  
-            VisualizationType::GRID_BASED 
+            AlgorithmCategory::GRAPH,
+            "Graph",
+            VisualizationType::GRAPH_BASED_VISUALIZATION,
+            "Graph Based Visualization"
         },
 
         // Tree
@@ -210,7 +329,8 @@ namespace c2l::algorithms
             AlgorithmType::BST_INSERT,
             AlgorithmCategory::TREE,
             "Tree",          
-            VisualizationType::TREE_BASED 
+            VisualizationType::TREE_BASED_VISUALIZATION,
+            "Tree Based Visualization"
         },
         { 
             "bst_search",       
@@ -218,7 +338,8 @@ namespace c2l::algorithms
             AlgorithmType::BST_SEARCH,  
             AlgorithmCategory::TREE,
             "Tree",          
-            VisualizationType::TREE_BASED 
+            VisualizationType::TREE_BASED_VISUALIZATION,
+            "Tree Based Visualization"
         },
         { 
             "avl_insert",       
@@ -226,7 +347,8 @@ namespace c2l::algorithms
             AlgorithmType::AVL_INSERT,   
             AlgorithmCategory::TREE,
             "Tree",          
-            VisualizationType::TREE_BASED 
+            VisualizationType::TREE_BASED_VISUALIZATION,
+            "Tree Based Visualization"
         }
     };
 
@@ -269,7 +391,7 @@ namespace c2l::algorithms
         if (const auto* info = get_algorithm_info(type))
             return info->id;
 
-        return "unknown";
+        return "Unknown";
     }
 
     inline AlgorithmCategory algorithm_category(AlgorithmType type)
@@ -285,7 +407,15 @@ namespace c2l::algorithms
         if (const auto* info = get_algorithm_info(type))
             return info->visualization;
 
-        return VisualizationType::ARRAY_BASED;
+        return VisualizationType::ARRAY_BASED_VISUALIZATION;
+    }
+
+    inline std::string_view display_visualization(AlgorithmType type)
+    {
+        if (const auto* info = get_algorithm_info(type))
+            return info->display_visualization;
+
+        return "Unknown Visualization";;
     }
 
 } // namespace c2l::algorithms

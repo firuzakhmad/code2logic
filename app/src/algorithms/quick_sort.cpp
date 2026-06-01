@@ -9,83 +9,6 @@ namespace c2l::algorithms
         LOG_DEBUG("QuickSort created and metadata loaded from JSON");
     }
 
-    void QuickSort::initialize(const std::vector<int>& data)
-    {
-        m_original_data = data;
-        reset();
-        generate_all_steps();
-        
-        LOG_INFO(
-            "QuickSort initialized with {} elements. Generated {} steps.",
-            data.size(), 
-            m_steps.size()
-        );
-    }
-
-    bool QuickSort::step_forward()
-    {
-        if (m_current_step_index < m_steps.size() - 1)
-        {
-            m_current_step_index++;
-            notify_observers();
-            return true;
-        }
-        return false;
-    }
-
-    bool QuickSort::step_backward()
-    {
-        if (m_current_step_index > 0)
-        {
-            m_current_step_index--;
-            notify_observers();
-            return true;
-        }
-        return false;
-    }
-
-    void QuickSort::reset()
-    {
-        m_current_step_index = 0;
-        m_steps.clear();
-        m_total_comparisons = 0;
-        m_total_swaps = 0;
-    }
-
-    std::vector<int> QuickSort::get_original_data() const
-    {
-        return m_original_data;
-    }
-
-    AlgorithmStep QuickSort::get_current_step() const
-    {
-        if (m_steps.empty() || m_current_step_index >= m_steps.size())
-        {
-            return AlgorithmStep{};
-        }
-        return m_steps[m_current_step_index];
-    }
-
-    size_t QuickSort::get_step_count() const
-    {
-        return m_steps.size();
-    }
-
-    size_t QuickSort::get_current_step_index() const
-    {
-        return m_current_step_index;
-    }
-
-    bool QuickSort::is_complete() const
-    {
-        return m_current_step_index >= m_steps.size() - 1;
-    }
-
-    bool QuickSort::is_steps_empty_or_invalid() const
-    {
-        return m_steps.empty() || m_current_step_index >= m_steps.size();
-    }
-
     void QuickSort::generate_all_steps()
     {
         if (m_original_data.empty())
@@ -481,8 +404,8 @@ namespace c2l::algorithms
         auto& viz = step.visualization;
         
         // Basic metrics
-        viz.comparisons = state.comparisons;
-        viz.swaps = state.swaps;
+        viz.comparison_count = state.comparisons;
+        viz.swap_count = state.swaps;
         
         // Clearing any previous highlights
         viz.highlighted_index = std::numeric_limits<size_t>::max();

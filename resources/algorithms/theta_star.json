@@ -1,0 +1,456 @@
+{
+  "algorithm": {
+    "id": "theta_star",
+    "name": "Theta* Any-Angle Pathfinding",
+    "display_type": "Theta*",
+    "category": "Path Finding",
+    "version": "1.0.0",
+    "last_updated": "2026-05-20",
+
+    "complexity": {
+      "time_best": "O(E log V)",
+      "time_average": "O(E log V)",
+      "time_worst": "O(E log V)",
+      "space": "O(V)",
+      "explanation": "Theta* has the same complexity as A* but with additional line-of-sight checks. Time complexity is O(E log V) where E is edges and V is vertices. Space complexity is O(V)."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Theta* is an any-angle pathfinding algorithm that produces shorter and more natural paths by allowing movement across grid cells using line-of-sight checks.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O(E log V) with line-of-sight checks",
+        "Space Complexity: O(V) for open/closed sets",
+        "",
+        "Key Characteristics:",
+        "• Produces shorter paths than A* on grids",
+        "• Uses line-of-sight to skip intermediate nodes",
+        "• Creates natural any-angle movement",
+        "• Same complexity as A* with LOS overhead",
+        "",
+        "Applications:",
+        "• Real-time strategy games",
+        "• Robotics navigation",
+        "• Character movement in games",
+        "• Any situation requiring smooth paths"
+      ],
+
+      "pseudocode": [
+        "vector<Cell> ThetaStar(",
+        "       const Grid& grid,",
+        "       Cell start,",
+        "       Cell target)",
+        "{",
+        "    PriorityQueue<Cell, float> open_set;",
+        "    vector<vector<bool>> closed_set(rows, vector<bool>(cols, false));",
+        "    vector<vector<Cell>> parent(rows, vector<Cell>(cols));",
+        "    vector<vector<float>> g_score(rows, vector<float>(cols, INFINITY));",
+        "",
+        "    g_score[start.row][start.col] = 0;",
+        "    parent[start.row][start.col] = start;",
+        "    open_set.push(start, heuristic(start, target));",
+        "",
+        "    while (!open_set.empty())",
+        "    {",
+        "        Cell current = open_set.pop_min();",
+        "",
+        "        if (current == target)",
+        "        {",
+        "            break;",
+        "        }",
+        "",
+        "        closed_set[current.row][current.col] = true;",
+        "",
+        "        for (const Cell& neighbor : get_neighbors(current))",
+        "        {",
+        "            if (closed_set[neighbor.row][neighbor.col]) continue;",
+        "            if (grid[neighbor.row][neighbor.col] == WALL) continue;",
+        "",
+        "            // Theta* key difference: check line of sight to parent",
+        "            Cell current_parent = parent[current.row][current.col];",
+        "            ",
+        "            if (line_of_sight(current_parent, neighbor))",
+        "            {",
+        "                // Path through parent (any-angle)",
+        "                tentative_g = g_score[current_parent.row][current_parent.col] +",
+        "                    distance(current_parent, neighbor);",
+        "                ",
+        "                if (tentative_g < g_score[neighbor.row][neighbor.col])",
+        "                {",
+        "                    parent[neighbor.row][neighbor.col] = current_parent;",
+        "                    g_score[neighbor.row][neighbor.col] = tentative_g;",
+        "                    f_score = tentative_g + heuristic(neighbor, target);",
+        "                    open_set.push(neighbor, f_score);",
+        "                }",
+        "            }",
+        "            else",
+        "            {",
+        "                // Standard A* path through current",
+        "                tentative_g = g_score[current.row][current.col] +",
+        "                    distance(current, neighbor);",
+        "                ",
+        "                if (tentative_g < g_score[neighbor.row][neighbor.col])",
+        "                {",
+        "                    parent[neighbor.row][neighbor.col] = current;",
+        "                    g_score[neighbor.row][neighbor.col] = tentative_g;",
+        "                    f_score = tentative_g + heuristic(neighbor, target);",
+        "                    open_set.push(neighbor, f_score);",
+        "                }",
+        "            }",
+        "        }",
+        "    }",
+        "",
+        "    return reconstruct_path(parent, start, target);",
+        "}"
+      ],
+
+      "optimizations": [
+        "Early line-of-sight termination",
+        "Bresenham's line algorithm for LOS checks",
+        "Lazy Theta* for fewer LOS checks",
+        "Memory-efficient parent tracking"
+      ],
+
+      "use_cases": [
+        "Real-time strategy game unit movement",
+        "Robotic path planning with smooth turns",
+        "First-person shooter NPC navigation",
+        "Autonomous vehicle path planning"
+      ],
+
+      "disadvantages": [
+        "More expensive than A* due to LOS checks",
+        "LOS checks can be costly on large grids",
+        "Path can cut very close to obstacles",
+        "More complex implementation than A*"
+      ],
+
+      "related_algorithms": [
+        "A* Algorithm",
+        "Lazy Theta*",
+        "Jump Point Search",
+        "Dijkstra's Algorithm"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "start_cell",
+        "display_name": "Start Cell",
+        "type": "string",
+        "description": "Starting position on the grid",
+        "visualization": {"color": "#00FF00", "icon": "start"}
+      },
+      {
+        "name": "target_cell",
+        "display_name": "Target Cell",
+        "type": "string",
+        "description": "Goal position to reach",
+        "visualization": {"color": "#FF0000", "icon": "target"}
+      },
+      {
+        "name": "current_cell",
+        "display_name": "Current Cell",
+        "type": "string",
+        "description": "Cell currently being processed",
+        "visualization": {"color": "#FF6B6B", "icon": "current"}
+      },
+      {
+        "name": "open_set_size",
+        "display_name": "Open Set Size",
+        "type": "size_t",
+        "description": "Number of cells in the open set",
+        "visualization": {"color": "#4ECDC4", "icon": "queue"}
+      },
+      {
+        "name": "closed_set_size",
+        "display_name": "Closed Set Size",
+        "type": "size_t",
+        "description": "Number of cells in closed set",
+        "visualization": {"color": "#9B59B6", "icon": "explored"}
+      },
+      {
+        "name": "line_of_sight_checks",
+        "display_name": "LOS Checks",
+        "type": "size_t",
+        "description": "Number of line-of-sight checks performed",
+        "visualization": {"color": "#FFA500", "icon": "los"}
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Neighbor Evaluations",
+        "type": "size_t",
+        "description": "Number of neighbor cells evaluated",
+        "visualization": {"color": "#88B04B", "icon": "comparison"}
+      },
+      {
+        "name": "g_score",
+        "display_name": "G-Score",
+        "type": "float",
+        "description": "Actual cost from start to current cell",
+        "visualization": {"color": "#92A8D1", "icon": "distance"}
+      },
+      {
+        "name": "line_of_sight",
+        "display_name": "Line of Sight",
+        "type": "boolean",
+        "description": "Whether line of sight exists to parent",
+        "visualization": {"color": "#FFD700", "icon": "los"}
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "push_start",
+        "name": "Push Start Cell",
+        "description": "Adding start cell to open set",
+        "tags": ["open_set", "start"],
+        "icon": "push"
+      },
+      {
+        "id": "pop_min",
+        "name": "Pop Minimum F-Score",
+        "description": "Extracting cell with lowest f-score",
+        "tags": ["open_set", "pop", "process"],
+        "icon": "extract"
+      },
+      {
+        "id": "goal_check",
+        "name": "Goal Check",
+        "description": "Checking if current cell is target",
+        "tags": ["goal", "check"],
+        "icon": "target"
+      },
+      {
+        "id": "add_to_closed",
+        "name": "Add to Closed Set",
+        "description": "Adding current cell to closed set",
+        "tags": ["closed_set", "settle"],
+        "icon": "settle"
+      },
+      {
+        "id": "evaluate_neighbor",
+        "name": "Evaluate Neighbor",
+        "description": "Evaluating neighboring cell",
+        "tags": ["neighbor", "evaluate"],
+        "icon": "edge"
+      },
+      {
+        "id": "line_of_sight_check",
+        "name": "Line of Sight Check",
+        "description": "Checking line of sight to parent cell",
+        "tags": ["los", "check"],
+        "icon": "los"
+      },
+      {
+        "id": "update_with_parent",
+        "name": "Update with Parent (Any-Angle)",
+        "description": "Updating path using line-of-sight to parent",
+        "tags": ["los", "update", "any-angle"],
+        "icon": "update"
+      },
+      {
+        "id": "relax_edge",
+        "name": "Relax Edge",
+        "description": "Checking if better path found",
+        "tags": ["edge", "relax"],
+        "icon": "relax"
+      },
+      {
+        "id": "update_scores",
+        "name": "Update Scores",
+        "description": "Updating g-score and f-score for neighbor",
+        "tags": ["update", "score"],
+        "icon": "update"
+      },
+      {
+        "id": "push_neighbor",
+        "name": "Push Neighbor",
+        "description": "Adding neighbor to open set",
+        "tags": ["open_set", "push", "neighbor"],
+        "icon": "push"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target cell reached with any-angle path",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "open_set_empty",
+        "name": "Open Set Empty",
+        "description": "No path exists to target",
+        "tags": ["complete", "failure"],
+        "icon": "empty"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Theta* search completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "vector<Cell> ThetaStar(const Grid& grid, Cell start, Cell target)",
+        "description_template": "Initializing Theta* algorithm on {rows}x{cols} grid",
+        "extract_variables": ["rows", "cols"],
+        "tags": ["initialization"]
+      },
+      "push_start": {
+        "pseudocode_line": 13,
+        "code_line": 13,
+        "code_line_content": "open_set.push(start, heuristic(start, target))",
+        "description_template": "Adding start cell ({start_row},{start_col}) to open set (f = {f_score})",
+        "extract_variables": ["start_row", "start_col", "f_score"],
+        "tags": ["open_set", "start"]
+      },
+      "pop_min": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "Cell current = open_set.pop_min()",
+        "description_template": "Popping cell ({current_row},{current_col}) with f = {f_score} from open set",
+        "extract_variables": ["current_row", "current_col", "f_score", "g_score"],
+        "tags": ["open_set", "pop"]
+      },
+      "goal_check": {
+        "pseudocode_line": 21,
+        "code_line": 21,
+        "code_line_content": "if (current == target)",
+        "description_template": "Checking if ({current_row},{current_col}) is the target cell",
+        "extract_variables": ["current_row", "current_col", "target_row", "target_col"],
+        "tags": ["goal", "check"]
+      },
+      "add_to_closed": {
+        "pseudocode_line": 26,
+        "code_line": 26,
+        "code_line_content": "closed_set[current.row][current.col] = true",
+        "description_template": "Adding cell ({current_row},{current_col}) to closed set",
+        "extract_variables": ["current_row", "current_col", "closed_set_size"],
+        "tags": ["closed_set", "settle"]
+      },
+      "evaluate_neighbor": {
+        "pseudocode_line": 28,
+        "code_line": 28,
+        "code_line_content": "for (const Cell& neighbor : get_neighbors(current))",
+        "description_template": "Evaluating neighbor ({neighbor_row},{neighbor_col}) from ({current_row},{current_col})",
+        "extract_variables": ["current_row", "current_col", "neighbor_row", "neighbor_col"],
+        "tags": ["neighbor", "evaluate"]
+      },
+      "line_of_sight_check": {
+        "pseudocode_line": 35,
+        "code_line": 35,
+        "code_line_content": "if (line_of_sight(current_parent, neighbor))",
+        "description_template": "Checking line of sight from parent ({parent_row},{parent_col}) to ({neighbor_row},{neighbor_col})",
+        "extract_variables": ["parent_row", "parent_col", "neighbor_row", "neighbor_col"],
+        "tags": ["los", "check"]
+      },
+      "update_with_parent": {
+        "pseudocode_line": 37,
+        "code_line": 37,
+        "code_line_content": "tentative_g = g_score[current_parent] + distance(current_parent, neighbor)",
+        "description_template": "LOS success! Using any-angle path from parent ({parent_row},{parent_col}) to neighbor ({neighbor_row},{neighbor_col})",
+        "extract_variables": ["parent_row", "parent_col", "neighbor_row", "neighbor_col", "tentative_g"],
+        "tags": ["los", "update", "any-angle"]
+      },
+      "relax_edge": {
+        "pseudocode_line": 44,
+        "code_line": 44,
+        "code_line_content": "if (tentative_g < g_score[neighbor.row][neighbor.col])",
+        "description_template": "Relaxing edge: tentative g = {tentative_g} < current g = {old_g} to ({neighbor_row},{neighbor_col})",
+        "extract_variables": ["tentative_g", "old_g", "neighbor_row", "neighbor_col"],
+        "tags": ["edge", "relax"]
+      },
+      "update_scores": {
+        "pseudocode_line": 47,
+        "code_line": 47,
+        "code_line_content": "g_score[neighbor.row][neighbor.col] = tentative_g",
+        "description_template": "Updating ({neighbor_row},{neighbor_col}): g = {new_g}, f = {new_f}",
+        "extract_variables": ["neighbor_row", "neighbor_col", "new_g", "new_f"],
+        "tags": ["update", "score"]
+      },
+      "push_neighbor": {
+        "pseudocode_line": 50,
+        "code_line": 50,
+        "code_line_content": "open_set.push(neighbor, f_score)",
+        "description_template": "Adding neighbor ({neighbor_row},{neighbor_col}) to open set with f = {f_score}",
+        "extract_variables": ["neighbor_row", "neighbor_col", "f_score"],
+        "tags": ["open_set", "push"]
+      },
+      "target_found": {
+        "pseudocode_line": 23,
+        "code_line": 23,
+        "code_line_content": "break",
+        "description_template": "Target cell ({target_row},{target_col}) reached! Path length: {path_length} steps, cost: {path_cost}",
+        "extract_variables": ["target_row", "target_col", "path_length", "path_cost"],
+        "tags": ["target", "found", "complete"]
+      },
+      "open_set_empty": {
+        "pseudocode_line": 16,
+        "code_line": 16,
+        "code_line_content": "while (!open_set.empty())",
+        "description_template": "Open set empty - No path exists from ({start_row},{start_col}) to ({target_row},{target_col})",
+        "extract_variables": ["start_row", "start_col", "target_row", "target_col", "explored_count"],
+        "tags": ["complete", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 58,
+        "code_line": 58,
+        "code_line_content": "return reconstruct_path(parent, start, target)",
+        "description_template": "Theta* completed. Explored {closed_set_size} cells, performed {los_checks} LOS checks",
+        "extract_variables": ["closed_set_size", "los_checks", "rows", "cols"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "grid",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "closed": "#06D6A0",
+        "open": "#FFD166",
+        "path": "#9B59B6",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500",
+        "los_edge": "#FFD700",
+        "wall": "#2A2A3A",
+        "weight_1": "#4A6A8A",
+        "weight_2": "#3A5A7A",
+        "weight_3": "#2A4A6A",
+        "weight_4": "#1A3A5A",
+        "weight_5": "#0A2A4A"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_coordinates": true,
+      "show_scores": false,
+      "show_los_edges": true
+    }
+  }
+}

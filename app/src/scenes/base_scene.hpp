@@ -81,16 +81,7 @@ namespace c2l::scenes
 	    virtual void setup_docking_layout() {}
 	    virtual void render_common_ui();
 
-		bool render_icon_button(
-			const std::string& id,
-			ui::managers::IconType type,
-			const std::function<void()>& callback = nullptr,
-			const ImVec2& size = ImVec2(0.f, 0.f),
-			bool enabled = true,
-			const std::string& tooltip = "");
-
 	    std::unique_ptr<ui::managers::UIManager> m_ui_manager;
-
 	    std::shared_ptr<ui::components::MainMenu> m_main_menu;
 
 		NavigationCallback m_push_callback;

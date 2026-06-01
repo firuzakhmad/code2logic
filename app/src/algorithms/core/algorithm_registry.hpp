@@ -10,6 +10,7 @@
 #include "core/json_config_manager/json_config_manager.hpp"
 #include "algorithms/core/algorithm_types.hpp"
 #include "algorithms/core/algorithm_metadata_types.hpp"
+#include "ui/managers/icon_manager.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -19,6 +20,8 @@
 #include <vector>
 #include <unordered_map>
 #include <string_view>
+
+#include "ui/core/popup.hpp"
 
 
 namespace c2l::algorithms
@@ -48,7 +51,9 @@ namespace c2l::algorithms
             VisualizerFactory visualizer_factory;
         };
 
-        explicit AlgorithmRegistry(core::JsonConfigManager& json_config_manager);
+        AlgorithmRegistry(
+            core::JsonConfigManager& json_config_manager,
+            ui::managers::IconManager& icon_manager);
         ~AlgorithmRegistry() = default;
 
         AlgorithmRegistry(const AlgorithmRegistry&) = delete;
@@ -82,6 +87,7 @@ namespace c2l::algorithms
         bool create_entry_for_available_algorithms();
 
         core::JsonConfigManager& m_json_config_manager;
+        ui::managers::IconManager& m_icon_manager;
 
         mutable std::shared_mutex m_mutex;
 

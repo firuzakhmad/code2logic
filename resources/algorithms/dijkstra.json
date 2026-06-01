@@ -1,0 +1,395 @@
+{
+  "algorithm": {
+    "id": "dijkstra",
+    "name": "Dijkstra's Algorithm",
+    "display_type": "Dijkstra",
+    "category": "Graph",
+    "version": "1.0.0",
+    "last_updated": "2026-05-11",
+
+    "complexity": {
+      "time_best": "O((V + E) log V)",
+      "time_average": "O((V + E) log V)",
+      "time_worst": "O((V + E) log V)",
+      "space": "O(V)",
+      "explanation": "Dijkstra's algorithm uses a priority queue for efficient minimum distance extraction. With binary heap, time complexity is O((V+E)log V). Space complexity is O(V) for distances and priority queue."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Dijkstra's algorithm finds the shortest paths from a source node to all other nodes in a weighted graph with non-negative edge weights.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O((V + E) log V) - with binary heap",
+        "Space Complexity: O(V) - for distances and priority queue",
+        "",
+        "Key Characteristics:",
+        "• Finds shortest paths from source to all vertices",
+        "• Works with non-negative edge weights",
+        "• Uses greedy approach with priority queue",
+        "• Foundation for many routing protocols",
+        "",
+        "Applications:",
+        "• GPS navigation and mapping",
+        "• Network routing (OSPF, IS-IS)",
+        "• Social network analysis",
+        "• Game AI pathfinding",
+        "• Resource allocation problems"
+      ],
+
+      "pseudocode": [
+        "void Dijkstra(",
+        "       const Graph& graph,",
+        "       size_t source_node,",
+        "       optional<size_t> target_node)",
+        "{",
+        "    PriorityQueue<size_t, int> pq;",
+        "    vector<int> dist(graph.node_count, INFINITY);",
+        "    vector<size_t> prev(graph.node_count, INVALID_NODE);",
+        "    vector<bool> visited(graph.node_count, false);",
+        "    vector<bool> in_pq(graph.node_count, false);",
+        "",
+        "    dist[source_node] = 0;",
+        "    pq.push(source_node, 0);",
+        "    in_pq[source_node] = true;",
+        "",
+        "    while (!pq.empty())",
+        "    {",
+        "        size_t current_node = pq.pop_min();",
+        "        in_pq[current_node] = false;",
+        "",
+        "        if (visited[current_node]) continue;",
+        "        visited[current_node] = true;",
+        "",
+        "        if (target_node.has_value() &&",
+        "            current_node == target_node.value())",
+        "        {",
+        "            break;",
+        "        }",
+        "",
+        "        for (const Edge& edge : graph.adjacencyList[current_node])",
+        "        {",
+        "            size_t neighbor = edge.to;",
+        "            int weight = edge.weight;",
+        "            int new_dist = dist[current_node] + weight;",
+        "",
+        "            if (new_dist < dist[neighbor])",
+        "            {",
+        "                dist[neighbor] = new_dist;",
+        "                prev[neighbor] = current_node;",
+        "                pq.push(neighbor, new_dist);",
+        "                in_pq[neighbor] = true;",
+        "            }",
+        "        }",
+        "    }",
+        "}"
+      ],
+
+      "optimizations": [
+        "Use binary heap for priority queue",
+        "Early termination when target is reached",
+        "Fibonacci heap for dense graphs (O(V log V + E))",
+        "Bidirectional Dijkstra for large graphs",
+        "A* with heuristic for goal-directed search"
+      ],
+
+      "use_cases": [
+        "GPS shortest path navigation",
+        "Network routing protocols",
+        "Social network degree of separation",
+        "Game character pathfinding",
+        "Transportation logistics"
+      ],
+
+      "disadvantages": [
+        "Cannot handle negative edge weights",
+        "Not suitable for very large graphs without optimizations",
+        "May explore many nodes unnecessarily",
+        "Requires more memory than BFS/DFS"
+      ],
+
+      "related_algorithms": [
+        "A* Search",
+        "Bellman-Ford Algorithm",
+        "Floyd-Warshall Algorithm",
+        "Breadth-First Search (unweighted)"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "source_node",
+        "display_name": "Source Node",
+        "type": "size_t",
+        "description": "The source vertex where Dijkstra begins",
+        "visualization": {
+          "color": "#00FF00",
+          "icon": "start"
+        }
+      },
+      {
+        "name": "current_node",
+        "display_name": "Current Node",
+        "type": "size_t",
+        "description": "The vertex currently being processed",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "current"
+        }
+      },
+      {
+        "name": "pq_size",
+        "display_name": "Priority Queue Size",
+        "type": "size_t",
+        "description": "Number of vertices in the priority queue",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "queue"
+        }
+      },
+      {
+        "name": "explored_count",
+        "display_name": "Settled Nodes",
+        "type": "size_t",
+        "description": "Number of vertices with finalized distances",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "explored"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Edge Relaxations",
+        "type": "size_t",
+        "description": "Number of edge relaxations performed",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "distance",
+        "display_name": "Distance",
+        "type": "int",
+        "description": "Current shortest distance from source",
+        "visualization": {
+          "color": "#92A8D1",
+          "icon": "distance"
+        }
+      },
+      {
+        "name": "edge_weight",
+        "display_name": "Edge Weight",
+        "type": "int",
+        "description": "Weight of the edge being explored",
+        "visualization": {
+          "color": "#E8A87C",
+          "icon": "weight"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "push_source",
+        "name": "Push Source Node",
+        "description": "Adding the source node to the priority queue",
+        "tags": ["pq", "source"],
+        "icon": "push"
+      },
+      {
+        "id": "extract_min",
+        "name": "Extract Minimum",
+        "description": "Extracting node with smallest distance from priority queue",
+        "tags": ["pq", "extract", "process"],
+        "icon": "extract"
+      },
+      {
+        "id": "settle_node",
+        "name": "Settle Node",
+        "description": "Finalizing the shortest distance for a node",
+        "tags": ["settle", "process"],
+        "icon": "settle"
+      },
+      {
+        "id": "relax_edge",
+        "name": "Relax Edge",
+        "description": "Checking if a shorter path to neighbor is found",
+        "tags": ["edge", "relax", "comparison"],
+        "icon": "edge"
+      },
+      {
+        "id": "update_distance",
+        "name": "Update Distance",
+        "description": "Updating distance to neighbor with shorter path",
+        "tags": ["distance", "update"],
+        "icon": "update"
+      },
+      {
+        "id": "push_neighbor",
+        "name": "Push Neighbor",
+        "description": "Adding neighbor to priority queue with new distance",
+        "tags": ["pq", "push", "neighbor"],
+        "icon": "push"
+      },
+      {
+        "id": "node_settled",
+        "name": "Node Settled",
+        "description": "Node distance has been finalized",
+        "tags": ["complete", "settled"],
+        "icon": "check"
+      },
+      {
+        "id": "pq_empty",
+        "name": "Priority Queue Empty",
+        "description": "No more nodes to process",
+        "tags": ["complete", "pq"],
+        "icon": "empty"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target node has been reached",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Dijkstra's algorithm completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void Dijkstra(const Graph& graph, size_t source_node, optional<size_t> target_node)",
+        "description_template": "Initializing Dijkstra's algorithm on graph with {node_count} nodes and {edge_count} edges",
+        "extract_variables": ["node_count", "edge_count"],
+        "tags": ["initialization"]
+      },
+      "push_source": {
+        "pseudocode_line": 13,
+        "code_line": 13,
+        "code_line_content": "pq.push(source_node, 0)",
+        "description_template": "Pushing source node {source_node} with distance 0",
+        "extract_variables": ["source_node"],
+        "tags": ["pq", "source"]
+      },
+      "extract_min": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "size_t current_node = pq.pop_min()",
+        "description_template": "Extracting node {current_node} with distance {distance} from priority queue (pq size: {pq_size})",
+        "extract_variables": ["current_node", "distance", "pq_size"],
+        "tags": ["pq", "extract"]
+      },
+      "settle_node": {
+        "pseudocode_line": 21,
+        "code_line": 20,
+        "code_line_content": "if (visited[current_node]) continue",
+        "description_template": "Settling node {current_node} with final distance {distance}",
+        "extract_variables": ["current_node", "distance", "explored_count"],
+        "tags": ["settle", "process"]
+      },
+      "relax_edge": {
+        "pseudocode_line": 34,
+        "code_line": 34,
+        "code_line_content": "int new_dist = dist[current_node] + weight",
+        "description_template": "Relaxing edge from {current_node} to neighbor {explored_neighbor} (weight: {edge_weight})",
+        "extract_variables": ["current_node", "explored_neighbor", "edge_weight"],
+        "tags": ["edge", "relax"]
+      },
+      "update_distance": {
+        "pseudocode_line": 36,
+        "code_line": 36,
+        "code_line_content": "if (new_dist < dist[neighbor])",
+        "description_template": "Found shorter path to {explored_neighbor}: {old_distance} -> {new_distance}",
+        "extract_variables": ["explored_neighbor", "old_distance", "new_distance"],
+        "tags": ["distance", "update"]
+      },
+      "push_neighbor": {
+        "pseudocode_line": 40,
+        "code_line": 40,
+        "code_line_content": "pq.push(neighbor, new_dist)",
+        "description_template": "Pushing neighbor {explored_neighbor} to priority queue with distance {new_distance}",
+        "extract_variables": ["explored_neighbor", "new_distance", "pq_size"],
+        "tags": ["pq", "push"]
+      },
+      "node_settled": {
+        "pseudocode_line": 43,
+        "code_line": 43,
+        "code_line_content": "}",
+        "description_template": "Node {current_node} settled with distance {distance}",
+        "extract_variables": ["current_node", "distance", "explored_count"],
+        "tags": ["complete", "settled"]
+      },
+      "pq_empty": {
+        "pseudocode_line": 16,
+        "code_line": 16,
+        "code_line_content": "while (!pq.empty())",
+        "description_template": "Priority queue empty - Dijkstra complete",
+        "extract_variables": ["explored_count"],
+        "tags": ["complete", "pq"]
+      },
+      "target_found": {
+        "pseudocode_line": 27,
+        "code_line": 27,
+        "code_line_content": "if (target_node.has_value() && current_node == target_node.value())",
+        "description_template": "Target node {found_at_node} reached with distance {distance}!",
+        "extract_variables": ["found_at_node", "distance"],
+        "tags": ["target", "found", "complete"]
+      },
+      "completed": {
+        "pseudocode_line": 45,
+        "code_line": 45,
+        "code_line_content": "}",
+        "description_template": "Dijkstra completed. Settled {explored_count} out of {node_count} nodes",
+        "extract_variables": ["explored_count", "node_count"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "force_directed",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "settled": "#06D6A0",
+        "frontier": "#FFD166",
+        "explored": "#4ECDC4",
+        "path": "#9B59B6",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500",
+        "edge_updated": "#00FFAA"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_distances": true,
+      "show_edge_weights": true
+    }
+  }
+}

@@ -572,6 +572,39 @@ namespace c2l::ui::managers
         }
     }
 
+    bool IconManager::render_icon_button(
+        const std::string& id,
+        ui::managers::IconType type,
+        const std::function<void()>& callback,
+        const ImVec2& size,
+        bool enabled,
+        const std::string& tooltip)
+    {
+        if (!ImGui::GetCurrentContext())
+        {
+            LOG_ERROR(
+                "No ImGui context for icon button {}",
+                id
+            );
+            return false;
+        }
+
+        bool clicked = render_icon_button(
+            id.c_str(),
+            type,
+            size,
+            enabled ? ImVec4(1, 1, 1, 1) : ImVec4(0.5f, 0.5f, 0.5f, 0.5f),
+            tooltip.empty() ? nullptr : tooltip.c_str());
+
+        if (clicked && callback)
+        {
+            callback();
+        }
+
+        return clicked;
+    }
+
+
     bool IconManager::render_icon_text_button(
         const char *str_id,
         IconType type,
@@ -1185,12 +1218,12 @@ namespace c2l::ui::managers
     std::optional<std::string> IconManager::icon_type_to_string(const IconType& type)
     {
         static const char* names[] = {
-            "PLAY", "PAUSE", "STEP_FORWARD", "STEP_BACKWARD", "RESET", "SETTINGS",
+            "PLAY", "ARROW_RIGHT", "ARROW_LEFT", "PAUSE", "STEP_FORWARD", "STEP_BACKWARD", "RESET", "SETTINGS",
             "EXPAND", "COLLAPSE", "CLOSE", "INFO", "WARNING", "ERROR", "SUCCESS",
             "MENU", "GRID", "LIST", "SEARCH", "FILTER", "DOWNLOAD", "UPLOAD",
             "SAVE", "TRASH", "EDIT", "COPY", "PASTE", "UNDO", "REDO", "ARRAY",
             "ALGORITHM", "STATISTIC", "STEPS", "ALGORITHM_VISUALIZATION",
-            "ALGORITHM_COMPARISON", "EXIT", "UNKNOWN"
+            "ALGORITHM_COMPARISON", "EXIT", "CHECK", "LINK", "UNKNOWN"
         };
 
         size_t index = static_cast<size_t>(type);
@@ -1204,12 +1237,12 @@ namespace c2l::ui::managers
     std::optional<IconType> IconManager::string_to_icon_type(const std::string& str)
     {
         static const char* names[] = {
-            "PLAY", "PAUSE", "STEP_FORWARD", "STEP_BACKWARD", "RESET", "SETTINGS",
+            "PLAY", "ARROW_RIGHT", "ARROW_LEFT", "PAUSE", "STEP_FORWARD", "STEP_BACKWARD", "RESET", "SETTINGS",
             "EXPAND", "COLLAPSE", "CLOSE", "INFO", "WARNING", "ERROR", "SUCCESS",
             "MENU", "GRID", "LIST", "SEARCH", "FILTER", "DOWNLOAD", "UPLOAD",
             "SAVE", "TRASH", "EDIT", "COPY", "PASTE", "UNDO", "REDO", "ARRAY",
             "ALGORITHM", "STATISTIC", "STEPS", "ALGORITHM_VISUALIZATION",
-            "ALGORITHM_COMPARISON", "EXIT", "UNKNOWN"
+            "ALGORITHM_COMPARISON", "EXIT", "CHECK", "LINK", "UNKNOWN"
         };
 
         for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); ++i)

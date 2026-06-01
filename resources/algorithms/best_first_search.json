@@ -1,0 +1,391 @@
+{
+  "algorithm": {
+    "id": "best_first_search",
+    "name": "Greedy Best-First Search",
+    "display_type": "Best-First Search",
+    "category": "Path Finding",
+    "version": "1.0.0",
+    "last_updated": "2026-05-21",
+
+    "complexity": {
+      "time_best": "O(E log V)",
+      "time_average": "O(E log V)",
+      "time_worst": "O(E log V)",
+      "space": "O(V)",
+      "explanation": "Best-First Search uses a priority queue with heuristic function. Time complexity is O(E log V) where E is edges and V is vertices. Space complexity is O(V) for the open set and visited tracking."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Greedy Best-First Search uses only the heuristic to guide the search toward the target, making it very fast but not guaranteed to find the shortest path.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O(E log V) with binary heap",
+        "Space Complexity: O(V) for open set and visited tracking",
+        "",
+        "Key Characteristics:",
+        "• Uses only heuristic to prioritize nodes",
+        "• Very fast, especially with good heuristic",
+        "• Does NOT guarantee shortest path",
+        "• Can be seen as A* without the g-score component",
+        "",
+        "Applications:",
+        "• Real-time pathfinding when optimality isn't critical",
+        "• Game AI where speed is priority",
+        "• Preliminary path estimation",
+        "• Search problems with good heuristics"
+      ],
+
+      "pseudocode": [
+        "vector<Cell> BestFirstSearch(",
+        "       const Grid& grid,",
+        "       Cell start,",
+        "       Cell target)",
+        "{",
+        "    PriorityQueue<Cell, float> open_set;",
+        "    vector<vector<bool>> visited(rows, vector<bool>(cols, false));",
+        "    vector<vector<bool>> in_open(rows, vector<bool>(cols, false));",
+        "    vector<vector<Cell>> came_from(rows, vector<Cell>(cols));",
+        "",
+        "    open_set.push(start, heuristic(start, target));",
+        "    in_open[start.row][start.col] = true;",
+        "",
+        "    while (!open_set.empty())",
+        "    {",
+        "        Cell current = open_set.pop_min();",
+        "        in_open[current.row][current.col] = false;",
+        "        visited[current.row][current.col] = true;",
+        "",
+        "        if (current == target)",
+        "        {",
+        "            break;",
+        "        }",
+        "",
+        "        for (const Cell& neighbor : get_neighbors(current))",
+        "        {",
+        "            if (visited[neighbor.row][neighbor.col]) continue;",
+        "            if (grid[neighbor.row][neighbor.col] == WALL) continue;",
+        "",
+        "            if (!in_open[neighbor.row][neighbor.col])",
+        "            {",
+        "                came_from[neighbor.row][neighbor.col] = current;",
+        "                float h = heuristic(neighbor, target);",
+        "                open_set.push(neighbor, h);",
+        "                in_open[neighbor.row][neighbor.col] = true;",
+        "            }",
+        "        }",
+        "    }",
+        "",
+        "    return reconstruct_path(came_from, start, target);",
+        "}"
+      ],
+
+      "optimizations": [
+        "Tie-breaking strategies for consistent behavior",
+        "Bidirectional Best-First Search",
+        "Dynamic weighting for improved path quality",
+        "Memory-efficient visited tracking"
+      ],
+
+      "use_cases": [
+        "Real-time strategy game unit movement",
+        "Rapid path estimation",
+        "Search problems with informative heuristics",
+        "Prototyping before implementing A*"
+      ],
+
+      "disadvantages": [
+        "Does NOT guarantee shortest path",
+        "Can get stuck in local minima",
+        "Path quality highly depends on heuristic",
+        "May explore many nodes in open areas"
+      ],
+
+      "related_algorithms": [
+        "A* Algorithm",
+        "Dijkstra's Algorithm",
+        "BFS (unweighted)",
+        "Greedy BFS"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "start_cell",
+        "display_name": "Start Cell",
+        "type": "string",
+        "description": "Starting position on the grid",
+        "visualization": {"color": "#00FF00", "icon": "start"}
+      },
+      {
+        "name": "target_cell",
+        "display_name": "Target Cell",
+        "type": "string",
+        "description": "Goal position to reach",
+        "visualization": {"color": "#FF0000", "icon": "target"}
+      },
+      {
+        "name": "current_cell",
+        "display_name": "Current Cell",
+        "type": "string",
+        "description": "Cell currently being processed",
+        "visualization": {"color": "#FF6B6B", "icon": "current"}
+      },
+      {
+        "name": "open_set_size",
+        "display_name": "Open Set Size",
+        "type": "size_t",
+        "description": "Number of cells in the open set (frontier)",
+        "visualization": {"color": "#4ECDC4", "icon": "queue"}
+      },
+      {
+        "name": "visited_count",
+        "display_name": "Visited Count",
+        "type": "size_t",
+        "description": "Number of cells visited/processed",
+        "visualization": {"color": "#9B59B6", "icon": "explored"}
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Neighbor Evaluations",
+        "type": "size_t",
+        "description": "Number of neighbor cells evaluated",
+        "visualization": {"color": "#88B04B", "icon": "comparison"}
+      },
+      {
+        "name": "current_heuristic",
+        "display_name": "Heuristic Value",
+        "type": "float",
+        "description": "Estimated distance from current cell to target",
+        "visualization": {"color": "#D4A5A5", "icon": "heuristic"}
+      },
+      {
+        "name": "heuristic_type",
+        "display_name": "Heuristic Type",
+        "type": "string",
+        "description": "Heuristic function being used",
+        "visualization": {"color": "#E8A87C", "icon": "settings"}
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "push_start",
+        "name": "Push Start Cell",
+        "description": "Adding start cell to open set with heuristic value",
+        "tags": ["open_set", "start", "heuristic"],
+        "icon": "push"
+      },
+      {
+        "id": "pop_min",
+        "name": "Pop Minimum Heuristic",
+        "description": "Extracting cell with smallest heuristic value",
+        "tags": ["open_set", "pop", "process"],
+        "icon": "extract"
+      },
+      {
+        "id": "goal_check",
+        "name": "Goal Check",
+        "description": "Checking if current cell is the target",
+        "tags": ["goal", "check"],
+        "icon": "target"
+      },
+      {
+        "id": "add_to_visited",
+        "name": "Add to Visited Set",
+        "description": "Marking current cell as visited",
+        "tags": ["visited", "settle"],
+        "icon": "settle"
+      },
+      {
+        "id": "evaluate_neighbor",
+        "name": "Evaluate Neighbor",
+        "description": "Evaluating neighboring cell",
+        "tags": ["neighbor", "evaluate"],
+        "icon": "edge"
+      },
+      {
+        "id": "compute_heuristic",
+        "name": "Compute Heuristic",
+        "description": "Calculating heuristic value for neighbor",
+        "tags": ["heuristic", "compute"],
+        "icon": "heuristic"
+      },
+      {
+        "id": "update_scores",
+        "name": "Update Scores",
+        "description": "Updating heuristic score for neighbor",
+        "tags": ["update", "heuristic"],
+        "icon": "update"
+      },
+      {
+        "id": "push_neighbor",
+        "name": "Push Neighbor",
+        "description": "Adding neighbor to open set",
+        "tags": ["open_set", "push", "neighbor"],
+        "icon": "push"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target cell has been reached",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "open_set_empty",
+        "name": "Open Set Empty",
+        "description": "No path exists to target",
+        "tags": ["complete", "failure"],
+        "icon": "empty"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Best-First Search completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "vector<Cell> BestFirstSearch(const Grid& grid, Cell start, Cell target)",
+        "description_template": "Initializing Best-First Search on {rows}x{cols} grid",
+        "extract_variables": ["rows", "cols"],
+        "tags": ["initialization"]
+      },
+      "push_start": {
+        "pseudocode_line": 11,
+        "code_line": 11,
+        "code_line_content": "open_set.push(start, heuristic(start, target))",
+        "description_template": "Adding start cell ({start_row},{start_col}) to open set (h = {heuristic})",
+        "extract_variables": ["start_row", "start_col", "heuristic"],
+        "tags": ["open_set", "start"]
+      },
+      "pop_min": {
+        "pseudocode_line": 16,
+        "code_line": 16,
+        "code_line_content": "Cell current = open_set.pop_min()",
+        "description_template": "Popping cell ({current_row},{current_col}) with h = {heuristic} from open set",
+        "extract_variables": ["current_row", "current_col", "heuristic"],
+        "tags": ["open_set", "pop"]
+      },
+      "goal_check": {
+        "pseudocode_line": 19,
+        "code_line": 19,
+        "code_line_content": "if (current == target)",
+        "description_template": "Checking if ({current_row},{current_col}) is the target cell",
+        "extract_variables": ["current_row", "current_col", "target_row", "target_col"],
+        "tags": ["goal", "check"]
+      },
+      "add_to_visited": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "visited[current.row][current.col] = true",
+        "description_template": "Marking cell ({current_row},{current_col}) as visited",
+        "extract_variables": ["current_row", "current_col", "visited_count"],
+        "tags": ["visited", "settle"]
+      },
+      "evaluate_neighbor": {
+        "pseudocode_line": 24,
+        "code_line": 24,
+        "code_line_content": "for (const Cell& neighbor : get_neighbors(current))",
+        "description_template": "Evaluating neighbor ({neighbor_row},{neighbor_col}) from ({current_row},{current_col})",
+        "extract_variables": ["current_row", "current_col", "neighbor_row", "neighbor_col"],
+        "tags": ["neighbor", "evaluate"]
+      },
+      "compute_heuristic": {
+        "pseudocode_line": 30,
+        "code_line": 30,
+        "code_line_content": "float h = heuristic(neighbor, target)",
+        "description_template": "Computing heuristic for neighbor ({neighbor_row},{neighbor_col}) = {heuristic}",
+        "extract_variables": ["neighbor_row", "neighbor_col", "heuristic"],
+        "tags": ["heuristic", "compute"]
+      },
+      "update_scores": {
+        "pseudocode_line": 29,
+        "code_line": 29,
+        "code_line_content": "came_from[neighbor.row][neighbor.col] = current",
+        "description_template": "Updating parent and heuristic for ({neighbor_row},{neighbor_col})",
+        "extract_variables": ["neighbor_row", "neighbor_col"],
+        "tags": ["update", "heuristic"]
+      },
+      "push_neighbor": {
+        "pseudocode_line": 31,
+        "code_line": 31,
+        "code_line_content": "open_set.push(neighbor, h)",
+        "description_template": "Adding neighbor ({neighbor_row},{neighbor_col}) to open set with h = {heuristic}",
+        "extract_variables": ["neighbor_row", "neighbor_col", "heuristic"],
+        "tags": ["open_set", "push"]
+      },
+      "target_found": {
+        "pseudocode_line": 21,
+        "code_line": 21,
+        "code_line_content": "break",
+        "description_template": "Target cell ({target_row},{target_col}) reached! Path length: {path_length} steps",
+        "extract_variables": ["target_row", "target_col", "path_length"],
+        "tags": ["target", "found", "complete"]
+      },
+      "open_set_empty": {
+        "pseudocode_line": 14,
+        "code_line": 14,
+        "code_line_content": "while (!open_set.empty())",
+        "description_template": "Open set empty - No path exists from ({start_row},{start_col}) to ({target_row},{target_col})",
+        "extract_variables": ["start_row", "start_col", "target_row", "target_col", "visited_count"],
+        "tags": ["complete", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 36,
+        "code_line": 36,
+        "code_line_content": "return reconstruct_path(came_from, start, target)",
+        "description_template": "Best-First Search completed. Visited {visited_count} cells, evaluated {comparisons} neighbors",
+        "extract_variables": ["visited_count", "comparisons", "rows", "cols"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "grid",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "visited": "#06D6A0",
+        "open": "#FFD166",
+        "path": "#9B59B6",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500",
+        "wall": "#2A2A3A",
+        "heuristic_high": "#FF4444",
+        "heuristic_medium": "#FFAA44",
+        "heuristic_low": "#44FF44"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_coordinates": true,
+      "show_heuristic": true,
+      "show_edge_weights": false
+    }
+  }
+}

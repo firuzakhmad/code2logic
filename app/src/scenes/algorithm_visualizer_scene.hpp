@@ -67,7 +67,18 @@ namespace c2l::scenes
          */
         void render() override;
 
-    private: 
+    private:
+        // Target input field state
+        struct TargetInputState
+        {
+            char target_buffer[32] = "";
+            int target_value = 0;
+            bool has_target = false;
+            bool search_requested = false;
+            float search_animation = 0.0f;
+        } m_target_state;
+
+
         // Rendering methods
         void render_algorithm_selector_panel();
         void render_algorithm_visualization_panel();
@@ -78,6 +89,8 @@ namespace c2l::scenes
         void render_algorithm_stats_panel();
         void render_thread_info_panel();
         void render_algorithm_variable_inspector_panel();
+        void render_target_state();
+        void render_search_result_feedback();
 
         // Panel rendering helpers
         void render_algorithm_header(

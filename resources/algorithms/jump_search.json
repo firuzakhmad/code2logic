@@ -1,0 +1,431 @@
+{
+  "algorithm": {
+    "id": "jump_search",
+    "name": "Jump Search",
+    "display_type": "Jump Search",
+    "category": "Searching",
+    "version": "1.0.0",
+    "last_updated": "2026-05-02",
+
+    "complexity": {
+      "time_best": "O(1)",
+      "time_average": "O(√n)",
+      "time_worst": "O(√n)",
+      "space": "O(1)",
+      "explanation": "Jump search combines the efficiency of binary search with the simplicity of linear search. It jumps ahead by √n steps, then performs linear search in the found block. Best case occurs when target is at the first jump position. Space complexity is O(1) as it uses only a few variables."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": true,
+      "adaptive": true,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": true,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "An efficient searching algorithm for sorted arrays that jumps ahead by fixed steps, then performs linear search in the identified block.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(1)   - target found at first jump position",
+        "• Average case: O(√n) - optimal block size of √n",
+        "• Worst case:   O(√n) - target in last block or not found",
+        "",
+        "Space Complexity: O(1) - constant extra space",
+        "",
+        "Key Characteristics:",
+        "• Requires sorted input array",
+        "• Optimal block size is √n (mathematically proven)",
+        "• Better than linear search for large arrays",
+        "• Better locality of reference than binary search",
+        "• Fewer jumps than binary search's cache misses",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: At most √n + √n = 2√n",
+        "• Memory: Constant O(1) auxiliary space",
+        "• Cache Performance: Better than binary search",
+        "",
+        "Comparison with Other Search Algorithms:",
+        "• Linear Search: O(n) but simpler, no sorting required",
+        "• Binary Search: O(log n) but more cache misses",
+        "• Exponential Search: Better for unbounded arrays",
+        "• Interpolation Search: O(log log n) average but needs uniform distribution"
+      ],
+
+      "pseudocode": [
+        "int jump_search(const std::vector<int>& arr, int target) {",
+        "    size_t n = arr.size();",
+        "    size_t step = sqrt(n);",
+        "    size_t prev = 0;",
+        "    ",
+        "    // Phase 1: Jump through blocks",
+        "    while (step <= n) {",
+        "        size_t boundary_idx = min(step, n) - 1;",
+        "        ",
+        "        if (arr[boundary_idx] >= target) {",
+        "            break;  // Found target block",
+        "        }",
+        "        ",
+        "        prev = step;",
+        "        step += sqrt(n);",
+        "        ",
+        "        if (prev >= n) return -1;",
+        "    }",
+        "    ",
+        "    // Phase 2: Linear scan in block",
+        "    size_t boundary_idx = std::min(state.step, n) - 1;",
+        "    for (size_t i = prev; i < boundary_idx; ++i) {",
+        "        if (arr[i] == target) {",
+        "            return i;",
+        "        }",
+        "    }",
+        "    ",
+        "    return -1;",
+        "}"
+      ],
+
+      "optimizations": [
+        "Optimal block size calculation using integer sqrt",
+        "Using bit operations for block size in powers of 2",
+        "Cache-aligned block sizes for better performance",
+        "Early exit optimization when step exceeds array bounds",
+        "Hybrid approach: Use binary search within blocks for large blocks",
+        "Parallel block search for multi-core systems"
+      ],
+
+      "use_cases": [
+        "Searching in large sorted arrays with good cache locality",
+        "Database index lookup in block-based storage",
+        "File system directory search",
+        "Network packet inspection with fixed block sizes",
+        "DNA sequence alignment (with modifications)",
+        "Text search in large sorted dictionaries",
+        "Embedded systems with limited memory"
+      ],
+
+      "disadvantages": [
+        "Requires sorted input data",
+        "Not as fast as binary search for large arrays (theoretically)",
+        "Suboptimal for very small arrays (n < 100)",
+        "May skip over the target if block size is too large",
+        "Not suitable for dynamic data with frequent insertions/deletions"
+      ],
+
+      "related_algorithms": [
+        "Binary Search",
+        "Linear Search",
+        "Exponential Search",
+        "Interpolation Search",
+        "Block Search",
+        "Chunk Search"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "target",
+        "display_name": "Target Value",
+        "type": "int",
+        "description": "The value being searched for in the array",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "target"
+        }
+      },
+      {
+        "name": "step",
+        "display_name": "Jump Size",
+        "type": "size_t",
+        "description": "Number of elements to jump each iteration (√n)",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "jump"
+        }
+      },
+      {
+        "name": "prev",
+        "display_name": "Previous Position",
+        "type": "size_t",
+        "description": "Start index of current block",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "block_start"
+        }
+      },
+      {
+        "name": "current_index",
+        "display_name": "Linear Search Index",
+        "type": "size_t",
+        "description": "Current index during linear search phase",
+        "visualization": {
+          "color": "#3498DB",
+          "icon": "current"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of comparisons performed",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "jumps_performed",
+        "display_name": "Jumps",
+        "type": "size_t",
+        "description": "Number of jumps performed during search",
+        "visualization": {
+          "color": "#E67E22",
+          "icon": "jump_count"
+        }
+      },
+      {
+        "name": "block_size",
+        "display_name": "Block Size",
+        "type": "size_t",
+        "description": "Size of each block being searched",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "block_size"
+        }
+      },
+      {
+        "name": "boundary_value",
+        "display_name": "Boundary Value",
+        "type": "int",
+        "description": "Value at the jump boundary being checked",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "boundary"
+        }
+      },
+      {
+        "name": "found",
+        "display_name": "Found",
+        "type": "bool",
+        "description": "Whether target has been found",
+        "visualization": {
+          "color": "#06D6A0",
+          "icon": "found"
+        }
+      },
+      {
+        "name": "result_index",
+        "display_name": "Result Index",
+        "type": "int",
+        "description": "Index where target was found, or -1 if not found",
+        "visualization": {
+          "color": "#118AB2",
+          "icon": "result"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup, calculating optimal block size",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "jump_start",
+        "name": "Jump Start",
+        "description": "Beginning a new jump iteration to find target block",
+        "tags": ["jump", "iteration"],
+        "icon": "jump"
+      },
+      {
+        "id": "jump_compare",
+        "name": "Jump Comparison",
+        "description": "Comparing boundary value with target to decide next action",
+        "tags": ["comparison", "jump", "decision"],
+        "icon": "compare"
+      },
+      {
+        "id": "jump_forward",
+        "name": "Jump Forward",
+        "description": "Target is larger than boundary value, jumping to next block",
+        "tags": ["jump", "forward", "movement"],
+        "icon": "arrow_right"
+      },
+      {
+        "id": "block_found",
+        "name": "Block Found",
+        "description": "Found the block that potentially contains the target",
+        "tags": ["block", "found", "success"],
+        "icon": "check"
+      },
+      {
+        "id": "linear_scan_start",
+        "name": "Linear Scan Start",
+        "description": "Beginning linear search within the identified block",
+        "tags": ["linear", "scan", "start"],
+        "icon": "search"
+      },
+      {
+        "id": "linear_compare",
+        "name": "Linear Comparison",
+        "description": "Comparing current element with target during linear scan",
+        "tags": ["comparison", "linear", "scan"],
+        "icon": "compare"
+      },
+      {
+        "id": "linear_next",
+        "name": "Next Element",
+        "description": "Moving to next element in the block for linear scan",
+        "tags": ["linear", "next", "movement"],
+        "icon": "arrow_right"
+      },
+      {
+        "id": "found",
+        "name": "Found",
+        "description": "Target value found during linear scan",
+        "tags": ["found", "success", "complete"],
+        "icon": "check_circle"
+      },
+      {
+        "id": "not_found",
+        "name": "Not Found",
+        "description": "Target value not found in the array",
+        "tags": ["not_found", "failure", "complete"],
+        "icon": "close"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm execution completed",
+        "tags": ["completed", "finished", "end"],
+        "icon": "flag"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "int jump_search(const std::vector<int>& arr, int target)",
+        "description_template": "Initializing Jump Search to find target {target} in array of size {size} with optimal block size {block_size} (√{size})",
+        "extract_variables": ["target", "size", "block_size"],
+        "tags": ["initialization"]
+      },
+      "jump_start": {
+        "pseudocode_line": 7,
+        "code_line": 20,
+        "code_line_content": "while (step <= n) {",
+        "description_template": "Jump iteration {iteration}: Starting new jump from position {prev} with step size {step}",
+        "extract_variables": ["iteration", "prev", "step"],
+        "tags": ["jump", "iteration"]
+      },
+      "jump_compare": {
+        "pseudocode_line": 10,
+        "code_line": 24,
+        "code_line_content": "if (arr[boundary_idx] >= target)",
+        "description_template": "Comparing boundary value arr[{boundary_idx}] = {boundary_value} with target {target}",
+        "extract_variables": ["boundary_idx", "boundary_value", "target"],
+        "tags": ["comparison", "jump", "decision"]
+      },
+      "jump_forward": {
+        "pseudocode_line": 15,
+        "code_line": 30,
+        "code_line_content": "prev = step; step += sqrt(n);",
+        "description_template": "Target {target} > {boundary_value}. Jumping to next block: prev={prev}, step={step}",
+        "extract_variables": ["target", "boundary_value", "prev", "step"],
+        "tags": ["jump", "forward", "movement"]
+      },
+      "block_found": {
+        "pseudocode_line": 11,
+        "code_line": 26,
+        "code_line_content": "break;  // Found target block",
+        "description_template": "Found potential block! Target {target} ≤ {boundary_value}. Block range: [{prev}, {step})",
+        "extract_variables": ["target", "boundary_value", "prev", "step"],
+        "tags": ["block", "found", "success"]
+      },
+      "linear_scan_start": {
+        "pseudocode_line": 22,
+        "code_line": 36,
+        "code_line_content": "for (size_t i = prev; i < boundary_idx; ++i)",
+        "description_template": "Starting linear scan in block from index {prev} to {boundary_idx}",
+        "extract_variables": ["prev", "boundary_idx"],
+        "tags": ["linear", "scan", "start"]
+      },
+      "linear_compare": {
+        "pseudocode_line": 23,
+        "code_line": 43,
+        "code_line_content": "if (arr[i] == target)",
+        "description_template": "Comparing arr[{current_index}] = {current_value} with target {target}",
+        "extract_variables": ["current_index", "current_value", "target"],
+        "tags": ["comparison", "linear", "scan"]
+      },
+      "linear_next": {
+        "pseudocode_line": 25,
+        "code_line": 46,
+        "code_line_content": "// continue loop",
+        "description_template": "arr[{current_index}] = {current_value} ≠ target {target}. Moving to next element",
+        "extract_variables": ["current_index", "current_value", "target"],
+        "tags": ["linear", "next", "movement"]
+      },
+      "found": {
+        "pseudocode_line": 24,
+        "code_line": 44,
+        "code_line_content": "return i;",
+        "description_template": "Target found! arr[{current_index}] = {current_value} equals target {target}. Returning index {current_index}",
+        "extract_variables": ["current_index", "current_value", "target"],
+        "tags": ["found", "success", "complete"]
+      },
+      "not_found": {
+        "pseudocode_line": 28,
+        "code_line": 52,
+        "code_line_content": "return -1;",
+        "description_template": "Target {target} not found after {jumps_performed} jumps and {comparisons} comparisons",
+        "extract_variables": ["target", "jumps_performed", "comparisons"],
+        "tags": ["not_found", "failure", "complete"]
+      },
+      "completed": {
+        "pseudocode_line": 29,
+        "code_line": 54,
+        "code_line_content": "} // end jump_search",
+        "description_template": "Jump Search completed. Target {target} {found_status} at index {result_index}. Total: {jumps_performed} jumps, {comparisons} comparisons, {linear_scans} linear scans",
+        "extract_variables": ["target", "found_status", "result_index", "jumps_performed", "comparisons", "linear_scans"],
+        "tags": ["completed", "finished"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "classic_bars",
+      "highlight_colors": {
+        "target": "#FF6B6B",
+        "jump_boundary": "#4ECDC4",
+        "block_start": "#FFD166",
+        "block_end": "#9B59B6",
+        "current_scan": "#3498DB",
+        "scanned_block": "#95A5A6",
+        "unscanned": "#7F8C8D",
+        "found": "#06D6A0",
+        "not_found": "#EF476F",
+        "jump_arrow": "#E67E22"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true,
+      "jump_visualization": {
+        "show_jump_arrows": true,
+        "highlight_block_boundaries": true,
+        "animate_jumps": true,
+        "show_block_range": true,
+        "pulse_current_block": true
+      }
+    }
+  }
+}

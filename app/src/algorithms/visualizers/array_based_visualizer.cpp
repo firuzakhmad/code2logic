@@ -14,13 +14,16 @@ namespace c2l::algorithms
     {}
 
 	void ArrayBasedVisualizer::initialize(
-        const ISimpleAlgorithm* execution,
-        const IAlgorithmMetadata* metadata)
-	{
+	    ISimpleAlgorithm* execution,
+        const IAlgorithmMetadata* metadata,
+        const bool show_sidebar_controller)
+    {
         m_execution = execution;
         m_metadata = metadata;
         m_has_initialized_particles = false;
         m_animation_time = 0.0f;
+
+        m_show_sidebar_controller = show_sidebar_controller;
 
         if (m_metadata)
         {
@@ -72,6 +75,8 @@ namespace c2l::algorithms
     void ArrayBasedVisualizer::render_array_visualization(
         const AlgorithmStep& step) 
     {
+        bool is_search = is_search_algorithm();
+
         // Style selector
         ImGui::SetNextItemWidth(180);
         int current_style_int = static_cast<int>(m_current_style);
@@ -79,7 +84,6 @@ namespace c2l::algorithms
             STYLE_NAMES, static_cast<int>(VisualizationStyle::COUNT)))
         {
             m_current_style = static_cast<VisualizationStyle>(current_style_int);
-            
         }
         
         ImGui::SameLine();
@@ -92,51 +96,463 @@ namespace c2l::algorithms
         }
         
         ImGui::Separator();
-        
+
         // Dispatching to appropriate visualization
-        if (m_metadata && m_metadata->get_category() == AlgorithmCategory::SORTING)
+        if (m_metadata && 
+            m_metadata->get_category() == AlgorithmCategory::SORTING || 
+            m_metadata->get_category() == AlgorithmCategory::SEARCHING)
         {
-            switch (m_current_style)
+            if (is_search && m_current_style == VisualizationStyle::CLASSIC_BARS )
             {
-                case VisualizationStyle::CLASSIC_BARS:
-                    render_classic_bars(step);
-                    break;
-                case VisualizationStyle::ENHANCED_BARS:
-                    render_enhanced_bars(step);
-                    break;
-                case VisualizationStyle::DOTS:
-                    render_dots(step);
-                    break;
-                case VisualizationStyle::CIRCULAR:
-                    render_circular(step);
-                    break;
-                case VisualizationStyle::NETWORK:
-                    render_network(step);
-                    break;
-                case VisualizationStyle::WAVEFORM:
-                    render_waveform(step);
-                    break;
-                case VisualizationStyle::HEATMAP:
-                    render_heatmap(step);
-                    break;
-                case VisualizationStyle::PARTICLE_SYSTEM:
-                    render_particle_system(step);
-                    break;
-                case VisualizationStyle::TREE_VIEW:
-                    render_tree_view(step);
-                    break;
-                case VisualizationStyle::MOLECULAR:
-                    render_molecular(step);
-                    break;
-                case VisualizationStyle::NEURAL_NETWORK:
-                    render_neural_network(step);
-                    break;
-                
-                default:
-                    render_enhanced_bars(step);
-                    break;
+                // Use enhanced search visualization for bar charts
+                render_search_visualization(step);
+            }
+            else
+            {
+                switch (m_current_style)
+                {
+                    case VisualizationStyle::CLASSIC_BARS:
+                        render_classic_bars(step);
+                        break;
+                    case VisualizationStyle::ENHANCED_BARS:
+                        render_enhanced_bars(step);
+                        break;
+                    case VisualizationStyle::DOTS:
+                        render_dots(step);
+                        break;
+                    case VisualizationStyle::CIRCULAR:
+                        render_circular(step);
+                        break;
+                    case VisualizationStyle::NETWORK:
+                        render_network(step);
+                        break;
+                    case VisualizationStyle::WAVEFORM:
+                        render_waveform(step);
+                        break;
+                    case VisualizationStyle::HEATMAP:
+                        render_heatmap(step);
+                        break;
+                    case VisualizationStyle::PARTICLE_SYSTEM:
+                        render_particle_system(step);
+                        break;
+                    case VisualizationStyle::TREE_VIEW:
+                        render_tree_view(step);
+                        break;
+                    case VisualizationStyle::MOLECULAR:
+                        render_molecular(step);
+                        break;
+                    case VisualizationStyle::NEURAL_NETWORK:
+                        render_neural_network(step);
+                        break;
+
+                    default:
+                        render_enhanced_bars(step);
+                        break;
+                }
+            }
+
+        }
+    }
+
+    void ArrayBasedVisualizer::render_search_visualization(
+        const AlgorithmStep& step)
+    {
+        ImGui::BeginChild(
+            "SearchVisualization",
+            ImVec2(0, 400),
+            true,
+            ImGuiWindowFlags_HorizontalScrollbar
+        );
+
+        const float available_width = ImGui::GetContentRegionAvail().x;
+        const float bar_width = calculate_bar_width(
+            step.data.size(),
+            available_width
+        );
+        const float max_bar_height = calculate_max_bar_height(
+            ImGui::GetContentRegionAvail()
+        );
+
+        const int max_value = *std::max_element(
+            step.data.begin(),
+            step.data.end()
+        );
+        if (max_value == 0)
+            return;
+
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        const ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+        const float start_y = cursor_pos.y + max_bar_height + 20;
+
+        // Draw bars with search-specific colors
+        for (size_t i = 0; i < step.data.size(); ++i)
+        {
+            const float bar_height = (static_cast<float>(step.data[i]) / max_value) * max_bar_height;
+            const float x = cursor_pos.x + i * (bar_width + 2);
+
+            const ImVec2 bar_min(x, start_y - bar_height);
+            const ImVec2 bar_max(x + bar_width, start_y);
+
+            // Use search-specific coloring
+            const ImU32 color = get_search_element_color(step, i);
+            draw_list->AddRectFilled(bar_min, bar_max, color);
+            draw_list->AddRect(bar_min, bar_max, ImColor(200, 200, 200, 200));
+
+            // Drawing value label
+            if (step.data.size() <= 30 && bar_height > 20)
+            {
+                const std::string value_str = std::to_string(step.data[i]);
+                const ImVec2 text_size = ImGui::CalcTextSize(value_str.c_str());
+                const float text_x = x + (bar_width - text_size.x) * 0.5f;
+                const float text_y = bar_min.y - text_size.y - 2;
+
+                if (text_y >= cursor_pos.y)
+                {
+                    draw_list->AddText(
+                        ImVec2(text_x, text_y),
+                        ImColor(255, 255, 255, 255), value_str.c_str()
+                    );
+                }
+            }
+
+            // Drawing index label
+            const std::string index_str = std::to_string(i);
+            const ImVec2 index_size = ImGui::CalcTextSize(index_str.c_str());
+            const float index_x = x + (bar_width - index_size.x) * 0.5f;
+            draw_list->AddText(
+                ImVec2(index_x, start_y + 5),
+                ImColor(180, 180, 180, 200),
+                index_str.c_str()
+            );
+        }
+
+        // Render boundaries and search indicators
+        render_search_boundaries(draw_list, cursor_pos, bar_width, start_y, step.data.size(), step);
+
+        // Draw target indicator
+        if (step.visualization.search.target_value != 0 || step.visualization.target_value != 0)
+        {
+            int target = step.visualization.search.target_value != 0 ?
+                        step.visualization.search.target_value : step.visualization.target_value;
+
+            std::string target_text = "Target: " + std::to_string(target);
+            ImVec2 text_size = ImGui::CalcTextSize(target_text.c_str());
+            draw_list->AddText(
+                ImVec2(cursor_pos.x + 10, cursor_pos.y + 10),
+                ImColor(255, 200, 100, 255),
+                target_text.c_str()
+            );
+        }
+
+        ImGui::EndChild();
+    }
+
+    void ArrayBasedVisualizer::render_search_boundaries(
+        ImDrawList* draw_list,
+        const ImVec2& cursor_pos,
+        float bar_width,
+        float start_y,
+        size_t data_size,
+        const AlgorithmStep& step)
+    {
+        float spacing = 2.0f;
+
+        // Draw left boundary indicator
+        if (step.visualization.search.left_boundary.has_value())
+        {
+            size_t left = step.visualization.search.left_boundary.value();
+            if (left < data_size)
+            {
+                float x = cursor_pos.x + left * (bar_width + spacing);
+                draw_list->AddLine(
+                    ImVec2(x - 5, start_y + 10),
+                    ImVec2(x - 5, start_y - 50),
+                    ImColor(100, 200, 255, 255),
+                    2.0f
+                );
+                draw_list->AddText(
+                    ImVec2(x - 15, start_y + 15),
+                    ImColor(100, 200, 255, 255),
+                    "L"
+                );
             }
         }
+
+        // Draw right boundary indicator
+        if (step.visualization.search.right_boundary.has_value())
+        {
+            size_t right = step.visualization.search.right_boundary.value();
+            if (right < data_size)
+            {
+                float x = cursor_pos.x + right * (bar_width + spacing) + bar_width;
+                draw_list->AddLine(
+                    ImVec2(x + 5, start_y + 10),
+                    ImVec2(x + 5, start_y - 50),
+                    ImColor(100, 200, 255, 255),
+                    2.0f
+                );
+                draw_list->AddText(
+                    ImVec2(x + 5, start_y + 15),
+                    ImColor(100, 200, 255, 255),
+                    "R"
+                );
+            }
+        }
+
+        // Draw mid point indicator
+        if (step.visualization.search.mid_point.has_value())
+        {
+            size_t mid = step.visualization.search.mid_point.value();
+            if (mid < data_size)
+            {
+                float pulse = (std::sin(m_animation_time * 8.0f) + 1.0f) * 0.5f;
+                float x = cursor_pos.x + mid * (bar_width + spacing) + bar_width / 2;
+
+                draw_list->AddCircleFilled(
+                    ImVec2(x, start_y - 30),
+                    8.0f + pulse * 4.0f,
+                    ImColor(255, 200, 100, static_cast<int>(150 + 100 * pulse))
+                );
+                draw_list->AddText(
+                    ImVec2(x - 5, start_y - 35),
+                    ImColor(0, 0, 0, 255),
+                    "M"
+                );
+            }
+        }
+
+        // Draw eliminated regions (grayed out)
+        const auto& eliminated = step.visualization.search.eliminated_indices;
+        if (!eliminated.empty())
+        {
+            for (size_t idx : eliminated)
+            {
+                if (idx < data_size)
+                {
+                    float x = cursor_pos.x + idx * (bar_width + spacing);
+                    draw_list->AddRectFilled(
+                        ImVec2(x, start_y - 100),
+                        ImVec2(x + bar_width, start_y + 20),
+                        ImColor(80, 80, 80, 120)
+                    );
+                }
+            }
+        }
+
+        // Draw searched indices
+        const auto& searched = step.visualization.search.searched_indices;
+        if (!searched.empty())
+        {
+            for (size_t idx : searched)
+            {
+                if (idx < data_size)
+                {
+                    float x = cursor_pos.x + idx * (bar_width + spacing);
+                    draw_list->AddRect(
+                        ImVec2(x - 2, start_y - 2),
+                        ImVec2(x + bar_width + 2, start_y + 2),
+                        ImColor(200, 200, 100, 150),
+                        0, 0, 2.0f
+                    );
+                }
+            }
+        }
+    }
+
+    void ArrayBasedVisualizer::render_jump_arrows(
+        const AlgorithmStep& step,
+        ImDrawList* draw_list,
+        const ImVec2& cursor_pos,
+        float bar_width,
+        float start_y,
+        size_t data_size)
+    {
+        // Check if we have jump information
+        auto jumps_opt = step.metadata.get<size_t>("jumps");
+        if (!jumps_opt.has_value()) return;
+
+        size_t jumps = jumps_opt.value();
+        if (jumps == 0) return;
+
+        // Get phase state
+        auto phase_opt = step.metadata.get<int>("phase_state");
+        if (!phase_opt.has_value()) return;
+
+        int phase = phase_opt.value();
+
+        // Only render during jumping phase
+        if (phase != 0) return; // 0 = JUMPING phase
+
+        float spacing = 2.0f;
+        float arrow_y = start_y - 80.0f;
+
+        // Draw arrows for each jump
+        for (size_t j = 0; j < jumps && j < data_size; ++j)
+        {
+            size_t jump_idx = j * static_cast<size_t>(std::sqrt(data_size));
+            if (jump_idx >= data_size) break;
+
+            float x_start = cursor_pos.x + jump_idx * (bar_width + spacing);
+
+            // Draw jump arrow
+            float pulse = (std::sin(m_animation_time * 8.0f + j * 2.0f) + 1.0f) * 0.5f;
+
+            // Arrow line
+            draw_list->AddLine(
+                ImVec2(x_start + bar_width / 2, arrow_y),
+                ImVec2(x_start + bar_width / 2 + 30, arrow_y),
+                ImColor(255, 165, 0, static_cast<int>(150 + 100 * pulse)),
+                2.0f
+            );
+
+            // Arrow head
+            draw_list->AddTriangleFilled(
+                ImVec2(x_start + bar_width / 2 + 30, arrow_y),
+                ImVec2(x_start + bar_width / 2 + 20, arrow_y - 5),
+                ImVec2(x_start + bar_width / 2 + 20, arrow_y + 5),
+                ImColor(255, 165, 0, static_cast<int>(150 + 100 * pulse))
+            );
+
+            // Jump label
+            std::string jump_text = "Jump " + std::to_string(j + 1);
+            ImVec2 text_size = ImGui::CalcTextSize(jump_text.c_str());
+            draw_list->AddText(
+                ImVec2(x_start + bar_width / 2 - text_size.x / 2, arrow_y - 20),
+                ImColor(255, 165, 0, 200),
+                jump_text.c_str()
+            );
+        }
+    }
+
+    // Add this to render block highlighting
+    void ArrayBasedVisualizer::render_jump_blocks(
+        const AlgorithmStep& step,
+        ImDrawList* draw_list,
+        const ImVec2& cursor_pos,
+        float bar_width,
+        float start_y,
+        size_t data_size)
+    {
+        auto block_start_opt = step.metadata.get<size_t>("visual_block_start");
+        auto block_end_opt = step.metadata.get<size_t>("visual_block_end");
+
+        if (!block_start_opt.has_value() || !block_end_opt.has_value()) return;
+
+        size_t block_start = block_start_opt.value();
+        size_t block_end = block_end_opt.value();
+
+        if (block_start >= data_size || block_end > data_size) return;
+
+        float spacing = 2.0f;
+        float pulse = (std::sin(m_animation_time * 6.0f) + 1.0f) * 0.5f;
+
+        float block_start_x = cursor_pos.x + block_start * (bar_width + spacing);
+        float block_end_x = cursor_pos.x + (block_end - 1) * (bar_width + spacing) + bar_width;
+
+        // Draw block highlight
+        draw_list->AddRectFilled(
+            ImVec2(block_start_x - 5, start_y - 100),
+            ImVec2(block_end_x + 5, start_y + 30),
+            ImColor(100, 200, 255, static_cast<int>(50 + 50 * pulse))
+        );
+
+        // Draw block border
+        draw_list->AddRect(
+            ImVec2(block_start_x - 5, start_y - 100),
+            ImVec2(block_end_x + 5, start_y + 30),
+            ImColor(100, 200, 255, static_cast<int>(150 + 100 * pulse)),
+            5.0f,
+            0,
+            2.0f
+        );
+
+        // Add block label
+        std::string block_text = "BLOCK: [" + std::to_string(block_start) + ", " + std::to_string(block_end) + ")";
+        ImVec2 text_size = ImGui::CalcTextSize(block_text.c_str());
+        draw_list->AddText(
+            ImVec2(block_start_x + (block_end_x - block_start_x) / 2 - text_size.x / 2, start_y - 70),
+            ImColor(100, 200, 255, 255),
+            block_text.c_str()
+        );
+    }
+
+
+    // Search-specific color function
+    ImU32 ArrayBasedVisualizer::get_search_element_color(
+        const AlgorithmStep& step,
+        size_t index) const
+    {
+        // Check if found
+        if (step.visualization.search.found_index.has_value() &&
+            index == step.visualization.search.found_index.value())
+        {
+            return ImColor(50, 255, 50, 255);  // Bright green for found
+        }
+
+        // Check if eliminated from search
+        const auto& eliminated = step.visualization.search.eliminated_indices;
+        if (std::find(eliminated.begin(), eliminated.end(), index) != eliminated.end())
+        {
+            return ImColor(80, 80, 80, 150);  // Gray for eliminated
+        }
+
+        // Check if currently being examined
+        if (step.visualization.search.mid_point.has_value() &&
+            index == step.visualization.search.mid_point.value())
+        {
+            float pulse = (std::sin(m_animation_time * 8.0f) + 1.0f) * 0.5f;
+            return ImColor(
+                255,
+                static_cast<int>(150 + 100 * pulse),
+                50,
+                255
+            );  // Pulsing orange/yellow for current mid
+        }
+
+        // Check if already searched
+        const auto& searched = step.visualization.search.searched_indices;
+        if (std::find(searched.begin(), searched.end(), index) != searched.end())
+        {
+            return ImColor(150, 150, 200, 200);  // Light blue for searched
+        }
+
+        // Check boundaries
+        bool is_in_boundary = true;
+        if (step.visualization.search.left_boundary.has_value() &&
+            index < step.visualization.search.left_boundary.value())
+        {
+            is_in_boundary = false;
+        }
+        if (step.visualization.search.right_boundary.has_value() &&
+            index > step.visualization.search.right_boundary.value())
+        {
+            is_in_boundary = false;
+        }
+
+        if (!is_in_boundary)
+        {
+            return ImColor(100, 100, 100, 100);  // Dim for out of bounds
+        }
+
+        // Default gradient based on value
+        const int max_value = *std::max_element(step.data.begin(), step.data.end());
+        float value_ratio = max_value > 0 ?
+            static_cast<float>(step.data[index]) / max_value : 0.5f;
+
+        return ImColor(
+            static_cast<int>(100 + 155 * value_ratio),
+            static_cast<int>(100 + 155 * (1.0f - value_ratio)),
+            255,
+            255
+        );
+    }
+
+    bool ArrayBasedVisualizer::is_search_algorithm() const
+    {
+        if (!m_metadata) return false;
+
+        auto category = m_metadata->get_category();
+        return category == AlgorithmCategory::SEARCHING;
     }
 
     void ArrayBasedVisualizer::render_classic_bars(
@@ -177,9 +593,19 @@ namespace c2l::algorithms
             
             const ImVec2 bar_min(x, start_y - bar_height);
             const ImVec2 bar_max(x + bar_width, start_y);
+
+            // Using appropriate color function based on algorithm type
+            ImU32 color;
+            if (is_search_algorithm())
+            {
+                color = get_search_element_color(step, i);
+            }
+            else
+            {
+                color = get_element_color(step, i);
+            }
             
             // Drawing bar
-            const ImU32 color = get_element_color(step, i);
             draw_list->AddRectFilled(bar_min, bar_max, color);
             draw_list->AddRect(bar_min, bar_max, ImColor(200, 200, 200, 200));
             
@@ -209,6 +635,14 @@ namespace c2l::algorithms
                 ImColor(180, 180, 180, 200), 
                 index_str.c_str()
             );
+        }
+
+        // Adding search boundaries if this is a search algorithm
+        if (is_search_algorithm())
+        {
+            render_jump_arrows(step, draw_list, cursor_pos, bar_width, start_y, step.data.size());
+            render_jump_blocks(step, draw_list, cursor_pos, bar_width, start_y, step.data.size());
+            render_search_boundaries(draw_list, cursor_pos, bar_width, start_y, step.data.size(), step);
         }
 
         ImGui::EndChild();
@@ -1834,7 +2268,7 @@ namespace c2l::algorithms
 
     VisualizationType ArrayBasedVisualizer::get_visualization_type() const
     {
-        return VisualizationType::ARRAY_BASED;
+        return VisualizationType::ARRAY_BASED_VISUALIZATION;
     }
 
     bool ArrayBasedVisualizer::supports_algorithm(

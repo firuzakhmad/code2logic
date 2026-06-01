@@ -18,14 +18,17 @@ namespace c2l::algorithms
 		~ArrayBasedVisualizer() override = default;
 
 		void initialize(
-			const ISimpleAlgorithm* execution,
-        	const IAlgorithmMetadata* metadata
+			ISimpleAlgorithm* execution,
+        	const IAlgorithmMetadata* metadata,
+        	const bool show_sidebar_controller
 		) override;
         void update(double delta_time) override;
         void render() override;
 
         [[nodiscard]] VisualizationType get_visualization_type() const override;
-		[[nodiscard]] bool supports_algorithm(const AlgorithmType& type) const override;
+		[[nodiscard]] bool supports_algorithm(
+			const AlgorithmType& type
+		) const override;
 
         void set_visualization_style(VisualizationStyle style);
         [[nodiscard]] VisualizationStyle get_visualization_style() const;
@@ -60,7 +63,11 @@ namespace c2l::algorithms
         	const AlgorithmStep& step
     	);
 
-    	void render_classic_bars(
+		void render_search_visualization(
+			const AlgorithmStep &step
+		);
+
+		void render_classic_bars(
     		const AlgorithmStep& step
 		);
 		void render_enhanced_bars(
@@ -200,6 +207,39 @@ namespace c2l::algorithms
             float radius_ratio
         ) const;
 
+		void render_search_boundaries(
+			ImDrawList *draw_list,
+			const ImVec2 &cursor_pos,
+			float bar_width,
+			float start_y,
+		    size_t data_size,
+		    const AlgorithmStep &step
+		);
+
+		void render_jump_arrows(
+			const AlgorithmStep &step, 
+			ImDrawList *draw_list, 
+			const ImVec2 &cursor_pos,
+			float bar_width,
+            float start_y, 
+            size_t data_size
+        );
+
+		void render_jump_blocks(
+			const AlgorithmStep &step, 
+			ImDrawList *draw_list, 
+			const ImVec2 &cursor_pos,
+            float bar_width,
+            float start_y, 
+            size_t data_size
+        );
+
+		ImU32 get_search_element_color(
+			const AlgorithmStep &step,
+			size_t index
+		) const;
+
+		bool is_search_algorithm() const;
 
         // Members
 		const ISimpleAlgorithm* m_execution		{nullptr};

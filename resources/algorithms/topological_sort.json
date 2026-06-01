@@ -1,0 +1,411 @@
+{
+  "algorithm": {
+    "id": "topological_sort",
+    "name": "Topological Sort",
+    "display_type": "Topological Sort",
+    "category": "Graph",
+    "version": "1.0.0",
+    "last_updated": "2026-05-14",
+
+    "complexity": {
+      "time_best": "O(V + E)",
+      "time_average": "O(V + E)",
+      "time_worst": "O(V + E)",
+      "space": "O(V)",
+      "explanation": "Kahn's algorithm processes each vertex and edge once. Time O(V+E), space O(V) for queue and indegree array."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": false,
+      "online": false,
+      "recursive": false,
+      "parallelizable": true,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Topological Sort orders vertices in a Directed Acyclic Graph (DAG) such that for every directed edge u→v, u comes before v.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O(V + E) - each vertex and edge processed once",
+        "Space Complexity: O(V) - for queue and indegree array",
+        "",
+        "Key Characteristics:",
+        "• Works only on Directed Acyclic Graphs (DAGs)",
+        "• Kahn's algorithm uses indegree tracking",
+        "• Multiple valid topological orders possible",
+        "• Detects cycles in directed graphs",
+        "",
+        "Applications:",
+        "• Build systems (make, Gradle, Maven)",
+        "• Course prerequisite ordering",
+        "• Task scheduling and dependency resolution",
+        "• Deadlock detection in databases",
+        "• Instruction scheduling in compilers"
+      ],
+
+      "pseudocode": [
+        "vector<size_t> TopologicalSort(",
+        "       const Graph& graph,",
+        "       optional<size_t> target_node)",
+        "{",
+        "    vector<int> indegree(graph.node_count, 0);",
+        "    vector<size_t> result;",
+        "    vector<bool> processed(graph.node_count, false);",
+        "    Queue<size_t> queue;",
+        "",
+        "    for (const Edge& edge : graph.edges)",
+        "    {",
+        "        indegree[edge.to]++;",
+        "    }",
+        "",
+        "    for (size_t i = 0; i < graph.node_count; i++)",
+        "    {",
+        "        if (indegree[i] == 0)",
+        "        {",
+        "            queue.push(i);",
+        "            processed[i] = true;",
+        "        }",
+        "    }",
+        "",
+        "    while (!queue.empty())",
+        "    {",
+        "        size_t current = queue.pop();",
+        "        result.push_back(current);",
+        "",
+        "        if (target_node.has_value() &&",
+        "            current == target_node.value())",
+        "        {",
+        "            return result;",
+        "        }",
+        "",
+        "        for (size_t neighbor : graph.adjacencyList[current])",
+        "        {",
+        "            indegree[neighbor]--;",
+        "",
+        "            if (indegree[neighbor] == 0 &&",
+        "                !processed[neighbor])",
+        "            {",
+        "                queue.push(neighbor);",
+        "                processed[neighbor] = true;",
+        "            }",
+        "        }",
+        "    }",
+        "",
+        "    if (result.size() != graph.node_count)",
+        "    {",
+        "        // Cycle detected",
+        "        result.clear();",
+        "    }",
+        "",
+        "    return result;",
+        "}"
+      ],
+
+      "optimizations": [
+        "Early termination when target node is found",
+        "DFS-based topological sort for recursive scenarios",
+        "Parallel topological sort for large DAGs",
+        "Incremental topological sort for dynamic graphs"
+      ],
+
+      "use_cases": [
+        "Build system dependency resolution",
+        "Course prerequisite scheduling",
+        "Task ordering in project management",
+        "Data flow analysis",
+        "Instruction scheduling in compilers"
+      ],
+
+      "disadvantages": [
+        "Only works on DAGs (no cycles)",
+        "No unique ordering guarantee",
+        "Cannot handle cyclic dependencies",
+        "Requires precomputation of indegrees"
+      ],
+
+      "related_algorithms": [
+        "Kahn's Algorithm",
+        "DFS-based Topological Sort",
+        "Tarjan's SCC Algorithm",
+        "Cycle Detection Algorithms"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "current_node",
+        "display_name": "Current Node",
+        "type": "size_t",
+        "description": "The vertex being processed and added to result",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "current"
+        }
+      },
+      {
+        "name": "current_neighbor",
+        "display_name": "Neighbor",
+        "type": "size_t",
+        "description": "The neighbor whose indegree is being decreased",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "neighbor"
+        }
+      },
+      {
+        "name": "indegree",
+        "display_name": "Indegree",
+        "type": "int",
+        "description": "Number of incoming edges to the node",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "indegree"
+        }
+      },
+      {
+        "name": "queue_size",
+        "display_name": "Queue Size",
+        "type": "size_t",
+        "description": "Number of nodes waiting to be processed",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "queue"
+        }
+      },
+      {
+        "name": "sorted_count",
+        "display_name": "Sorted Nodes",
+        "type": "size_t",
+        "description": "Number of nodes added to topological order",
+        "visualization": {
+          "color": "#06D6A0",
+          "icon": "sorted"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Edge Processed",
+        "type": "size_t",
+        "description": "Number of edges processed",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "cycle_detected",
+        "display_name": "Cycle Detected",
+        "type": "bool",
+        "description": "Whether a cycle was detected in the graph",
+        "visualization": {
+          "color": "#FF0000",
+          "icon": "warning"
+        }
+      },
+      {
+        "name": "target_node",
+        "display_name": "Target Node",
+        "type": "size_t",
+        "description": "Target node for early termination",
+        "visualization": {
+          "color": "#FF0000",
+          "icon": "target"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Initialize indegree array and result",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "compute_indegrees",
+        "name": "Compute Indegrees",
+        "description": "Calculating indegree for each vertex",
+        "tags": ["preprocessing", "indegree"],
+        "icon": "compute"
+      },
+      {
+        "id": "enqueue_zero_indegree",
+        "name": "Enqueue Zero-Indegree",
+        "description": "Adding nodes with indegree 0 to queue",
+        "tags": ["queue", "initial"],
+        "icon": "enqueue"
+      },
+      {
+        "id": "dequeue_node",
+        "name": "Dequeue Node",
+        "description": "Removing node from queue for processing",
+        "tags": ["queue", "dequeue"],
+        "icon": "dequeue"
+      },
+      {
+        "id": "add_to_result",
+        "name": "Add to Result",
+        "description": "Adding node to topological order",
+        "tags": ["result", "process"],
+        "icon": "add"
+      },
+      {
+        "id": "target_check",
+        "name": "Target Check",
+        "description": "Checking if target node is reached",
+        "tags": ["target", "check"],
+        "icon": "target"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target node reached - early termination",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "decrement_indegree",
+        "name": "Decrement Indegree",
+        "description": "Decreasing indegree of neighbor",
+        "tags": ["edge", "update"],
+        "icon": "decrement"
+      },
+      {
+        "id": "enqueue_neighbor",
+        "name": "Enqueue Neighbor",
+        "description": "Adding neighbor to queue (indegree became 0)",
+        "tags": ["queue", "enqueue"],
+        "icon": "enqueue"
+      },
+      {
+        "id": "cycle_detected",
+        "name": "Cycle Detected",
+        "description": "Graph contains a cycle - not a DAG",
+        "tags": ["error", "cycle", "complete"],
+        "icon": "warning"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Topological sort completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "vector<size_t> TopologicalSort(const Graph& graph, optional<size_t> target_node)",
+        "description_template": "Initializing Topological Sort on graph with {node_count} nodes and {edge_count} edges",
+        "extract_variables": ["node_count", "edge_count"],
+        "tags": ["initialization"]
+      },
+      "compute_indegrees": {
+        "pseudocode_line": 12,
+        "code_line": 12,
+        "code_line_content": "indegree[edge.to]++",
+        "description_template": "Computing indegrees: processed {comparisons} edges",
+        "extract_variables": ["comparisons"],
+        "tags": ["preprocessing", "indegree"]
+      },
+      "enqueue_zero_indegree": {
+        "pseudocode_line": 17,
+        "code_line": 17,
+        "code_line_content": "if (indegree[i] == 0)",
+        "description_template": "Enqueuing node {current_node} with indegree 0",
+        "extract_variables": ["current_node"],
+        "tags": ["queue", "initial"]
+      },
+      "dequeue_node": {
+        "pseudocode_line": 26,
+        "code_line": 26,
+        "code_line_content": "size_t current = queue.pop()",
+        "description_template": "Dequeuing node {current_node} (queue size: {queue_size})",
+        "extract_variables": ["current_node", "queue_size"],
+        "tags": ["queue", "dequeue"]
+      },
+      "add_to_result": {
+        "pseudocode_line": 27,
+        "code_line": 27,
+        "code_line_content": "result.push_back(current)",
+        "description_template": "Adding node {current_node} to topological order",
+        "extract_variables": ["current_node", "sorted_count"],
+        "tags": ["result", "process"]
+      },
+      "target_check": {
+        "pseudocode_line": 29,
+        "code_line": 29,
+        "code_line_content": "if (target_node.has_value() && current == target_node.value())",
+        "description_template": "Checking if current node {current_node} is target {target_node}",
+        "extract_variables": ["current_node", "target_node"],
+        "tags": ["target", "check"]
+      },
+      "target_found": {
+        "pseudocode_line": 32,
+        "code_line": 32,
+        "code_line_content": "return result",
+        "description_template": "Target node {target_node} found! Topological order up to target returned.",
+        "extract_variables": ["target_node", "sorted_count"],
+        "tags": ["target", "found", "complete"]
+      },
+      "decrement_indegree": {
+        "pseudocode_line": 37,
+        "code_line": 37,
+        "code_line_content": "indegree[neighbor]--",
+        "description_template": "Decrementing indegree of neighbor {explored_neighbor} to {indegree}",
+        "extract_variables": ["explored_neighbor", "indegree", "current_node"],
+        "tags": ["edge", "update"]
+      },
+      "enqueue_neighbor": {
+        "pseudocode_line": 39,
+        "code_line": 39,
+        "code_line_content": "if (indegree[neighbor] == 0 && !processed[neighbor])",
+        "description_template": "Enqueuing neighbor {explored_neighbor} (indegree reached 0)",
+        "extract_variables": ["explored_neighbor", "queue_size"],
+        "tags": ["queue", "enqueue"]
+      },
+      "cycle_detected": {
+        "pseudocode_line": 48,
+        "code_line": 48,
+        "code_line_content": "if (result.size() != graph.node_count)",
+        "description_template": "Cycle detected! Graph is not a DAG.",
+        "extract_variables": ["sorted_count", "node_count"],
+        "tags": ["error", "cycle", "complete"]
+      },
+      "completed": {
+        "pseudocode_line": 54,
+        "code_line": 54,
+        "code_line_content": "return result",
+        "description_template": "Topological sort completed. Order: {result}",
+        "extract_variables": ["sorted_count", "result"],
+        "tags": ["completed", "finished"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "hierarchical",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "processed": "#06D6A0",
+        "queued": "#FFD166",
+        "edge_active": "#FFA500",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "cycle": "#FF0000"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indegrees": true
+    }
+  }
+}

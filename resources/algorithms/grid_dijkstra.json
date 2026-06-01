@@ -1,0 +1,403 @@
+{
+  "algorithm": {
+    "id": "grid_dijkstra",
+    "name": "Grid Dijkstra's Algorithm",
+    "display_type": "Dijkstra",
+    "category": "Path Finding",
+    "version": "1.0.0",
+    "last_updated": "2026-05-20",
+
+    "complexity": {
+      "time_best": "O((V + E) log V)",
+      "time_average": "O((V + E) log V)",
+      "time_worst": "O((V + E) log V)",
+      "space": "O(V)",
+      "explanation": "Dijkstra uses a priority queue for efficient extraction of minimum distance nodes. Time complexity is O((V + E) log V) with a binary heap. Space complexity is O(V) for storing distances and the priority queue."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Dijkstra's algorithm finds the shortest path from a start node to all other nodes in a weighted graph with non-negative edge weights.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O((V + E) log V) with binary heap",
+        "Space Complexity: O(V) for distances and priority queue",
+        "",
+        "Key Characteristics:",
+        "• Guarantees shortest path in weighted graphs",
+        "• Works with non-negative edge weights only",
+        "• Explores nodes in order of increasing distance from start",
+        "• Can be stopped early when target is reached",
+        "",
+        "Applications:",
+        "• GPS navigation systems",
+        "• Network routing protocols (OSPF, IS-IS)",
+        "• Social network analysis",
+        "• Game AI pathfinding"
+      ],
+
+      "pseudocode": [
+        "vector<Cell> Dijkstra(",
+        "       const Grid& grid,",
+        "       Cell start,",
+        "       Cell target)",
+        "{",
+        "    PriorityQueue<Cell, float> pq;",
+        "    vector<vector<bool>> in_pq(rows, vector<bool>(cols, false));",
+        "    vector<vector<bool>> visited(rows, vector<bool>(cols, false));",
+        "    vector<vector<Cell>> came_from(rows, vector<Cell>(cols));",
+        "    vector<vector<float>> dist(rows, vector<float>(cols, INFINITY));",
+        "",
+        "    dist[start.row][start.col] = 0;",
+        "    pq.push(start, 0);",
+        "    in_pq[start.row][start.col] = true;",
+        "",
+        "    while (!pq.empty())",
+        "    {",
+        "        Cell current = pq.pop_min();",
+        "        in_pq[current.row][current.col] = false;",
+        "",
+        "        if (current == target)",
+        "        {",
+        "            break;",
+        "        }",
+        "",
+        "        visited[current.row][current.col] = true;",
+        "",
+        "        for (const Cell& neighbor : get_neighbors(current))",
+        "        {",
+        "            if (visited[neighbor.row][neighbor.col]) continue;",
+        "            if (grid[neighbor.row][neighbor.col] == WALL) continue;",
+        "",
+        "            float alt = dist[current.row][current.col] +",
+        "                movement_cost(current, neighbor);",
+        "",
+        "            if (alt < dist[neighbor.row][neighbor.col])",
+        "            {",
+        "                came_from[neighbor.row][neighbor.col] = current;",
+        "                dist[neighbor.row][neighbor.col] = alt;",
+        "",
+        "                if (!in_pq[neighbor.row][neighbor.col])",
+        "                {",
+        "                    pq.push(neighbor, alt);",
+        "                    in_pq[neighbor.row][neighbor.col] = true;",
+        "                }",
+        "            }",
+        "        }",
+        "    }",
+        "",
+        "    return reconstruct_path(came_from, start, target);",
+        "}"
+      ],
+
+      "optimizations": [
+        "Binary heap for priority queue",
+        "Early termination when target is reached",
+        "Bidirectional Dijkstra for faster pathfinding",
+        "A* with heuristic for better guidance"
+      ],
+
+      "use_cases": [
+        "GPS and mapping applications",
+        "Network routing protocols",
+        "Robotics path planning with terrain costs",
+        "Game AI for weighted maps"
+      ],
+
+      "disadvantages": [
+        "Cannot handle negative edge weights",
+        "Explores many nodes unnecessarily when target is known",
+        "Slower than A* when a good heuristic is available",
+        "Memory usage can be high for large graphs"
+      ],
+
+      "related_algorithms": [
+        "A* Algorithm",
+        "Bellman-Ford (handles negative weights)",
+        "Floyd-Warshall (all-pairs shortest paths)",
+        "BFS (unweighted graphs)"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "start_cell",
+        "display_name": "Start Cell",
+        "type": "string",
+        "description": "Starting position on the grid",
+        "visualization": {"color": "#00FF00", "icon": "start"}
+      },
+      {
+        "name": "target_cell",
+        "display_name": "Target Cell",
+        "type": "string",
+        "description": "Goal position to reach",
+        "visualization": {"color": "#FF0000", "icon": "target"}
+      },
+      {
+        "name": "current_cell",
+        "display_name": "Current Cell",
+        "type": "string",
+        "description": "Cell currently being processed",
+        "visualization": {"color": "#FF6B6B", "icon": "current"}
+      },
+      {
+        "name": "open_set_size",
+        "display_name": "Open Set Size",
+        "type": "size_t",
+        "description": "Number of cells in the priority queue",
+        "visualization": {"color": "#4ECDC4", "icon": "queue"}
+      },
+      {
+        "name": "closed_set_size",
+        "display_name": "Closed Set Size",
+        "type": "size_t",
+        "description": "Number of cells with finalized distances",
+        "visualization": {"color": "#9B59B6", "icon": "explored"}
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Neighbor Evaluations",
+        "type": "size_t",
+        "description": "Number of neighbor cells evaluated",
+        "visualization": {"color": "#88B04B", "icon": "comparison"}
+      },
+      {
+        "name": "current_distance",
+        "display_name": "Current Distance",
+        "type": "float",
+        "description": "Shortest known distance from start to current cell",
+        "visualization": {"color": "#92A8D1", "icon": "distance"}
+      },
+      {
+        "name": "edge_weight",
+        "display_name": "Edge Weight",
+        "type": "float",
+        "description": "Movement cost to neighbor",
+        "visualization": {"color": "#E8A87C", "icon": "weight"}
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "push_start",
+        "name": "Push Start Cell",
+        "description": "Adding start cell to priority queue with distance 0",
+        "tags": ["open_set", "start"],
+        "icon": "push"
+      },
+      {
+        "id": "pop_min",
+        "name": "Pop Minimum Distance",
+        "description": "Extracting cell with smallest distance from priority queue",
+        "tags": ["open_set", "pop", "process"],
+        "icon": "extract"
+      },
+      {
+        "id": "goal_check",
+        "name": "Goal Check",
+        "description": "Checking if current cell is the target",
+        "tags": ["goal", "check"],
+        "icon": "target"
+      },
+      {
+        "id": "add_to_closed",
+        "name": "Add to Closed Set",
+        "description": "Marking current cell as processed (distance finalized)",
+        "tags": ["closed_set", "settle"],
+        "icon": "settle"
+      },
+      {
+        "id": "evaluate_neighbor",
+        "name": "Evaluate Neighbor",
+        "description": "Evaluating neighboring cell",
+        "tags": ["neighbor", "evaluate"],
+        "icon": "edge"
+      },
+      {
+        "id": "relax_edge",
+        "name": "Relax Edge",
+        "description": "Checking if a shorter path to neighbor is found",
+        "tags": ["edge", "relax"],
+        "icon": "relax"
+      },
+      {
+        "id": "update_distance",
+        "name": "Update Distance",
+        "description": "Updating shortest known distance to neighbor",
+        "tags": ["update", "distance"],
+        "icon": "update"
+      },
+      {
+        "id": "push_neighbor",
+        "name": "Push Neighbor",
+        "description": "Adding neighbor to priority queue with new distance",
+        "tags": ["open_set", "push", "neighbor"],
+        "icon": "push"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target cell has been reached",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "open_set_empty",
+        "name": "Open Set Empty",
+        "description": "No path exists to target",
+        "tags": ["complete", "failure"],
+        "icon": "empty"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Dijkstra search completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "vector<Cell> Dijkstra(const Grid& grid, Cell start, Cell target)",
+        "description_template": "Initializing Dijkstra's algorithm on {rows}x{cols} grid",
+        "extract_variables": ["rows", "cols"],
+        "tags": ["initialization"]
+      },
+      "push_start": {
+        "pseudocode_line": 13,
+        "code_line": 13,
+        "code_line_content": "pq.push(start, 0)",
+        "description_template": "Adding start cell ({start_row},{start_col}) to priority queue with distance 0",
+        "extract_variables": ["start_row", "start_col"],
+        "tags": ["open_set", "start"]
+      },
+      "pop_min": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "Cell current = pq.pop_min()",
+        "description_template": "Popping cell ({current_row},{current_col}) with distance {current_distance}",
+        "extract_variables": ["current_row", "current_col", "current_distance"],
+        "tags": ["open_set", "pop"]
+      },
+      "goal_check": {
+        "pseudocode_line": 21,
+        "code_line": 21,
+        "code_line_content": "if (current == target)",
+        "description_template": "Checking if ({current_row},{current_col}) is the target cell",
+        "extract_variables": ["current_row", "current_col", "target_row", "target_col"],
+        "tags": ["goal", "check"]
+      },
+      "add_to_closed": {
+        "pseudocode_line": 26,
+        "code_line": 26,
+        "code_line_content": "visited[current.row][current.col] = true",
+        "description_template": "Adding cell ({current_row},{current_col}) to visited set (distance finalized)",
+        "extract_variables": ["current_row", "current_col", "closed_set_size"],
+        "tags": ["closed_set", "settle"]
+      },
+      "evaluate_neighbor": {
+        "pseudocode_line": 28,
+        "code_line": 28,
+        "code_line_content": "for (const Cell& neighbor : get_neighbors(current))",
+        "description_template": "Evaluating neighbor ({neighbor_row},{neighbor_col}) from ({current_row},{current_col})",
+        "extract_variables": ["current_row", "current_col", "neighbor_row", "neighbor_col"],
+        "tags": ["neighbor", "evaluate"]
+      },
+      "relax_edge": {
+        "pseudocode_line": 36,
+        "code_line": 36,
+        "code_line_content": "if (alt < dist[neighbor.row][neighbor.col])",
+        "description_template": "Relaxing edge: tentative distance = {tentative_distance} < current distance = {old_distance} to ({neighbor_row},{neighbor_col})",
+        "extract_variables": ["tentative_distance", "old_distance", "neighbor_row", "neighbor_col"],
+        "tags": ["edge", "relax"]
+      },
+      "update_distance": {
+        "pseudocode_line": 39,
+        "code_line": 39,
+        "code_line_content": "dist[neighbor.row][neighbor.col] = alt",
+        "description_template": "Updating ({neighbor_row},{neighbor_col}) shortest distance to {new_distance}",
+        "extract_variables": ["neighbor_row", "neighbor_col", "new_distance"],
+        "tags": ["update", "distance"]
+      },
+      "push_neighbor": {
+        "pseudocode_line": 43,
+        "code_line": 43,
+        "code_line_content": "pq.push(neighbor, alt)",
+        "description_template": "Adding neighbor ({neighbor_row},{neighbor_col}) to priority queue with distance {new_distance}",
+        "extract_variables": ["neighbor_row", "neighbor_col", "new_distance"],
+        "tags": ["open_set", "push"]
+      },
+      "target_found": {
+        "pseudocode_line": 23,
+        "code_line": 23,
+        "code_line_content": "break",
+        "description_template": "Target cell ({target_row},{target_col}) reached! Path length: {path_length} steps, cost: {path_cost}",
+        "extract_variables": ["target_row", "target_col", "path_length", "path_cost"],
+        "tags": ["target", "found", "complete"]
+      },
+      "open_set_empty": {
+        "pseudocode_line": 16,
+        "code_line": 16,
+        "code_line_content": "while (!pq.empty())",
+        "description_template": "Priority queue empty - No path exists from ({start_row},{start_col}) to ({target_row},{target_col})",
+        "extract_variables": ["start_row", "start_col", "target_row", "target_col", "explored_count"],
+        "tags": ["complete", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 50,
+        "code_line": 50,
+        "code_line_content": "return reconstruct_path(came_from, start, target)",
+        "description_template": "Dijkstra completed. Explored {closed_set_size} cells, evaluated {comparisons} neighbors",
+        "extract_variables": ["closed_set_size", "comparisons", "rows", "cols"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "grid",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "closed": "#06D6A0",
+        "open": "#FFD166",
+        "path": "#9B59B6",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500",
+        "wall": "#2A2A3A",
+        "weight_1": "#4A6A8A",
+        "weight_2": "#3A5A7A",
+        "weight_3": "#2A4A6A",
+        "weight_4": "#1A3A5A",
+        "weight_5": "#0A2A4A"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_coordinates": true,
+      "show_distances": true,
+      "show_edge_weights": true
+    }
+  }
+}

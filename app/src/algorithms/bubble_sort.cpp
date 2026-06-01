@@ -10,86 +10,10 @@ namespace c2l::algorithms
         LOG_DEBUG("BubbleSort created and metadata loaded from JSON");
     }
 
-    void BubbleSort::initialize(const std::vector<int> &data)
+    void BubbleSort::reset_state()
     {
-        m_original_data = data;
-        reset();
-        generate_all_steps();
-
-        LOG_INFO(
-            "BubbleSort initialized with {} elements", 
-            data.size()
-        );
-    }
-
-    bool BubbleSort::step_forward()
-    {
-        if (m_current_step_index < m_steps.size() - 1)
-        {
-            m_current_step_index++;
-            notify_observers();
-            return true;
-        }
-
-        return false;
-    }
-
-    bool BubbleSort::step_backward()
-    {
-        if (m_current_step_index > 0)
-        {
-            m_current_step_index--;
-            notify_observers();
-            return true;
-        }
-
-        return false;
-    }
-
-    void BubbleSort::reset()
-    {
-        m_current_step_index = 0;
-        m_steps.clear();
         m_total_comparisons = 0;
         m_total_swaps = 0;
-    }
-
-    std::vector<int> BubbleSort::get_original_data() const
-    {
-        return m_original_data;
-    }
-
-    AlgorithmStep BubbleSort::get_current_step() const
-    {
-        if (m_steps.empty() || m_current_step_index >= m_steps.size())
-        {
-            return AlgorithmStep{};
-        }
-        return m_steps[m_current_step_index];
-    }
-
-    size_t BubbleSort::get_step_count() const
-    {
-        return m_steps.size();
-    }
-
-    size_t BubbleSort::get_current_step_index() const
-    {
-        return m_current_step_index;
-    }
-
-
-    bool BubbleSort::is_complete() const
-    {
-        return m_current_step_index >= m_steps.size() - 1;
-    }
-
-    bool BubbleSort::is_steps_empty_or_invalid() const
-    {
-        if (m_steps.empty() || m_current_step_index >= m_steps.size())
-            return true;
-
-        return false;
     }
 
     void BubbleSort::generate_all_steps()
@@ -271,21 +195,45 @@ namespace c2l::algorithms
         size_t total_swaps) const
     {
         // Setting core data
-        step.metadata.set("i", state.outer_loop_index, "Outer loop index");
-        step.metadata.set("j", state.inner_loop_index, "Inner loop index");
+        step.metadata.set(
+            "i", 
+            state.outer_loop_index, 
+            "Outer loop index"
+        );
+        step.metadata.set(
+            "j", 
+            state.inner_loop_index, 
+            "Inner loop index"
+        );
         if (operation_id == "pass_complete")
         {
             step.metadata.set(
+
                 "swapped",
                 state.swapped_in_current_pass,
                 "Swap occurred during pass"
             );
         }
 
-        step.metadata.set("swapped", state.swapped_in_current_pass, "Swap occurred");
-        step.metadata.set("comparisons", state.comparisons, "Total comparisons");
-        step.metadata.set("swaps", state.swaps, "Total swaps");
-        step.metadata.set("sorted_count", state.sorted_elements, "Sorted elements");
+        step.metadata.set(
+            "swapped", 
+            state.swapped_in_current_pass, 
+            "Swap occurred"
+        );
+        step.metadata.set(
+            "comparisons", 
+            state.comparisons, 
+            "Total comparisons"
+        );
+        step.metadata.set(
+            "swaps", 
+            state.swaps, 
+            "Total swaps"
+        );
+        step.metadata.set("sorted_count", 
+            state.sorted_elements, 
+        "Sorted elements"
+        );
 
         // Setting array values if indices are valid
         if (state.inner_loop_index < state.data.size())
@@ -324,9 +272,10 @@ namespace c2l::algorithms
             step.visualization.compared_index = state.inner_loop_index + 1;
         else
             step.visualization.compared_index = -1;
+
         step.visualization.is_swap_step = (operation_id == "swap");
-        step.visualization.comparisons = total_comparisons;
-        step.visualization.swaps = total_swaps;
+        step.visualization.comparison_count = total_comparisons;
+        step.visualization.swap_count = total_swaps;
 
         // Marking sorted elements
         step.visualization.additional_highlights.clear();

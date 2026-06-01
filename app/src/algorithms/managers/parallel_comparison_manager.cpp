@@ -56,7 +56,7 @@ namespace c2l::algorithms
     bool ParallelComparisonManager::set_algorithm_right(
         AlgorithmType type)
     {
-        return initialize_algorithm(m_right, type, 0);
+        return initialize_algorithm(m_right, type, 1);
     }
 
     bool ParallelComparisonManager::initialize_algorithm(
@@ -115,7 +115,16 @@ namespace c2l::algorithms
         if (!m_current_data.empty())
         {
             algorithm.algorithm->initialize(m_current_data);
-            algorithm.metrics.total_steps = algorithm.algorithm->get_step_count();
+            algorithm.metrics.step_count = algorithm.algorithm->get_step_count();
+        }
+
+        if (algorithm.visualizer)
+        {
+            algorithm.visualizer->initialize(
+                algorithm.algorithm.get(),
+                algorithm.metadata,
+                false
+            );
         }
 
         LOG_INFO(
@@ -135,74 +144,71 @@ namespace c2l::algorithms
 
         m_current_data = data;
 
-        auto init_start = std::chrono::high_resolution_clock::now();
+        // Reset metrics BEFORE spawning tasks so we start clean
+        m_left.metrics.reset();
+        m_right.metrics.reset();
 
-        // Initialize both algorithms in parallel using ThreadManager
         std::vector<std::future<void>> init_tasks;
 
-        // Left algorithm initialization task
         if (m_left.is_valid())
         {
             auto left_future = m_thread_manager.enqueue_task(
                 core::ThreadManager::ThreadType::COMPUTE,
-                [this, data, init_start]()
+                [this, data]()
                 {
+                    // Capture start INSIDE the lambda so we measure only
+                    // generate_all_steps(), not thread pool queue latency
+                    const auto t_start = std::chrono::high_resolution_clock::now();
                     m_left.algorithm->initialize(data);
-                    m_left.metrics.total_steps = m_left.algorithm->get_step_count();
+                    const auto t_end = std::chrono::high_resolution_clock::now();
 
-                    const auto init_end = std::chrono::high_resolution_clock::now();
-                    m_left.metrics.initialization_time = 
+                    m_left.metrics.initialization_time =
                         std::chrono::duration_cast<std::chrono::microseconds>(
-                            init_end - init_start).count();
+                            t_end - t_start).count();
+                    m_left.metrics.step_count   = m_left.algorithm->get_step_count();
+                    m_left.metrics.peak_memory   = m_left.algorithm->get_peak_memory_bytes();
+                    m_left.metrics.execution_time =
+                        m_left.algorithm->get_algorithm_time_us();
                 }
             );
-
             init_tasks.push_back(std::move(left_future));
         }
 
-        init_start = std::chrono::high_resolution_clock::now();
-
-        // right algorithm initialization task
         if (m_right.is_valid())
         {
             auto right_future = m_thread_manager.enqueue_task(
                 core::ThreadManager::ThreadType::COMPUTE,
-                [this, data, init_start]()
+                [this, data]()
                 {
+                    const auto t_start = std::chrono::high_resolution_clock::now();
                     m_right.algorithm->initialize(data);
-                    m_right.metrics.total_steps = m_right.algorithm->get_step_count();
+                    const auto t_end = std::chrono::high_resolution_clock::now();
 
-                    const auto init_end = std::chrono::high_resolution_clock::now();
-                    m_right.metrics.initialization_time = 
+                    m_right.metrics.initialization_time =
                         std::chrono::duration_cast<std::chrono::microseconds>(
-                            init_end - init_start).count();
+                            t_end - t_start).count();
+                    m_right.metrics.step_count   = m_right.algorithm->get_step_count();
+                    m_right.metrics.peak_memory   = m_right.algorithm->get_peak_memory_bytes();
+                    m_right.metrics.execution_time =
+                        m_right.algorithm->get_algorithm_time_us();
                 }
             );
-
             init_tasks.push_back(std::move(right_future));
         }
 
-        // Waiting for both initializations to complete
         for (auto& task : init_tasks)
         {
             if (task.valid())
-            {
                 task.wait();
-            }
         }
 
-        // Resetting metrics
-        m_left.metrics.reset();
-        m_right.metrics.reset();
-
-        if (m_left.is_valid())
-            m_left.metrics.total_steps = m_left.algorithm->get_step_count();
-        if (m_right.is_valid())
-            m_right.metrics.total_steps = m_right.algorithm->get_step_count();
-
         LOG_DEBUG(
-            "Shared data set with {} elements (parallel initialization)",
-            data.size()
+            "Shared data set: {} elements | left={}us {}steps | right={}us {}steps",
+            data.size(),
+            m_left.metrics.execution_time.load(),
+            m_left.metrics.step_count.load(),
+            m_right.metrics.execution_time.load(),
+            m_right.metrics.step_count.load()
         );
     }
 
@@ -385,10 +391,16 @@ namespace c2l::algorithms
                 algo.metrics.current_step = algo.algorithm->get_current_step_index();
                 algo.metrics.is_complete = algo.algorithm->is_complete();
 
-                if (algo.metrics.total_steps > 0)
+                // Record history for live graphs
+                algo.comparisons_history.push_back(
+                    static_cast<float>(algo.metrics.comparison_count.load()));
+                algo.step_time_history_ms.push_back(
+                    static_cast<float>(step_duration.count()) / 1000.0f);
+
+                if (algo.metrics.step_count > 0)
                 {
                     algo.metrics.progress = static_cast<float>(algo.metrics.current_step) /
-                                                static_cast<float>(algo.metrics.total_steps - 1);
+                                                static_cast<float>(algo.metrics.step_count - 1);
                 }
 
                 algo.step_completed = true;
@@ -530,11 +542,15 @@ namespace c2l::algorithms
 
         m_left.metrics.reset();
         m_right.metrics.reset();
+        m_left.comparisons_history.clear();
+        m_right.comparisons_history.clear();
+        m_left.step_time_history_ms.clear();
+        m_right.step_time_history_ms.clear();
 
         if (m_left.is_valid())
-            m_left.metrics.total_steps = m_left.algorithm->get_step_count();
+            m_left.metrics.step_count = m_left.algorithm->get_step_count();
         if (m_right.is_valid())
-            m_right.metrics.total_steps = m_right.algorithm->get_step_count();
+            m_right.metrics.step_count = m_right.algorithm->get_step_count();
 
         m_total_playback_time = 0;
 
@@ -545,8 +561,8 @@ namespace c2l::algorithms
     {
         m_speed = std::clamp(
             speed,
-            ALGORITHM_COMPUTATION_MIN_STEEP,
-            ALGORITHM_COMPUTATION_MAX_STEEP
+            ALGORITHM_COMPUTATION_MIN_SPEED,
+            ALGORITHM_COMPUTATION_MAX_SPEED
         );
     }
 
@@ -583,11 +599,13 @@ namespace c2l::algorithms
         algo.metrics.update_from_step(step);
         algo.metrics.current_step = algo.algorithm->get_current_step_index();
         algo.metrics.is_complete = algo.algorithm->is_complete();
+        algo.metrics.visited_node_count = algo.visualizer->get_total_visited_nodes();
+        algo.metrics.explored_node_count = algo.visualizer->get_total_explored_nodes();
 
-        if (algo.metrics.total_steps > 0)
+        if (algo.metrics.step_count > 0)
         {
             algo.metrics.progress = static_cast<float>(algo.metrics.current_step) /
-                                        static_cast<float>(algo.metrics.total_steps - 1);
+                                        static_cast<float>(algo.metrics.step_count - 1);
         }
     }
 
@@ -600,63 +618,77 @@ namespace c2l::algorithms
         result.left.total_time = std::chrono::microseconds(
             m_left.metrics.execution_time.load()
         );
-        result.left.steps = m_left.metrics.total_steps.load();
-        result.left.comparisons = m_left.metrics.total_comparisons.load();
-        result.left.swaps = m_left.metrics.total_swaps.load();
+        result.left.steps = m_left.metrics.step_count.load();
+        result.left.comparisons = m_left.metrics.comparison_count.load();
+        result.left.swaps = m_left.metrics.swap_count.load();
+        result.left.visited_node_count = m_left.metrics.visited_node_count.load();
+        result.left.explored_node_count = m_left.metrics.explored_node_count.load();
 
         // Right algorithm results
         result.right.total_time = std::chrono::microseconds(
             m_right.metrics.execution_time.load()
         );
-        result.right.steps = m_right.metrics.total_steps.load();
-        result.right.comparisons = m_right.metrics.total_comparisons.load();
-        result.right.swaps = m_right.metrics.total_swaps.load();
+        result.right.steps = m_right.metrics.step_count.load();
+        result.right.comparisons = m_right.metrics.comparison_count.load();
+        result.right.swaps = m_right.metrics.swap_count.load();
+        result.right.visited_node_count = m_right.metrics.visited_node_count.load();
+        result.right.explored_node_count = m_right.metrics.explored_node_count.load();
 
         // Calculate average step times
         if (result.left.steps > 0)
         {
-            result.left.avg_step_time_ms = result.left.total_time.count() /
-                              (1000.0 * m_left.metrics.step_count.load());
+            result.left.avg_step_time_ms = static_cast<double>(result.left.total_time.count()) /
+                              (1000.0 * static_cast<double>(m_left.metrics.step_count.load()));
         }
 
         if (result.right.steps > 0)
         {
-            result.right.avg_step_time_ms = result.right.total_time.count() /
-                               (1000.0 * m_right.metrics.step_count.load());
+            result.right.avg_step_time_ms = static_cast<double>(result.right.total_time.count()) /
+                               (1000.0 * static_cast<double>(m_right.metrics.step_count.load()));
         }
 
         // Calculate scores
         if (result.left.total_time.count() > 0 && result.right.total_time.count() > 0)
         {
-            result.left.speed_score = 1.0 / 
-                                (1.0 + result.left.total_time.count() / 1000000.0);
-            result.right.speed_score = 1.0 / 
-                                (1.0 + result.right.total_time.count() / 1000000.0);
+            // speed_score: faster algorithm gets a score closer to 1.0
+            result.left.speed_score = 1.0 /
+                (1.0 + static_cast<double>(result.left.total_time.count()) / 1000000.0);
+            result.right.speed_score = 1.0 /
+                (1.0 + static_cast<double>(result.right.total_time.count()) / 1000000.0);
 
-            result.left.efficiency_score = result.left.comparisons /
-                                (1.0 + result.left.total_time.count() / 1000.0);
-            result.right.efficiency_score = result.right.comparisons /
-                                (1.0 + result.right.total_time.count() / 1000.0);
+            // efficiency_score: comparisons per step — lower means fewer redundant
+            // comparisons per unit of work, which is the meaningful metric
+            result.left.efficiency_score = result.left.steps > 0
+                ? static_cast<double>(result.left.comparisons) /
+                  static_cast<double>(result.left.steps)
+                : 0.0;
+            result.right.efficiency_score = result.right.steps > 0
+                ? static_cast<double>(result.right.comparisons) /
+                  static_cast<double>(result.right.steps)
+                : 0.0;
 
             // Parallel efficiency (how well they utilized parallel execution)
-            double total_sequential_time = result.left.total_time.count() +
-                                          result.right.total_time.count();
-            double max_parallel_time = std::max(result.left.total_time.count(),
-                                               result.right.total_time.count());
+            double total_sequential_time = static_cast<double>(result.left.total_time.count()) +
+                                          static_cast<double>(result.right.total_time.count());
+            double max_parallel_time = std::max(
+                static_cast<double>(result.left.total_time.count()),
+                static_cast<double>(result.right.total_time.count()));
             result.parallel_efficiency = (total_sequential_time / max_parallel_time) / 2.0;
 
             // Determine winner
             if (result.left.total_time < result.right.total_time)
             {
                 result.winner = "left";
-                result.performance_ratio = static_cast<double>(
-                    result.right.total_time.count()) / result.left.total_time.count();
+                result.performance_ratio =
+                    static_cast<double>(result.right.total_time.count()) /
+                    static_cast<double>(result.left.total_time.count());
             }
             else if (result.right.total_time < result.left.total_time)
             {
                 result.winner = "right";
-                result.performance_ratio = static_cast<double>(
-                    result.left.total_time.count()) / result.right.total_time.count();
+                result.performance_ratio =
+                    static_cast<double>(result.left.total_time.count()) /
+                    static_cast<double>(result.right.total_time.count());
             }
         }
 
@@ -678,12 +710,12 @@ namespace c2l::algorithms
         return m_is_paused;
     }
 
-    const ParallelComparisonManager::ParallelAlgorithm&
+    const ParallelAlgorithm&
     ParallelComparisonManager::get_left_algorithm() const noexcept
     {
         return m_left;
     }
-    const ParallelComparisonManager::ParallelAlgorithm&
+    const ParallelAlgorithm&
     ParallelComparisonManager::get_right_algorithm() const noexcept
     {
         return m_right;

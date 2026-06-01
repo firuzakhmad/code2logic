@@ -5,6 +5,8 @@
 #ifndef CODE2LOGIC_VARIABLES_HPP
 #define CODE2LOGIC_VARIABLES_HPP
 
+#include <climits>
+
 namespace c2l::core
 {
 #define DEFAULT_ICON_SIZE           {40, 40}
@@ -12,13 +14,20 @@ namespace c2l::core
 #define ICON_BUTTON_WIDTH           20.0f
 #define ICON_BUTTON_HEIGHT          20.0f
 
-#define BUTTON_WIDTH                80.0f
+#define DEFAULT_BUTTON_WIDTH        80.0f
+#define DEFAULT_BUTTON_HEIGHT       25.0f
 
-#define PROGRESS_BAR_WIDTH          20.0f
+#define PROGRESS_BAR_WIDTH          150.0f
 #define PROGRESS_BAR_HEIGHT         20.0f
 
-#define ALGORITHM_COMPUTATION_MIN_STEEP 0.1f
-#define ALGORITHM_COMPUTATION_MAX_STEEP 20.f
+#define ALGORITHM_COMPUTATION_MIN_SPEED 0.1f
+#define ALGORITHM_COMPUTATION_MAX_SPEED 40.f
+
+#define ALGORITHM_DATA_MIN_SIZE     15
+#define ALGORITHM_DATA_MAX_SIZE     80
+
+#define ALGORITHM_DATA_MIN_VALUE    15
+#define ALGORITHM_DATA_MAX_VALUE    200
 
 #define SLIDER_WIDTH                100.0f
 #define SLIDER_HEIGHT               20.0f
@@ -38,6 +47,9 @@ namespace c2l::core
 #define DEFAULT_HEADING_FONT_COLOR  {0.560f, 0.566f, 0.566f, 1.0f}
 #define DEFAULT_HEADING_FONT_MARGIN {0, 4}
 
+
+    static constexpr float INF = std::numeric_limits<float>::infinity();
+    static constexpr float  SQRT2 = 1.4142135623f;
 
 }
 

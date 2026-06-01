@@ -1,18 +1,39 @@
 {
   "icons":
   {
-    "play": 
+    "play":
     {
       "description": "Play button for algorithm execution",
       "default_path": "resources/icons/default/play/play.png",
       "type": "PLAY",
-      "alternatives": 
+      "alternatives":
       {
         "professional": "resources/icons/professional/play/play.png"
       },
       "sizes": [16, 24, 32, 48]
     },
-
+    "arrow_right":
+    {
+      "description": "ARROW Right button for algorithm execution",
+      "default_path": "resources/icons/default/arrow/arrow_right.png",
+      "type": "ARROW_RIGHT",
+      "alternatives": 
+      {
+        "professional": "resources/icons/professional/arrow/arrow_right.png"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+    "arrow_left":
+    {
+      "description": "ARROW Left button for algorithm execution",
+      "default_path": "resources/icons/default/arrow/arrow_left.png",
+      "type": "ARROW_LEFT",
+      "alternatives":
+      {
+        "professional": "resources/icons/professional/arrow/arrow_left.png"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
     "pause": 
     {
       "description": "Pause button for algorithm execution",
@@ -138,6 +159,39 @@
       "alternatives":
       {
         "professional": "resources/icons/professional/exit/exit.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+    "check":
+    {
+      "description": "Check icon for visualization",
+      "default_path": "resources/icons/default/check/check.png",
+      "type": "CHECK",
+      "alternatives":
+      {
+        "professional": "resources/icons/professional/check/check.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+    "close":
+    {
+      "description": "Close icon for visualization",
+      "default_path": "resources/icons/default/close/close.png",
+      "type": "CLOSE",
+      "alternatives":
+      {
+        "professional": "resources/icons/professional/close/close.svg"
+      },
+      "sizes": [16, 24, 32, 48]
+    },
+    "link":
+    {
+      "description": "Link icon for visualization",
+      "default_path": "resources/icons/default/link/link.png",
+      "type": "LINK",
+      "alternatives":
+      {
+        "professional": "resources/icons/professional/link/link.svg"
       },
       "sizes": [16, 24, 32, 48]
     }

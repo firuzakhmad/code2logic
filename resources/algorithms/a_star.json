@@ -1,0 +1,437 @@
+{
+  "algorithm": {
+    "id": "a_star",
+    "name": "A* Search Algorithm",
+    "display_type": "A*",
+    "category": "Graph",
+    "version": "1.0.0",
+    "last_updated": "2026-05-12",
+
+    "complexity": {
+      "time_best": "O(E)",
+      "time_average": "O((V + E) log V)",
+      "time_worst": "O((V + E) log V)",
+      "space": "O(V)",
+      "explanation": "A* uses a priority queue with heuristic function. Time complexity depends on heuristic quality. Space complexity is O(V) for open/closed sets."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "A* is an informed graph traversal algorithm that uses a heuristic to efficiently find the shortest path from source to target.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O((V + E) log V) - with good heuristic",
+        "Space Complexity: O(V) - for open and closed sets",
+        "",
+        "Key Characteristics:",
+        "• Uses heuristic to guide search toward target",
+        "• Combines Dijkstra's optimality with greedy best-first speed",
+        "• Requires admissible heuristic for optimality",
+        "• Admissible heuristics: Euclidean distance, Manhattan distance",
+        "",
+        "Applications:",
+        "• Video game pathfinding",
+        "• Robotics navigation",
+        "• GPS routing",
+        "• Network routing optimization",
+        "• Puzzle solving (15-puzzle, 8-puzzle)"
+      ],
+
+      "pseudocode": [
+        "void AStar(",
+        "       const Graph& graph,",
+        "       size_t source_node,",
+        "       size_t target_node)",
+        "{",
+        "    PriorityQueue<Node, float> open_set;",
+        "    vector<bool> in_open_set(graph.node_count, false);",
+        "    vector<bool> closed_set(graph.node_count, false);",
+        "    vector<size_t> came_from(graph.node_count, INVALID_NODE);",
+        "    vector<float> g_score(graph.node_count, INFINITY);",
+        "    vector<float> f_score(graph.node_count, INFINITY);",
+        "",
+        "    g_score[source_node] = 0;",
+        "    f_score[source_node] = heuristic(source_node, target_node);",
+        "    open_set.push(source_node, f_score[source_node]);",
+        "    in_open_set[source_node] = true;",
+        "",
+        "    while (!open_set.empty())",
+        "    {",
+        "        size_t current_node = open_set.pop_min();",
+        "        in_open_set[current_node] = false;",
+        "",
+        "        if (current_node == target_node)",
+        "        {",
+        "            break;",
+        "        }",
+        "",
+        "        closed_set[current_node] = true;",
+        "",
+        "        for (const Edge& edge : graph.adjacencyList[current_node])",
+        "        {",
+        "            size_t neighbor = edge.to;",
+        "            int weight = edge.weight;",
+        "",
+        "            if (closed_set[neighbor]) continue;",
+        "",
+        "            float tentative_g_score = g_score[current_node] + weight;",
+        "",
+        "            if (tentative_g_score < g_score[neighbor])",
+        "            {",
+        "                came_from[neighbor] = current_node;",
+        "                g_score[neighbor] = tentative_g_score;",
+        "                f_score[neighbor] = g_score[neighbor] +",
+        "                    heuristic(neighbor, target_node);",
+        "",
+        "                if (!in_open_set[neighbor])",
+        "                {",
+        "                    open_set.push(neighbor, f_score[neighbor]);",
+        "                    in_open_set[neighbor] = true;",
+        "                }",
+        "            }",
+        "        }",
+        "    }",
+        "}"
+      ],
+
+      "optimizations": [
+        "Use binary heap for priority queue",
+        "Tie-breaking strategies for better performance",
+        "Bidirectional A* for large graphs",
+        "Jump Point Search for grid-based graphs",
+        "Dynamic weighting for faster search"
+      ],
+
+      "use_cases": [
+        "Video game pathfinding",
+        "Robotics navigation",
+        "GPS navigation systems",
+        "Maze solving",
+        "Puzzle solving algorithms"
+      ],
+
+      "disadvantages": [
+        "Requires good heuristic for optimal performance",
+        "Memory usage can be high for large graphs",
+        "Not suitable for dynamic graphs without updates",
+        "Heuristic must be admissible for optimality"
+      ],
+
+      "related_algorithms": [
+        "Dijkstra's Algorithm",
+        "Greedy Best-First Search",
+        "Bidirectional A*",
+        "Theta*"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "source_node",
+        "display_name": "Source Node",
+        "type": "size_t",
+        "description": "Starting node for the search",
+        "visualization": {
+          "color": "#00FF00",
+          "icon": "start"
+        }
+      },
+      {
+        "name": "target_node",
+        "display_name": "Target Node",
+        "type": "size_t",
+        "description": "Goal node to reach",
+        "visualization": {
+          "color": "#FF0000",
+          "icon": "target"
+        }
+      },
+      {
+        "name": "current_node",
+        "display_name": "Current Node",
+        "type": "size_t",
+        "description": "Node currently being processed",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "current"
+        }
+      },
+      {
+        "name": "open_set_size",
+        "display_name": "Open Set Size",
+        "type": "size_t",
+        "description": "Number of nodes in the open set (frontier)",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "queue"
+        }
+      },
+      {
+        "name": "closed_set_size",
+        "display_name": "Closed Set Size",
+        "type": "size_t",
+        "description": "Number of nodes in closed set (explored)",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "explored"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Edge Evaluations",
+        "type": "size_t",
+        "description": "Number of edges evaluated",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "g_score",
+        "display_name": "G-Score",
+        "type": "float",
+        "description": "Actual cost from source to current node",
+        "visualization": {
+          "color": "#92A8D1",
+          "icon": "distance"
+        }
+      },
+      {
+        "name": "f_score",
+        "display_name": "F-Score",
+        "type": "float",
+        "description": "Estimated total cost (g + h)",
+        "visualization": {
+          "color": "#E8A87C",
+          "icon": "score"
+        }
+      },
+      {
+        "name": "h_score",
+        "display_name": "Heuristic",
+        "type": "float",
+        "description": "Estimated distance to target",
+        "visualization": {
+          "color": "#D4A5A5",
+          "icon": "heuristic"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "push_source",
+        "name": "Push Source Node",
+        "description": "Adding source node to open set",
+        "tags": ["open_set", "source"],
+        "icon": "push"
+      },
+      {
+        "id": "pop_min",
+        "name": "Pop Minimum F-Score",
+        "description": "Extracting node with lowest f-score from open set",
+        "tags": ["open_set", "pop", "process"],
+        "icon": "extract"
+      },
+      {
+        "id": "goal_check",
+        "name": "Goal Check",
+        "description": "Checking if current node is the target",
+        "tags": ["goal", "check"],
+        "icon": "target"
+      },
+      {
+        "id": "add_to_closed",
+        "name": "Add to Closed Set",
+        "description": "Adding current node to closed set (explored)",
+        "tags": ["closed_set", "settle"],
+        "icon": "settle"
+      },
+      {
+        "id": "evaluate_edge",
+        "name": "Evaluate Edge",
+        "description": "Evaluating edge to neighbor",
+        "tags": ["edge", "evaluate"],
+        "icon": "edge"
+      },
+      {
+        "id": "relax_edge",
+        "name": "Relax Edge",
+        "description": "Checking if better path to neighbor found",
+        "tags": ["edge", "relax"],
+        "icon": "relax"
+      },
+      {
+        "id": "update_scores",
+        "name": "Update Scores",
+        "description": "Updating g-score and f-score for neighbor",
+        "tags": ["update", "score"],
+        "icon": "update"
+      },
+      {
+        "id": "push_neighbor",
+        "name": "Push Neighbor",
+        "description": "Adding neighbor to open set",
+        "tags": ["open_set", "push", "neighbor"],
+        "icon": "push"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target node has been reached",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "open_set_empty",
+        "name": "Open Set Empty",
+        "description": "No path exists to target",
+        "tags": ["complete", "failure"],
+        "icon": "empty"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "A* search completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void AStar(const Graph& graph, size_t source_node, size_t target_node)",
+        "description_template": "Initializing A* algorithm on graph with {node_count} nodes and {edge_count} edges",
+        "extract_variables": ["node_count", "edge_count"],
+        "tags": ["initialization"]
+      },
+      "push_source": {
+        "pseudocode_line": 15,
+        "code_line": 15,
+        "code_line_content": "open_set.push(source_node, f_score[source_node])",
+        "description_template": "Adding source node {source_node} to open set (f = {f_score})",
+        "extract_variables": ["source_node", "f_score"],
+        "tags": ["open_set", "source"]
+      },
+      "pop_min": {
+        "pseudocode_line": 20,
+        "code_line": 20,
+        "code_line_content": "size_t current_node = open_set.pop_min()",
+        "description_template": "Popping node {current_node} with f = {f_score} from open set",
+        "extract_variables": ["current_node", "f_score", "g_score"],
+        "tags": ["open_set", "pop"]
+      },
+      "goal_check": {
+        "pseudocode_line": 23,
+        "code_line": 23,
+        "code_line_content": "if (current_node == target_node)",
+        "description_template": "Checking if {current_node} is the target node",
+        "extract_variables": ["current_node", "target_node"],
+        "tags": ["goal", "check"]
+      },
+      "add_to_closed": {
+        "pseudocode_line": 28,
+        "code_line": 28,
+        "code_line_content": "closed_set[current_node] = true",
+        "description_template": "Adding node {current_node} to closed set (explored)",
+        "extract_variables": ["current_node", "closed_set_size"],
+        "tags": ["closed_set", "settle"]
+      },
+      "evaluate_edge": {
+        "pseudocode_line": 30,
+        "code_line": 30,
+        "code_line_content": "for (const Edge& edge : graph.adjacencyList[current_node])",
+        "description_template": "Evaluating edge from {current_node} to neighbor {explored_neighbor}",
+        "extract_variables": ["current_node", "explored_neighbor", "edge_weight"],
+        "tags": ["edge", "evaluate"]
+      },
+      "relax_edge": {
+        "pseudocode_line": 39,
+        "code_line": 39,
+        "code_line_content": "if (tentative_g_score < g_score[neighbor])",
+        "description_template": "Relaxing edge: tentative g = {tentative_g_score} < current g = {old_g_score}",
+        "extract_variables": ["tentative_g_score", "old_g_score", "explored_neighbor"],
+        "tags": ["edge", "relax"]
+      },
+      "update_scores": {
+        "pseudocode_line": 42,
+        "code_line": 42,
+        "code_line_content": "g_score[neighbor] = tentative_g_score",
+        "description_template": "Updating {explored_neighbor}: g = {new_g_score}, f = {new_f_score}",
+        "extract_variables": ["explored_neighbor", "new_g_score", "new_f_score"],
+        "tags": ["update", "score"]
+      },
+      "push_neighbor": {
+        "pseudocode_line": 48,
+        "code_line": 48,
+        "code_line_content": "open_set.push(neighbor, f_score[neighbor])",
+        "description_template": "Adding neighbor {explored_neighbor} to open set with f = {f_score}",
+        "extract_variables": ["explored_neighbor", "f_score"],
+        "tags": ["open_set", "push"]
+      },
+      "target_found": {
+        "pseudocode_line": 25,
+        "code_line": 25,
+        "code_line_content": "break",
+        "description_template": "Target node {target_node} reached! Path cost: {g_score}",
+        "extract_variables": ["target_node", "g_score"],
+        "tags": ["target", "found", "complete"]
+      },
+      "open_set_empty": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "while (!open_set.empty())",
+        "description_template": "Open set empty - No path exists to target",
+        "extract_variables": ["explored_count"],
+        "tags": ["complete", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 54,
+        "code_line": 54,
+        "code_line_content": "}",
+        "description_template": "A* completed. Explored {closed_set_size} nodes, evaluated {comparisons} edges",
+        "extract_variables": ["closed_set_size", "comparisons", "node_count"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "force_directed",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "closed": "#06D6A0",
+        "open": "#FFD166",
+        "path": "#9B59B6",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_distances": true,
+      "show_edge_weights": true
+    }
+  }
+}

@@ -1,0 +1,378 @@
+{
+  "algorithm": {
+    "id": "grid_dfs",
+    "name": "Depth-First Search",
+    "display_type": "DFS",
+    "category": "Path Finding",
+    "version": "1.0.0",
+    "last_updated": "2026-05-20",
+
+    "complexity": {
+      "time_best": "O(V + E)",
+      "time_average": "O(V + E)",
+      "time_worst": "O(V + E)",
+      "space": "O(V)",
+      "explanation": "DFS explores as far as possible along each branch before backtracking. Time complexity is O(V + E) where V is vertices and E is edges. Space complexity is O(V) for the stack and visited set."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": false,
+      "online": false,
+      "recursive": true,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Depth-First Search explores paths to their fullest depth before backtracking, using a stack (LIFO) for frontier management.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O(V + E) where V = rows*cols, E = edges",
+        "Space Complexity: O(V) for stack and visited tracking",
+        "",
+        "Key Characteristics:",
+        "• Explores deep paths first before exploring breadth",
+        "• Uses a stack (LIFO) for frontier management",
+        "• Does NOT guarantee shortest path",
+        "• Memory efficient for deep graphs",
+        "",
+        "Applications:",
+        "• Maze generation and solving",
+        "• Topological sorting",
+        "• Cycle detection in graphs",
+        "• Puzzle solving (with state space search)"
+      ],
+
+      "pseudocode": [
+        "vector<Cell> DFS(",
+        "       const Grid& grid,",
+        "       Cell start,",
+        "       Cell target)",
+        "{",
+        "    stack<Cell> frontier;",
+        "    vector<vector<bool>> visited(rows, vector<bool>(cols, false));",
+        "    vector<vector<bool>> in_frontier(rows, vector<bool>(cols, false));",
+        "    vector<vector<Cell>> came_from(rows, vector<Cell>(cols));",
+        "",
+        "    frontier.push(start);",
+        "    in_frontier[start.row][start.col] = true;",
+        "",
+        "    while (!frontier.empty())",
+        "    {",
+        "        Cell current = frontier.pop_top();",
+        "        in_frontier[current.row][current.col] = false;",
+        "        visited[current.row][current.col] = true;",
+        "",
+        "        if (current == target)",
+        "        {",
+        "            break;",
+        "        }",
+        "",
+        "        for (const Cell& neighbor : get_neighbors(current))",
+        "        {",
+        "            if (visited[neighbor.row][neighbor.col]) continue;",
+        "            if (in_frontier[neighbor.row][neighbor.col]) continue;",
+        "            if (grid[neighbor.row][neighbor.col] == WALL) continue;",
+        "",
+        "            came_from[neighbor.row][neighbor.col] = current;",
+        "            frontier.push(neighbor);",
+        "            in_frontier[neighbor.row][neighbor.col] = true;",
+        "        }",
+        "    }",
+        "",
+        "    return reconstruct_path(came_from, start, target);",
+        "}"
+      ],
+
+      "optimizations": [
+        "Iterative stack-based implementation (avoid recursion limits)",
+        "Early termination when target is found",
+        "Neighbor ordering for better path quality",
+        "Iterative deepening DFS for bounded searches"
+      ],
+
+      "use_cases": [
+        "Maze solving algorithms",
+        "Topological sorting of DAGs",
+        "Finding connected components",
+        "Puzzle state space exploration"
+      ],
+
+      "disadvantages": [
+        "Does NOT guarantee shortest path",
+        "Can get stuck in deep branches",
+        "May explore many nodes unnecessarily",
+        "Recursive implementation can cause stack overflow on deep grids"
+      ],
+
+      "related_algorithms": [
+        "BFS (Breadth-First Search)",
+        "Dijkstra's Algorithm (weighted graphs)",
+        "A* Algorithm (with heuristic)",
+        "Iterative Deepening DFS"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "start_cell",
+        "display_name": "Start Cell",
+        "type": "string",
+        "description": "Starting position on the grid",
+        "visualization": {"color": "#00FF00", "icon": "start"}
+      },
+      {
+        "name": "target_cell",
+        "display_name": "Target Cell",
+        "type": "string",
+        "description": "Goal position to reach",
+        "visualization": {"color": "#FF0000", "icon": "target"}
+      },
+      {
+        "name": "current_cell",
+        "display_name": "Current Cell",
+        "type": "string",
+        "description": "Cell currently being processed",
+        "visualization": {"color": "#FF6B6B", "icon": "current"}
+      },
+      {
+        "name": "stack_size",
+        "display_name": "Stack Size",
+        "type": "size_t",
+        "description": "Number of cells in the frontier stack",
+        "visualization": {"color": "#4ECDC4", "icon": "stack"}
+      },
+      {
+        "name": "visited_count",
+        "display_name": "Visited Count",
+        "type": "size_t",
+        "description": "Number of cells visited/explored",
+        "visualization": {"color": "#9B59B6", "icon": "explored"}
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Neighbor Evaluations",
+        "type": "size_t",
+        "description": "Number of neighbor cells evaluated",
+        "visualization": {"color": "#88B04B", "icon": "comparison"}
+      },
+      {
+        "name": "current_depth",
+        "display_name": "Current Depth",
+        "type": "int",
+        "description": "Discovery time of current cell",
+        "visualization": {"color": "#92A8D1", "icon": "depth"}
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "push_start",
+        "name": "Push Start Cell",
+        "description": "Adding start cell to the frontier stack",
+        "tags": ["frontier", "start"],
+        "icon": "push"
+      },
+      {
+        "id": "pop_top",
+        "name": "Pop Top of Stack",
+        "description": "Extracting next cell from stack (LIFO)",
+        "tags": ["frontier", "pop", "process"],
+        "icon": "extract"
+      },
+      {
+        "id": "goal_check",
+        "name": "Goal Check",
+        "description": "Checking if current cell is the target",
+        "tags": ["goal", "check"],
+        "icon": "target"
+      },
+      {
+        "id": "add_to_visited",
+        "name": "Add to Visited Set",
+        "description": "Marking current cell as visited",
+        "tags": ["visited", "settle"],
+        "icon": "settle"
+      },
+      {
+        "id": "evaluate_neighbor",
+        "name": "Evaluate Neighbor",
+        "description": "Evaluating neighboring cell",
+        "tags": ["neighbor", "evaluate"],
+        "icon": "edge"
+      },
+      {
+        "id": "discover_neighbor",
+        "name": "Discover Neighbor",
+        "description": "Discovering new unvisited neighbor",
+        "tags": ["neighbor", "discover"],
+        "icon": "discover"
+      },
+      {
+        "id": "push_neighbor",
+        "name": "Push Neighbor",
+        "description": "Adding neighbor to the frontier stack",
+        "tags": ["frontier", "push", "neighbor"],
+        "icon": "push"
+      },
+      {
+        "id": "backtrack",
+        "name": "Backtrack",
+        "description": "No more neighbors to explore, backtracking",
+        "tags": ["backtrack", "return"],
+        "icon": "backtrack"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target cell has been reached",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "stack_empty",
+        "name": "Stack Empty",
+        "description": "No path exists to target",
+        "tags": ["complete", "failure"],
+        "icon": "empty"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "DFS search completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "vector<Cell> DFS(const Grid& grid, Cell start, Cell target)",
+        "description_template": "Initializing DFS algorithm on {rows}x{cols} grid",
+        "extract_variables": ["rows", "cols"],
+        "tags": ["initialization"]
+      },
+      "push_start": {
+        "pseudocode_line": 11,
+        "code_line": 11,
+        "code_line_content": "frontier.push(start)",
+        "description_template": "Adding start cell ({start_row},{start_col}) to frontier stack",
+        "extract_variables": ["start_row", "start_col"],
+        "tags": ["frontier", "start"]
+      },
+      "pop_top": {
+        "pseudocode_line": 16,
+        "code_line": 16,
+        "code_line_content": "Cell current = frontier.pop_top()",
+        "description_template": "Popping cell ({current_row},{current_col}) from top of stack",
+        "extract_variables": ["current_row", "current_col"],
+        "tags": ["frontier", "pop"]
+      },
+      "goal_check": {
+        "pseudocode_line": 20,
+        "code_line": 20,
+        "code_line_content": "if (current == target)",
+        "description_template": "Checking if ({current_row},{current_col}) is the target cell",
+        "extract_variables": ["current_row", "current_col", "target_row", "target_col"],
+        "tags": ["goal", "check"]
+      },
+      "add_to_visited": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "visited[current.row][current.col] = true",
+        "description_template": "Marking cell ({current_row},{current_col}) as visited",
+        "extract_variables": ["current_row", "current_col", "visited_count"],
+        "tags": ["visited", "settle"]
+      },
+      "evaluate_neighbor": {
+        "pseudocode_line": 25,
+        "code_line": 25,
+        "code_line_content": "for (const Cell& neighbor : get_neighbors(current))",
+        "description_template": "Evaluating neighbor ({neighbor_row},{neighbor_col}) from ({current_row},{current_col})",
+        "extract_variables": ["current_row", "current_col", "neighbor_row", "neighbor_col"],
+        "tags": ["neighbor", "evaluate"]
+      },
+      "discover_neighbor": {
+        "pseudocode_line": 31,
+        "code_line": 31,
+        "code_line_content": "came_from[neighbor.row][neighbor.col] = current",
+        "description_template": "Discovered new neighbor ({neighbor_row},{neighbor_col})",
+        "extract_variables": ["neighbor_row", "neighbor_col"],
+        "tags": ["neighbor", "discover"]
+      },
+      "push_neighbor": {
+        "pseudocode_line": 32,
+        "code_line": 32,
+        "code_line_content": "frontier.push(neighbor)",
+        "description_template": "Adding neighbor ({neighbor_row},{neighbor_col}) to frontier stack",
+        "extract_variables": ["neighbor_row", "neighbor_col"],
+        "tags": ["frontier", "push"]
+      },
+      "backtrack": {
+        "pseudocode_line": 17,
+        "code_line": 17,
+        "code_line_content": "// Backtrack to previous node",
+        "description_template": "No more neighbors to explore from ({current_row},{current_col}), backtracking",
+        "extract_variables": ["current_row", "current_col"],
+        "tags": ["backtrack", "return"]
+      },
+      "target_found": {
+        "pseudocode_line": 22,
+        "code_line": 22,
+        "code_line_content": "break",
+        "description_template": "Target cell ({target_row},{target_col}) reached! Path length: {path_length} steps",
+        "extract_variables": ["target_row", "target_col", "path_length"],
+        "tags": ["target", "found", "complete"]
+      },
+      "stack_empty": {
+        "pseudocode_line": 14,
+        "code_line": 14,
+        "code_line_content": "while (!frontier.empty())",
+        "description_template": "Stack empty - No path exists from ({start_row},{start_col}) to ({target_row},{target_col})",
+        "extract_variables": ["start_row", "start_col", "target_row", "target_col", "visited_count"],
+        "tags": ["complete", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 37,
+        "code_line": 37,
+        "code_line_content": "return reconstruct_path(came_from, start, target)",
+        "description_template": "DFS completed. Visited {visited_count} cells, evaluated {comparisons} neighbors",
+        "extract_variables": ["visited_count", "comparisons", "rows", "cols"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "grid",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "visited": "#06D6A0",
+        "frontier": "#FFD166",
+        "path": "#9B59B6",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500",
+        "wall": "#2A2A3A"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_coordinates": true,
+      "show_distances": true,
+      "show_edge_weights": false
+    }
+  }
+}

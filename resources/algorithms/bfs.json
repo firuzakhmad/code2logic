@@ -1,0 +1,400 @@
+{
+  "algorithm": {
+    "id": "bfs",
+    "name": "Breadth-First Search",
+    "display_type": "BFS",
+    "category": "Graph",
+    "version": "1.0.0",
+    "last_updated": "2026-03-02",
+
+    "complexity": {
+      "time_best": "O(V + E)",
+      "time_average": "O(V + E)",
+      "time_worst": "O(V + E)",
+      "space": "O(V)",
+      "explanation": "BFS explores all vertices and edges exactly once. Space complexity is O(V) for the queue and visited set."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": false,
+      "online": false,
+      "recursive": false,
+      "parallelizable": true,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Breadth-First Search (BFS) is a graph traversal algorithm that explores vertices in order of their distance from the source vertex.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O(V + E) - visit each vertex and edge once",
+        "Space Complexity: O(V) - for queue and visited set",
+        "",
+        "Key Characteristics:",
+        "• Explores graph level by level",
+        "• Finds shortest path in unweighted graphs",
+        "• Can be used for cycle detection",
+        "• Foundation for many graph algorithms",
+        "",
+        "Applications:",
+        "• Shortest path in unweighted graphs",
+        "• Web crawling (page rank)",
+        "• Social network analysis",
+        "• GPS navigation systems",
+        "• Puzzle solving (Rubik's Cube, 8-puzzle)"
+      ],
+
+      "pseudocode": [
+        "void BFS(",
+        "       const Graph& graph, ",
+        "       size_t start_node, ",
+        "       optional<size_t> target_node)",
+        "{",
+        "    Queue<size_t> queue;",
+        "    vector<bool> visited(graph.node_count, false);",
+        "    vector<bool> inQueue(graph.node_count, false);",
+        "    vector<size_t> parent(graph.node_count, INVALID_NODE);",
+        "    vector<int> distance(graph.node_count, -1);",
+        "",
+        "    queue.push(start_node);",
+        "    inQueue[start_node] = true;",
+        "    distance[start_node] = 0;",
+        "",
+        "    while (!queue.empty())",
+        "    {",
+        "        size_t current_node = queue.front();",
+        "        queue.pop();",
+        "        inQueue[current_node] = false;",
+        "",
+        "        if (!visited[current_node])",
+        "        {",
+        "            visited[current_node] = true;",
+        "",
+        "            if (target_node.has_value() &&",
+        "                current_node == target_node.value())",
+        "            {",
+        "                break;",
+        "            }",
+        "",
+        "            for (size_t neighbor : graph.adjacencyList[current_node])",
+        "            {",
+        "                if (!visited[neighbor] && !inQueue[neighbor])",
+        "                {",
+        "                    queue.push(neighbor);",
+        "                    inQueue[neighbor] = true;",
+        "                    parent[neighbor] = current_node;",
+        "                    distance[neighbor] = distance[current_node] + 1;",
+        "                }",
+        "            }",
+        "        }",
+        "    }",
+        "}"
+      ],
+
+      "optimizations": [
+        "Use bitset for visited in dense graphs",
+        "Bidirectional BFS for faster path finding",
+        "Parallel BFS for large graphs",
+        "Early termination when target found"
+      ],
+
+      "use_cases": [
+        "Finding shortest path in unweighted graphs",
+        "Web crawling and indexing",
+        "Social network friend suggestions",
+        "GPS shortest route (unweighted)",
+        "Puzzle solving",
+        "Network broadcast routing"
+      ],
+
+      "disadvantages": [
+        "Requires O(V) memory",
+        "Not suitable for weighted graphs (use Dijkstra)",
+        "Can be slower than DFS for deep graphs",
+        "May explore many nodes unnecessarily"
+      ],
+
+      "related_algorithms": [
+        "Depth-First Search (DFS)",
+        "Dijkstra's Algorithm",
+        "A* Search",
+        "Bidirectional Search"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "start_node",
+        "display_name": "Start Node",
+        "type": "size_t",
+        "description": "The vertex where BFS begins its traversal",
+        "visualization": {
+          "color": "#00FF00",
+          "icon": "start"
+        }
+      },
+      {
+        "name": "current_node",
+        "display_name": "Current Node",
+        "type": "size_t",
+        "description": "The vertex currently being processed",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "current"
+        }
+      },
+      {
+        "name": "queue_size",
+        "display_name": "Queue Size",
+        "type": "size_t",
+        "description": "Number of vertices waiting to be processed",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "queue"
+        }
+      },
+      {
+        "name": "current_level",
+        "display_name": "Current Level",
+        "type": "size_t",
+        "description": "Distance from start of nodes being processed",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "level"
+        }
+      },
+      {
+        "name": "explored_count",
+        "display_name": "Explored Nodes",
+        "type": "size_t",
+        "description": "Number of vertices visited so far",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "explored"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Adjacency Checks",
+        "type": "size_t",
+        "description": "Number of neighbor checks performed",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "distance",
+        "display_name": "Distance",
+        "type": "int",
+        "description": "Shortest distance from start node to current node",
+        "visualization": {
+          "color": "#92A8D1",
+          "icon": "distance"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "enqueue_start",
+        "name": "Enqueue Start Node",
+        "description": "Adding the starting node to the queue",
+        "tags": ["queue", "start"],
+        "icon": "enqueue"
+      },
+      {
+        "id": "dequeue_node",
+        "name": "Dequeue Node",
+        "description": "Removing a node from the queue for processing",
+        "tags": ["queue", "dequeue", "process"],
+        "icon": "dequeue"
+      },
+      {
+        "id": "visit_node",
+        "name": "Visit Node",
+        "description": "Marking a node as visited and processing it",
+        "tags": ["visit", "process"],
+        "icon": "visit"
+      },
+      {
+        "id": "explore_edge",
+        "name": "Explore Edge",
+        "description": "Examining an edge to a neighbor vertex",
+        "tags": ["edge", "explore", "comparison"],
+        "icon": "edge"
+      },
+      {
+        "id": "enqueue_neighbor",
+        "name": "Enqueue Neighbor",
+        "description": "Adding an unvisited neighbor to the queue",
+        "tags": ["queue", "enqueue", "neighbor"],
+        "icon": "enqueue"
+      },
+      {
+        "id": "node_processed",
+        "name": "Node Processed",
+        "description": "Finished processing the current node",
+        "tags": ["complete", "processed"],
+        "icon": "check"
+      },
+      {
+        "id": "no_neighbors",
+        "name": "No Neighbors",
+        "description": "Current node has no adjacent vertices",
+        "tags": ["edge", "complete"],
+        "icon": "warn"
+      },
+      {
+        "id": "queue_empty",
+        "name": "Queue Empty",
+        "description": "No more nodes to process",
+        "tags": ["complete", "queue"],
+        "icon": "empty"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target node has been found",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "BFS traversal completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void BFS(const Graph& graph, size_t start_node, optional<size_t> target_node)",
+        "description_template": "Initializing BFS algorithm on graph with {node_count} nodes and {edge_count} edges",
+        "extract_variables": ["node_count", "edge_count"],
+        "tags": ["initialization"]
+      },
+      "enqueue_start": {
+        "pseudocode_line": 12,
+        "code_line": 12,
+        "code_line_content": "queue.push(start_node)",
+        "description_template": "Enqueuing start node {start_node}",
+        "extract_variables": ["start_node"],
+        "tags": ["queue", "start"]
+      },
+      "dequeue_node": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "size_t current_node = queue.front()",
+        "description_template": "Dequeuing node {current_node} (queue size: {queue_size})",
+        "extract_variables": ["current_node", "queue_size"],
+        "tags": ["queue", "dequeue"]
+      },
+      "visit_node": {
+        "pseudocode_line": 22,
+        "code_line": 22,
+        "code_line_content": "if (!visited[current_node])",
+        "description_template": "Visiting node {current_node} at distance {distance} from start",
+        "extract_variables": ["current_node", "distance", "explored_count"],
+        "tags": ["visit", "process"]
+      },
+      "check_target": {
+        "pseudocode_line": 26,
+        "code_line": 26,
+        "code_line_content": "if (target_node.has_value() && current_node == target_node.value())",
+        "description_template": "Target node: {target_node}, current node {current_node}!",
+        "extract_variables": ["target_node", "current_node"],
+        "tags": ["target", "found", "complete"]
+      },
+      "target_found": {
+        "pseudocode_line": 29,
+        "code_line": 29,
+        "code_line_content": "break",
+        "description_template": "Target node {found_at_node} found at level {found_at_level}!",
+        "extract_variables": ["found_at_node", "found_at_level"],
+        "tags": ["target", "found", "complete"]
+      },
+      "explore_edge": {
+        "pseudocode_line": 34,
+        "code_line": 34,
+        "code_line_content": "if (!visited[neighbor] && !inQueue[neighbor])",
+        "description_template": "Exploring edge from {current_node} to neighbor {explored_neighbor}",
+        "extract_variables": ["current_node", "explored_neighbor"],
+        "tags": ["edge", "explore"]
+      },
+      "enqueue_neighbor": {
+        "pseudocode_line": 36,
+        "code_line": 36,
+        "code_line_content": "queue.push(neighbor)",
+        "description_template": "Enqueuing unvisited neighbor {explored_neighbor}",
+        "extract_variables": ["explored_neighbor", "queue_size"],
+        "tags": ["queue", "enqueue"]
+      },
+      "node_processed": {
+        "pseudocode_line": 42,
+        "code_line": 42,
+        "code_line_content": "}",
+        "description_template": "Finished processing node {current_node}",
+        "extract_variables": ["current_node", "explored_count"],
+        "tags": ["process", "complete"]
+      },
+      "no_neighbors": {
+        "pseudocode_line": 25,
+        "code_line": 24,
+        "code_line_content": "for (size_t neighbor : graph.adjacencyList[current_node])",
+        "description_template": "Node {current_node} has no neighbors to explore",
+        "extract_variables": ["current_node"],
+        "tags": ["edge", "complete"]
+      },
+      "queue_empty": {
+        "pseudocode_line": 12,
+        "code_line": 11,
+        "code_line_content": "while (!queue.empty())",
+        "description_template": "Queue is empty - BFS traversal complete",
+        "extract_variables": ["explored_count"],
+        "tags": ["complete", "queue"]
+      },
+      "completed": {
+        "pseudocode_line": 44,
+        "code_line": 44,
+        "code_line_content": "}",
+        "description_template": "BFS completed. Explored {explored_count} out of {node_count} nodes",
+        "extract_variables": ["explored_count", "node_count"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "force_directed",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "visited": "#06D6A0",
+        "frontier": "#FFD166",
+        "explored": "#4ECDC4",
+        "path": "#9B59B6",
+        "start": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_distances": true
+    }
+  }
+}

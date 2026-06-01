@@ -88,25 +88,26 @@ namespace c2l::algorithms
             // Attaching observer
             new_context.execution->add_observer(this);
 
-            // Initializing visualizer
-            if (new_context.visualizer)
-            {
-                new_context.visualizer->initialize(
-                    new_context.execution.get(),
-                    new_context.metadata
-                );
-            }
-
             // Initialize with random data
             try
             {
-                auto default_data = generate_random_data();
+                const auto default_data = generate_random_data();
                 new_context.execution->initialize(default_data);
             }
             catch (const std::exception& e)
             {
                 LOG_ERROR("Failed to initialize algorithm: {}", e.what());
                 return false;
+            }
+
+            // Initializing visualizer
+            if (new_context.visualizer)
+            {
+                new_context.visualizer->initialize(
+                    new_context.execution.get(),
+                    new_context.metadata,
+                    true
+                );
             }
 
             // Move new context into current context
@@ -372,14 +373,14 @@ namespace c2l::algorithms
                             m_accumulated_time -= step_interval;
                             step_taken = true;
 
-                            if (algorithm->get_current_step_index() % 10 == 0)
-                            {
-                                LOG_DEBUG(
-                                    "Algorithm progress: {}/{}",
-                                    algorithm->get_current_step_index(),
-                                    algorithm->get_step_count()
-                                );
-                            }
+                            // if (algorithm->get_current_step_index() % 10 == 0)
+                            // {
+                            //     LOG_DEBUG(
+                            //         "Algorithm progress: {}/{}",
+                            //         algorithm->get_current_step_index(),
+                            //         algorithm->get_step_count()
+                            //     );
+                            // }
                         }
                     }
                     else
@@ -411,7 +412,11 @@ namespace c2l::algorithms
 
     void AlgorithmManager::set_speed(const float speed)
     {
-        m_speed = std::max(0.1f, std::min(speed, 5.0f));
+        m_speed = std::clamp(
+            speed,
+            ALGORITHM_COMPUTATION_MIN_SPEED,
+            ALGORITHM_COMPUTATION_MAX_SPEED
+        );
     }
 
     void AlgorithmManager::set_data(const std::vector<int>& data)
@@ -472,11 +477,16 @@ namespace c2l::algorithms
 
         auto current_step = m_current_context.execution->get_current_step();
 
-        LOG_WARNING("operation_id: {}", current_step.metadata.operation_id);
-
-
-        m_cached_code_highlights =
-            json_algorithm->generate_highlights(current_step.metadata.operation_id, current_step);
+        try
+        {
+            m_cached_code_highlights =
+                json_algorithm->generate_highlights(current_step.metadata.operation_id, current_step);
+        }
+        catch (const std::exception& e)
+        {
+            LOG_ERROR("Failed to generate highlights: {}", e.what());
+            return;
+        }
 
         const auto& description = m_current_context.metadata->get_description();
 
@@ -509,14 +519,14 @@ namespace c2l::algorithms
         }
     }
 
-    const std::vector<CodeHighlight>& 
+    const std::vector<CodeHighlight>&
     AlgorithmManager::get_current_code_highlights() const
     {
         std::shared_lock lock(m_algorithm_mutex);
         return m_cached_code_highlights;
     }
 
-    const PseudocodeDisplay&
+    PseudocodeDisplay
     AlgorithmManager::get_current_pseudocode_with_highlights() const
     {
         std::shared_lock lock(m_algorithm_mutex);
@@ -534,7 +544,30 @@ namespace c2l::algorithms
 
         return m_current_context.metadata->get_type();
     }
-    
+
+    VisualizationType AlgorithmManager::get_current_visualization_type() const noexcept
+    {
+        std::shared_lock lock(m_algorithm_mutex);
+
+        if (!m_current_context.is_valid())
+        {
+            return VisualizationType::UNKNOWN;
+        }
+
+        return m_current_context.metadata->get_visualization_type();
+    }
+
+    const std::string& AlgorithmManager::get_current_display_visualization() const noexcept
+    {
+        std::shared_lock lock(m_algorithm_mutex);
+
+        if (!m_current_context.is_valid())
+        {
+            return "Unknown";
+        }
+
+        return m_current_context.metadata->get_display_visualization();
+    }
 
     IAlgorithmVisualizer* AlgorithmManager::get_current_visualizer() const
     {

@@ -11,109 +11,6 @@ namespace c2l::algorithms
         LOG_DEBUG("SelectionSort created and metadata loaded from JSON");
     }
 
-    void SelectionSort::initialize(const std::vector<int>& data)
-    {
-        if (data.empty())
-        {
-            LOG_WARNING("SelectionSort initialized with empty data");
-            m_original_data.clear();
-            reset();
-            return;
-        }
-
-        m_original_data = data;
-        reset();
-        generate_all_steps();
-
-        LOG_INFO(
-            "SelectionSort initialized with {} elements. Generated {} steps.",
-            data.size(), 
-            m_steps.size()
-        );
-    }
-
-    bool SelectionSort::step_forward()
-    {
-        if (m_current_step_index < m_steps.size() - 1)
-        {
-            m_current_step_index++;
-            notify_observers();
-            return true;
-        }
-
-        LOG_DEBUG("Cannot step forward - already at last step");
-        return false;
-    }
-
-    bool SelectionSort::step_backward()
-    {
-        if (m_current_step_index > 0)
-        {
-            m_current_step_index--;
-            notify_observers();
-            return true;
-        }
-
-        LOG_DEBUG("Cannot step backward - already at first step");
-        return false;
-    }
-
-    void SelectionSort::reset()
-    {
-        m_current_step_index = 0;
-        m_steps.clear();
-        m_total_comparisons = 0;
-        m_total_swaps = 0;
-        LOG_DEBUG("SelectionSort reset");
-    }
-
-    std::vector<int> SelectionSort::get_original_data() const
-    {
-        return m_original_data;
-    }
-
-    AlgorithmStep SelectionSort::get_current_step() const
-    {
-        if (m_steps.empty() || m_current_step_index >= m_steps.size())
-        {
-            LOG_WARNING(
-                "get_current_step called with invalid state - steps: {}, index: {}",
-                m_steps.size(), 
-                m_current_step_index
-            );
-            return AlgorithmStep{};
-        }
-        return m_steps[m_current_step_index];
-    }
-
-    size_t SelectionSort::get_step_count() const
-    {
-        return m_steps.size();
-    }
-
-    size_t SelectionSort::get_current_step_index() const
-    {
-        return m_current_step_index;
-    }
-
-    bool SelectionSort::is_complete() const
-    {
-        if (m_steps.empty())
-        {
-            return false;
-        }
-        return m_current_step_index >= m_steps.size() - 1;
-    }
-
-    bool SelectionSort::is_steps_empty_or_invalid() const
-    {
-        if (m_steps.empty() || m_current_step_index >= m_steps.size())
-        {
-            return true;
-        }
-        return false;
-    }
-
     void SelectionSort::generate_all_steps()
     {
         if (m_original_data.empty())
@@ -531,13 +428,14 @@ namespace c2l::algorithms
     void SelectionSort::update_visualization_data(
         AlgorithmStep& step,
         const SelectionSortState& state,
-        const std::string& operation_id) const
+        const std::string& operation_id
+    ) const
     {
         auto& viz = step.visualization;
         
         // Basic metrics
-        viz.comparisons = state.comparisons;
-        viz.swaps = state.swaps;
+        viz.comparison_count = state.comparisons;
+        viz.swap_count = state.swaps;
         
         // Clear previous highlights
         viz.highlighted_index = std::numeric_limits<size_t>::max();

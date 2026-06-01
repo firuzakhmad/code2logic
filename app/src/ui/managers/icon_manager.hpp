@@ -31,6 +31,8 @@ namespace c2l::ui::managers
     enum class IconType : uint32_t
     {
         PLAY,
+        ARROW_RIGHT,
+        ARROW_LEFT,
         PAUSE,
         STEP_FORWARD,
         STEP_BACKWARD,
@@ -64,6 +66,8 @@ namespace c2l::ui::managers
         ALGORITHM_VISUALIZATION,
         ALGORITHM_COMPARISON,
         EXIT,
+        CHECK,
+        LINK,
 
         UNKNOWN,
         COUNT = 64
@@ -195,6 +199,16 @@ namespace c2l::ui::managers
             const ImVec2& size,
             const ImVec4& tint = {-1, 0, 0, 0},
             const char* tooltip = nullptr);
+
+        bool render_icon_button(
+            const std::string &id,
+            IconType type,
+            const std::function<void()> &callback,
+            const ImVec2 &size,
+            bool enabled,
+            const std::string &tooltip
+        );
+
         bool render_icon_text_button(
             const char* str_id,
             IconType type,
