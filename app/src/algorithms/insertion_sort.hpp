@@ -30,17 +30,8 @@ namespace c2l::algorithms
         InsertionSort& operator=(InsertionSort&&) noexcept = delete;
 
         // ISimpleAlgorithm interface
-        void initialize(const std::vector<int>& data) override;
-        bool step_forward() override;
-        bool step_backward() override;
-        void reset() override;
-
-        [[nodiscard]] std::vector<int> get_original_data() const override;
-        [[nodiscard]] AlgorithmStep get_current_step() const override;
-        [[nodiscard]] size_t get_current_step_index() const override;
-        [[nodiscard]] size_t get_step_count() const override;
-        [[nodiscard]] bool is_complete() const override;
-        [[nodiscard]] bool is_steps_empty_or_invalid() const override;
+        void generate_all_steps() override;
+        void reset_state() override {};
 
     private:
         /**
@@ -57,8 +48,6 @@ namespace c2l::algorithms
             size_t comparisons              {0};     // Total comparisons performed
             size_t swaps                    {0};     // Total swaps/assignments performed
         };
-
-        void generate_all_steps();
 
         void push_step(
             const InsertionSortState& state,
@@ -81,10 +70,6 @@ namespace c2l::algorithms
             const InsertionSortState& state,
             const std::string& operation_id
         ) const;
-
-        std::vector<int> m_original_data;
-        std::vector<AlgorithmStep> m_steps;
-        size_t m_current_step_index         {0};
 
         // Performance tracking
         size_t m_total_comparisons          {0};

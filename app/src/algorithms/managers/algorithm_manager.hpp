@@ -37,13 +37,13 @@ namespace c2l::algorithms
     public:
         using AlgorithmPtr = std::unique_ptr<ISimpleAlgorithm>;
         using VisualizerPtr = std::unique_ptr<IAlgorithmVisualizer>;
-        using MetadataPtr = IAlgorithmMetadata*;
+        using MetadataPtr = std::unique_ptr<IAlgorithmMetadata>;
 
         struct AlgorithmContext
         {
             AlgorithmPtr execution;
             VisualizerPtr visualizer;
-            const IAlgorithmMetadata *metadata  {nullptr};
+            const IAlgorithmMetadata *metadata;
             std::string name;
             AlgorithmType type                  {AlgorithmType::UNKNOWN};
 
@@ -120,7 +120,7 @@ namespace c2l::algorithms
         /**
          * @brief Get pseudocode display with current step highlights
          */
-        [[nodiscard]] const PseudocodeDisplay& get_current_pseudocode_with_highlights() const;
+        [[nodiscard]] PseudocodeDisplay get_current_pseudocode_with_highlights() const;
 
         // Current algorithm state
         // [[nodiscard]] const AlgorithmContext& get_current_context() const noexcept;
@@ -129,6 +129,8 @@ namespace c2l::algorithms
         [[nodiscard]] IAlgorithmVisualizer* get_current_visualizer() const;
         [[nodiscard]] const std::string& get_current_algorithm_name() const;
         [[nodiscard]] AlgorithmType get_current_algorithm_type() const noexcept;
+        [[nodiscard]] VisualizationType get_current_visualization_type() const noexcept;
+        [[nodiscard]] const std::string& get_current_display_visualization() const noexcept;
 
         // Playback state
         [[nodiscard]] bool is_playing() const;

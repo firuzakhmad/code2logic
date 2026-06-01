@@ -21,12 +21,22 @@ namespace c2l::algorithms
     public:
         virtual ~IAlgorithmMetadata() = default;
 
-        [[nodiscard]] virtual const std::string& get_id() const noexcept = 0;
-        [[nodiscard]] virtual const std::string& get_display_name() const noexcept = 0;
-        [[nodiscard]] virtual AlgorithmCategory get_category() const noexcept = 0;
-        [[nodiscard]] virtual const std::string& get_display_category() const noexcept = 0;
-        [[nodiscard]] virtual AlgorithmType get_type() const noexcept = 0;
-        [[nodiscard]] virtual const std::string& get_display_type() const noexcept = 0;
+        [[nodiscard]] virtual const std::string&
+        get_id() const noexcept = 0;
+        [[nodiscard]] virtual const std::string&
+        get_display_name() const noexcept = 0;
+        [[nodiscard]] virtual AlgorithmCategory
+        get_category() const noexcept = 0;
+        [[nodiscard]] virtual const std::string&
+        get_display_category() const noexcept = 0;
+        [[nodiscard]] virtual AlgorithmType
+        get_type() const noexcept = 0;
+        [[nodiscard]] virtual const std::string&
+        get_display_type() const noexcept = 0;
+        [[nodiscard]] virtual VisualizationType
+        get_visualization_type() const noexcept = 0;
+        [[nodiscard]] virtual const std::string&
+        get_display_visualization() const noexcept = 0;
 
         [[nodiscard]] virtual const AlgorithmComplexityInfo& 
         get_complexity() const noexcept = 0;

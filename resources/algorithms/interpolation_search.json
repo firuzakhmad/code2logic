@@ -1,0 +1,414 @@
+{
+  "algorithm": {
+    "id": "interpolation_search",
+    "name": "Interpolation Search",
+    "display_type": "Interpolation Search",
+    "category": "Searching",
+    "version": "1.0.0",
+    "last_updated": "2026-05-02",
+
+    "complexity": {
+      "time_best": "O(1)",
+      "time_average": "O(log log n)",
+      "time_worst": "O(n)",
+      "space": "O(1)",
+      "explanation": "Interpolation search uses value distribution to estimate position. Best case occurs when guesses are accurate. Average case is O(log log n) for uniformly distributed data. Worst case degrades to O(n) for non-uniform distributions."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": true,
+      "adaptive": true,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "An advanced searching algorithm that uses value distribution to estimate the target's position, similar to looking up a name in a phone book.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(1)   - perfect guess on first try",
+        "• Average case: O(log log n) - for uniformly distributed data",
+        "• Worst case:   O(n)   - for non-uniform distributions",
+        "",
+        "Space Complexity: O(1) - constant extra space",
+        "",
+        "Key Characteristics:",
+        "• Requires sorted input array",
+        "• Uses value interpolation formula",
+        "• Works best on uniformly distributed data",
+        "• Intuitive - like searching a phone book",
+        "• Can be faster than binary search for uniform data",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: O(log log n) average",
+        "• Memory: Constant O(1) auxiliary space",
+        "• Guess Accuracy: Depends on data distribution",
+        "",
+        "Comparison with Other Search Algorithms:",
+        "• Binary Search: O(log n) but works on any distribution",
+        "• Linear Search: O(n) but simpler",
+        "• Jump Search: O(√n) with better cache locality",
+        "• Exponential Search: Better for unbounded arrays"
+      ],
+
+      "pseudocode": [
+        "int interpolation_search(const std::vector<int>& arr, int target) {",
+        "    size_t left = 0;",
+        "    size_t right = arr.size() - 1;",
+        "    ",
+        "    while (left <= right && target >= arr[left] && target <= arr[right]) {",
+        "        if (left == right) {",
+        "            if (arr[left] == target) return left;",
+        "            break;",
+        "        }",
+        "        ",
+        "        // Interpolation formula",
+        "        size_t pos = left + ((target - arr[left]) * (right - left)) / (arr[right] - arr[left]);",
+        "        ",
+        "        if (arr[pos] == target)",
+        "            return pos;",
+        "        ",
+        "        if (arr[pos] < target)",
+        "            left = pos + 1;",
+        "        else",
+        "            right = pos - 1;",
+        "    }",
+        "    ",
+        "    return -1;",
+        "}"
+      ],
+
+      "optimizations": [
+        "Use 64-bit arithmetic to prevent overflow",
+        "Add boundary checks for out-of-range positions",
+        "Fall back to binary search for small intervals",
+        "Use linear interpolation with rounding",
+        "Handle duplicate values appropriately",
+        "Adaptive interpolation for non-uniform distributions"
+      ],
+
+      "use_cases": [
+        "Phone book or dictionary lookup",
+        "Searching in uniformly distributed datasets",
+        "Database index search with uniform keys",
+        "Scientific computing with evenly spaced data",
+        "Finding values in sorted arrays with known distribution",
+        "Searching in large sorted lists with predictable patterns"
+      ],
+
+      "disadvantages": [
+        "Poor performance on non-uniform distributions",
+        "Requires sorted input data",
+        "Can be slower than binary search for small arrays",
+        "Overflow risk with large values",
+        "Not suitable for dynamic data",
+        "Degenerates to O(n) for exponential distributions"
+      ],
+
+      "related_algorithms": [
+        "Binary Search",
+        "Linear Search",
+        "Jump Search",
+        "Exponential Search",
+        "Uniform Binary Search",
+        "Fibonacci Search"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "target",
+        "display_name": "Target Value",
+        "type": "int",
+        "description": "The value being searched for in the array",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "target"
+        }
+      },
+      {
+        "name": "left",
+        "display_name": "Left Boundary",
+        "type": "size_t",
+        "description": "Left boundary of current search interval",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "left"
+        }
+      },
+      {
+        "name": "right",
+        "display_name": "Right Boundary",
+        "type": "size_t",
+        "description": "Right boundary of current search interval",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "right"
+        }
+      },
+      {
+        "name": "pos",
+        "display_name": "Estimated Position",
+        "type": "size_t",
+        "description": "Calculated position using interpolation formula",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "estimate"
+        }
+      },
+      {
+        "name": "left_value",
+        "display_name": "Left Value",
+        "type": "int",
+        "description": "Value at left boundary",
+        "visualization": {
+          "color": "#3498DB",
+          "icon": "value"
+        }
+      },
+      {
+        "name": "right_value",
+        "display_name": "Right Value",
+        "type": "int",
+        "description": "Value at right boundary",
+        "visualization": {
+          "color": "#E67E22",
+          "icon": "value"
+        }
+      },
+      {
+        "name": "interpolation_ratio",
+        "display_name": "Interpolation Ratio",
+        "type": "double",
+        "description": "Ratio indicating where target falls between left and right values",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "ratio"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of comparisons performed",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "iterations",
+        "display_name": "Iterations",
+        "type": "size_t",
+        "description": "Number of iterations performed",
+        "visualization": {
+          "color": "#F39C12",
+          "icon": "iteration"
+        }
+      },
+      {
+        "name": "guess_accuracy",
+        "display_name": "Guess Accuracy",
+        "type": "double",
+        "description": "Accuracy of the position estimate (0 to 1)",
+        "visualization": {
+          "color": "#1ABC9C",
+          "icon": "accuracy"
+        }
+      },
+      {
+        "name": "found",
+        "display_name": "Found",
+        "type": "bool",
+        "description": "Whether target has been found",
+        "visualization": {
+          "color": "#06D6A0",
+          "icon": "found"
+        }
+      },
+      {
+        "name": "result_index",
+        "display_name": "Result Index",
+        "type": "int",
+        "description": "Index where target was found, or -1 if not found",
+        "visualization": {
+          "color": "#118AB2",
+          "icon": "result"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "out_of_range",
+        "name": "Target Out of Range",
+        "description": "Target is outside the array's value range",
+        "tags": ["out_of_range", "failure"],
+        "icon": "warning"
+      },
+      {
+        "id": "calculate_position",
+        "name": "Calculate Position",
+        "description": "Using interpolation formula to estimate target position",
+        "tags": ["calculation", "interpolation", "estimate"],
+        "icon": "calculate"
+      },
+      {
+        "id": "compare",
+        "name": "Compare",
+        "description": "Comparing estimated position value with target",
+        "tags": ["comparison", "decision"],
+        "icon": "compare"
+      },
+      {
+        "id": "narrow_left",
+        "name": "Narrow Left",
+        "description": "Target is smaller, narrowing search to left subarray",
+        "tags": ["narrow", "left", "movement"],
+        "icon": "arrow_left"
+      },
+      {
+        "id": "narrow_right",
+        "name": "Narrow Right",
+        "description": "Target is larger, narrowing search to right subarray",
+        "tags": ["narrow", "right", "movement"],
+        "icon": "arrow_right"
+      },
+      {
+        "id": "found",
+        "name": "Found",
+        "description": "Target value found at estimated position",
+        "tags": ["found", "success"],
+        "icon": "check_circle"
+      },
+      {
+        "id": "not_found",
+        "name": "Not Found",
+        "description": "Target value not found in the array",
+        "tags": ["not_found", "failure"],
+        "icon": "close"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm execution completed",
+        "tags": ["completed", "finished"],
+        "icon": "flag"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "int interpolation_search(const std::vector<int>& arr, int target)",
+        "description_template": "Initializing Interpolation Search to find target {target} in array of size {size} (Uniformity: {data_uniformity}%)",
+        "extract_variables": ["target", "size", "data_uniformity"],
+        "tags": ["initialization"]
+      },
+      "out_of_range": {
+        "pseudocode_line": 4,
+        "code_line": 10,
+        "code_line_content": "if (target < arr[left] || target > arr[right])",
+        "description_template": "Target {target} is outside array range [{left_value}, {right_value}]. Search cannot proceed.",
+        "extract_variables": ["target", "left_value", "right_value"],
+        "tags": ["out_of_range", "failure"]
+      },
+      "calculate_position": {
+        "pseudocode_line": 12,
+        "code_line": 18,
+        "code_line_content": "size_t pos = left + ((target - arr[left]) * (right - left)) / (arr[right] - arr[left]);",
+        "description_template": "Calculating interpolated position: pos = {left} + (({target} - {left_value}) * ({right} - {left})) / ({right_value} - {left_value}) = {pos} (Ratio: {interpolation_ratio:.3f}, Accuracy: {guess_accuracy:.1%})",
+        "extract_variables": ["left", "target", "left_value", "right", "right_value", "pos", "interpolation_ratio", "guess_accuracy"],
+        "tags": ["calculation", "interpolation", "estimate"]
+      },
+      "compare": {
+        "pseudocode_line": 14,
+        "code_line": 22,
+        "code_line_content": "if (arr[pos] == target)",
+        "description_template": "Comparing arr[{pos}] = {pos_value} with target {target}",
+        "extract_variables": ["pos", "pos_value", "target"],
+        "tags": ["comparison", "decision"]
+      },
+      "narrow_left": {
+        "pseudocode_line": 20,
+        "code_line": 28,
+        "code_line_content": "right = pos - 1;",
+        "description_template": "arr[{pos}] = {pos_value} > target {target}. Narrowing to left subarray [{left}, {new_right}]",
+        "extract_variables": ["pos", "pos_value", "target", "left", "new_right"],
+        "tags": ["narrow", "left", "movement"]
+      },
+      "narrow_right": {
+        "pseudocode_line": 18,
+        "code_line": 26,
+        "code_line_content": "left = pos + 1;",
+        "description_template": "arr[{pos}] = {pos_value} < target {target}. Narrowing to right subarray [{new_left}, {right}]",
+        "extract_variables": ["pos", "pos_value", "target", "new_left", "right"],
+        "tags": ["narrow", "right", "movement"]
+      },
+      "found": {
+        "pseudocode_line": 15,
+        "code_line": 23,
+        "code_line_content": "return pos;",
+        "description_template": "Target found! arr[{pos}] = {pos_value} equals target {target}. Returning index {pos} after {iterations} iterations",
+        "extract_variables": ["pos", "pos_value", "target", "iterations"],
+        "tags": ["found", "success"]
+      },
+      "not_found": {
+        "pseudocode_line": 24,
+        "code_line": 32,
+        "code_line_content": "return -1;",
+        "description_template": "Target {target} not found after {iterations} iterations and {comparisons} comparisons",
+        "extract_variables": ["target", "iterations", "comparisons"],
+        "tags": ["not_found", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 25,
+        "code_line": 34,
+        "code_line_content": "} // end interpolation_search",
+        "description_template": "Interpolation Search completed. Target {target} {found_status} at index {result_index}. Performance: {iterations} iterations, {comparisons} comparisons, {guess_accuracy:.1%} average accuracy",
+        "extract_variables": ["target", "found_status", "result_index", "iterations", "comparisons", "guess_accuracy"],
+        "tags": ["completed", "finished"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "classic_bars",
+      "highlight_colors": {
+        "target": "#FF6B6B",
+        "estimated_position": "#9B59B6",
+        "left_boundary": "#4ECDC4",
+        "right_boundary": "#FFD166",
+        "interpolation_line": "#88B04B",
+        "eliminated": "#95A5A6",
+        "found": "#06D6A0",
+        "not_found": "#EF476F"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true,
+      "interpolation_visualization": {
+        "show_interpolation_line": true,
+        "animate_estimate": true,
+        "show_accuracy_gauge": true,
+        "show_uniformity_indicator": true,
+        "pulse_estimated_position": true
+      }
+    }
+  }
+}

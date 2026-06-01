@@ -43,8 +43,10 @@ namespace c2l::algorithms
         [[nodiscard]] AlgorithmCategory get_category() const noexcept override;
         [[nodiscard]] const std::string& get_display_category() const noexcept override;
         [[nodiscard]] AlgorithmType get_type() const noexcept override;
-        [[nodiscard]] const std::string& get_display_type() const noexcept override;
-        
+	    [[nodiscard]] const std::string& get_display_type() const noexcept override;
+        [[nodiscard]] VisualizationType get_visualization_type() const noexcept override;
+	    [[nodiscard]] const std::string& get_display_visualization() const noexcept override;
+
         [[nodiscard]] const AlgorithmComplexityInfo& 
         get_complexity() const noexcept override;
         [[nodiscard]] const AlgorithmPropertiesInfo& 

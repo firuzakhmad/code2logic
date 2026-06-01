@@ -118,6 +118,8 @@ namespace c2l::algorithms
         m_metadata.display_category = info->display_category;
         m_metadata.type = info->type;
         m_metadata.display_type = j.value("display_type", std::string(info->display_name));
+        m_metadata.visualization_type = info->visualization;
+	    m_metadata.display_visualization = info->display_visualization;
 
         return true;
     }
@@ -538,12 +540,25 @@ namespace c2l::algorithms
         return m_metadata.type; 
     }
 
-    const std::string& 
+    const std::string&
     JsonAlgorithmBase::get_display_type() const noexcept
-    { 
+    {
         std::shared_lock lock(m_metadata_mutex);
-        return m_metadata.display_type; 
+        return m_metadata.display_type;
     }
+
+    VisualizationType JsonAlgorithmBase::get_visualization_type() const noexcept
+	{
+	    std::shared_lock lock(m_metadata_mutex);
+	    return m_metadata.visualization_type;
+	}
+
+    const std::string&
+    JsonAlgorithmBase::get_display_visualization() const noexcept
+	{
+	    std::shared_lock lock(m_metadata_mutex);
+	    return m_metadata.display_visualization;
+	}
 
     const AlgorithmComplexityInfo& 
     JsonAlgorithmBase::get_complexity() const noexcept 

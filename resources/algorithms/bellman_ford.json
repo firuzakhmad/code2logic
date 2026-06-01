@@ -1,0 +1,415 @@
+{
+  "algorithm": {
+    "id": "bellman_ford",
+    "name": "Bellman-Ford Algorithm",
+    "display_type": "Bellman-Ford",
+    "category": "Graph",
+    "version": "1.0.0",
+    "last_updated": "2026-05-14",
+
+    "complexity": {
+      "time_best": "O(E)",
+      "time_average": "O(V * E)",
+      "time_worst": "O(V * E)",
+      "space": "O(V)",
+      "explanation": "Bellman-Ford relaxes all edges V-1 times. Best case O(E) when early termination occurs. Space complexity O(V) for distances."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": true,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Bellman-Ford finds shortest paths from a source vertex to all other vertices in a weighted graph, handling negative edge weights and detecting negative cycles.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O(V * E) - worst case V-1 relaxations of all edges",
+        "Space Complexity: O(V) - for distance and predecessor arrays",
+        "",
+        "Key Characteristics:",
+        "• Handles negative edge weights unlike Dijkstra",
+        "• Detects negative cycles in the graph",
+        "• More versatile but slower than Dijkstra",
+        "• Can be optimized with early termination",
+        "",
+        "Applications:",
+        "• Distance-vector routing protocols (RIP, BGP)",
+        "• Currency arbitrage detection",
+        "• Network flow optimization",
+        "• Graph analysis with negative weights"
+      ],
+
+      "pseudocode": [
+        "void BellmanFord(",
+        "       const Graph& graph,",
+        "       size_t source_node,",
+        "       optional<size_t> target_node)",
+        "{",
+        "    vector<int> dist(graph.node_count, INFINITY);",
+        "    vector<size_t> prev(graph.node_count, INVALID_NODE);",
+        "    vector<bool> reached(graph.node_count, false);",
+        "",
+        "    dist[source_node] = 0;",
+        "    reached[source_node] = true;",
+        "",
+        "    for (int i = 0; i < graph.node_count - 1; i++)",
+        "    {",
+        "        bool updated = false;",
+        "",
+        "        for (const Edge& edge : graph.edges)",
+        "        {",
+        "            if (dist[edge.from] < INFINITY &&",
+        "                dist[edge.from] + edge.weight < dist[edge.to])",
+        "            {",
+        "                dist[edge.to] = dist[edge.from] + edge.weight;",
+        "                prev[edge.to] = edge.from;",
+        "                reached[edge.to] = true;",
+        "                updated = true;",
+        "",
+        "                if (target_node.has_value() &&",
+        "                    edge.to == target_node.value())",
+        "                {",
+        "                    return;",
+        "                }",
+        "            }",
+        "        }",
+        "",
+        "        if (!updated) break;",
+        "    }",
+        "",
+        "    for (const Edge& edge : graph.edges)",
+        "    {",
+        "        if (dist[edge.from] < INFINITY &&",
+        "            dist[edge.from] + edge.weight < dist[edge.to])",
+        "        {",
+        "            // Negative cycle detected",
+        "            return;",
+        "        }",
+        "    }",
+        "}"
+      ],
+
+      "optimizations": [
+        "Early termination when no distance updates occur",
+        "Queue-based SPFA (Shortest Path Faster Algorithm) for better average performance",
+        "Yen's optimization for sparse graphs",
+        "Parallel relaxation for large graphs"
+      ],
+
+      "use_cases": [
+        "Distance-vector routing protocols (RIP)",
+        "Currency arbitrage detection in forex markets",
+        "Network flow with negative edge costs",
+        "Checking for negative cycles in graphs"
+      ],
+
+      "disadvantages": [
+        "Slow O(V*E) time complexity for dense graphs",
+        "Not suitable for very large graphs",
+        "SPFA variant is often faster in practice"
+      ],
+
+      "related_algorithms": [
+        "Dijkstra's Algorithm (non-negative weights only)",
+        "SPFA (Shortest Path Faster Algorithm)",
+        "Floyd-Warshall Algorithm (all-pairs)",
+        "Johnson's Algorithm (all-pairs with negative weights)"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "source_node",
+        "display_name": "Source Node",
+        "type": "size_t",
+        "description": "The source vertex where shortest paths originate",
+        "visualization": {
+          "color": "#00FF00",
+          "icon": "start"
+        }
+      },
+      {
+        "name": "current_node",
+        "display_name": "Current Node",
+        "type": "size_t",
+        "description": "The 'from' node of the edge being relaxed",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "current"
+        }
+      },
+      {
+        "name": "current_neighbor",
+        "display_name": "Target Node",
+        "type": "size_t",
+        "description": "The 'to' node of the edge being relaxed",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "neighbor"
+        }
+      },
+      {
+        "name": "current_iteration",
+        "display_name": "Iteration",
+        "type": "size_t",
+        "description": "Current relaxation iteration number",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "iteration"
+        }
+      },
+      {
+        "name": "explored_count",
+        "display_name": "Nodes Reached",
+        "type": "size_t",
+        "description": "Number of nodes with finite distance",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "explored"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Edge Relaxations",
+        "type": "size_t",
+        "description": "Number of edge relaxations performed",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "distance",
+        "display_name": "Distance",
+        "type": "int",
+        "description": "Current shortest distance from source",
+        "visualization": {
+          "color": "#92A8D1",
+          "icon": "distance"
+        }
+      },
+      {
+        "name": "edge_weight",
+        "display_name": "Edge Weight",
+        "type": "int",
+        "description": "Weight of the edge being relaxed",
+        "visualization": {
+          "color": "#E8A87C",
+          "icon": "weight"
+        }
+      },
+      {
+        "name": "updates_in_iteration",
+        "display_name": "Updates",
+        "type": "size_t",
+        "description": "Number of distance updates in current iteration",
+        "visualization": {
+          "color": "#D4A5A5",
+          "icon": "update"
+        }
+      },
+      {
+        "name": "negative_cycle",
+        "display_name": "Negative Cycle",
+        "type": "bool",
+        "description": "Whether a negative cycle was detected",
+        "visualization": {
+          "color": "#FF0000",
+          "icon": "warning"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Initialize distance and predecessor arrays",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "iteration_start",
+        "name": "Start Iteration",
+        "description": "Beginning a new relaxation iteration",
+        "tags": ["iteration"],
+        "icon": "iteration"
+      },
+      {
+        "id": "relax_edge",
+        "name": "Relax Edge",
+        "description": "Checking if a shorter path through current edge exists",
+        "tags": ["edge", "relax", "comparison"],
+        "icon": "edge"
+      },
+      {
+        "id": "update_distance",
+        "name": "Update Distance",
+        "description": "Updating distance to a node with a shorter path",
+        "tags": ["distance", "update"],
+        "icon": "update"
+      },
+      {
+        "id": "iteration_end",
+        "name": "End Iteration",
+        "description": "Completed a full relaxation iteration",
+        "tags": ["iteration", "summary"],
+        "icon": "check"
+      },
+      {
+        "id": "no_updates",
+        "name": "No Updates",
+        "description": "No distance updates occurred - early termination",
+        "tags": ["complete", "optimization"],
+        "icon": "empty"
+      },
+      {
+        "id": "negative_cycle_check",
+        "name": "Negative Cycle Check",
+        "description": "Verifying no negative cycles exist",
+        "tags": ["verification", "cycle"],
+        "icon": "check"
+      },
+      {
+        "id": "negative_cycle",
+        "name": "Negative Cycle Detected",
+        "description": "A negative cycle was found in the graph",
+        "tags": ["error", "cycle", "complete"],
+        "icon": "warning"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target node has been reached",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Bellman-Ford algorithm completed successfully",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void BellmanFord(const Graph& graph, size_t source_node, optional<size_t> target_node)",
+        "description_template": "Initializing Bellman-Ford algorithm on graph with {node_count} nodes and {edge_count} edges",
+        "extract_variables": ["node_count", "edge_count"],
+        "tags": ["initialization"]
+      },
+      "iteration_start": {
+        "pseudocode_line": 13,
+        "code_line": 13,
+        "code_line_content": "for (int i = 0; i < graph.node_count - 1; i++)",
+        "description_template": "Starting relaxation iteration {current_iteration} / {max_iterations}",
+        "extract_variables": ["current_iteration", "max_iterations"],
+        "tags": ["iteration"]
+      },
+      "relax_edge": {
+        "pseudocode_line": 19,
+        "code_line": 19,
+        "code_line_content": "if (dist[edge.from] + edge.weight < dist[edge.to])",
+        "description_template": "Relaxing edge {current_node} --> {explored_neighbor} (weight: {edge_weight})",
+        "extract_variables": ["current_node", "explored_neighbor", "edge_weight"],
+        "tags": ["edge", "relax"]
+      },
+      "update_distance": {
+        "pseudocode_line": 22,
+        "code_line": 22,
+        "code_line_content": "dist[edge.to] = dist[edge.from] + edge.weight",
+        "description_template": "Updating distance to {explored_neighbor}: {old_distance} --> {new_distance}",
+        "extract_variables": ["explored_neighbor", "old_distance", "new_distance"],
+        "tags": ["distance", "update"]
+      },
+      "target_check": {
+        "pseudocode_line": 27,
+        "code_line": 27,
+        "code_line_content": "if (target_node.has_value() && edge.to == target_node.value())",
+        "description_template": "Checking if target node {target_node} is reached",
+        "extract_variables": ["target_node", "explored_neighbor"],
+        "tags": ["target", "check"]
+      },
+      "target_found": {
+        "pseudocode_line": 30,
+        "code_line": 30,
+        "code_line_content": "return",
+        "description_template": "Target node {target_node} reached with distance {distance}!",
+        "extract_variables": ["target_node", "distance"],
+        "tags": ["target", "found", "complete"]
+      },
+      "iteration_end": {
+        "pseudocode_line": 33,
+        "code_line": 33,
+        "code_line_content": "}",
+        "description_template": "Completed iteration {current_iteration}, {updates_in_iteration} updates performed",
+        "extract_variables": ["current_iteration", "updates_in_iteration"],
+        "tags": ["iteration", "summary"]
+      },
+      "no_updates": {
+        "pseudocode_line": 35,
+        "code_line": 35,
+        "code_line_content": "if (!updated) break;",
+        "description_template": "No distance updates occurred - early termination",
+        "extract_variables": [],
+        "tags": ["complete", "optimization"]
+      },
+      "negative_cycle_check": {
+        "pseudocode_line": 38,
+        "code_line": 38,
+        "code_line_content": "for (const Edge& edge : graph.edges)",
+        "description_template": "Checking for negative cycles in graph",
+        "extract_variables": [],
+        "tags": ["verification", "cycle"]
+      },
+      "negative_cycle": {
+        "pseudocode_line": 40,
+        "code_line": 40,
+        "code_line_content": "if (dist[edge.from] + edge.weight < dist[edge.to])",
+        "description_template": "Negative cycle detected in graph! Shortest paths not well-defined.",
+        "extract_variables": [],
+        "tags": ["error", "cycle", "complete"]
+      },
+      "completed": {
+        "pseudocode_line": 47,
+        "code_line": 47,
+        "code_line_content": "}",
+        "description_template": "Bellman-Ford completed. Found shortest paths to {explored_count} nodes.",
+        "extract_variables": ["explored_count", "node_count"],
+        "tags": ["completed", "finished"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "force_directed",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "visited": "#06D6A0",
+        "relaxing": "#FFD166",
+        "updated": "#00FFAA",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500",
+        "negative_cycle": "#FF0000"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_distances": true,
+      "show_edge_weights": true
+    }
+  }
+}

@@ -99,36 +99,4 @@ namespace c2l::scenes
 		return m_navigation_enabled;
 	}
 
-	bool BaseScene::render_icon_button(
-		const std::string& id,
-		ui::managers::IconType type,
-		const std::function<void()>& callback,
-		const ImVec2& size,
-		bool enabled,
-		const std::string& tooltip)
-	{
-		if (!ImGui::GetCurrentContext()) 
-		{
-			LOG_ERROR(
-				"No ImGui context for icon button {}", 
-				id
-			);
-			return false;
-		}
-
-		bool clicked = m_icon_manager.render_icon_button(
-			id.c_str(),
-			type,
-			size,
-			enabled ? ImVec4(1, 1, 1, 1) : ImVec4(0.5f, 0.5f, 0.5f, 0.5f),
-			tooltip.empty() ? nullptr : tooltip.c_str());
-
-		if (clicked && callback)
-		{
-			callback();
-		}
-
-		return clicked;
-	}
-
 } // namespace c2l::scenes

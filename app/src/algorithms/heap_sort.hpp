@@ -41,18 +41,8 @@ namespace c2l::algorithms
         HeapSort(HeapSort&&) noexcept = delete;
         HeapSort& operator=(HeapSort&&) noexcept = delete;
 
-        // ISimpleAlgorithm Interface Implementation
-        void initialize(const std::vector<int>& data) override;
-        bool step_forward() override;
-        bool step_backward() override;
-        void reset() override;
-
-        [[nodiscard]] std::vector<int> get_original_data() const override;
-        [[nodiscard]] AlgorithmStep get_current_step() const override;
-        [[nodiscard]] size_t get_step_count() const override;
-        [[nodiscard]] size_t get_current_step_index() const override;
-        [[nodiscard]] bool is_complete() const override;
-        [[nodiscard]] bool is_steps_empty_or_invalid() const override;
+        void generate_all_steps() override;
+        void reset_state() override {};
 
     private:
         /**
@@ -87,14 +77,6 @@ namespace c2l::algorithms
         };
 
         /**
-         * @brief Generate all algorithm steps upfront for navigation
-         * 
-         * This method pre-computes every step of the heap sort algorithm
-         * to enable forward/backward navigation through the visualization.
-         */
-        void generate_all_steps();
-
-        /**
          * @brief Build max heap from unsorted array using Floyd's algorithm
          * 
          * @param state Current algorithm state (will be modified)
@@ -115,7 +97,10 @@ namespace c2l::algorithms
          * @param state Current algorithm state
          * @param operation_id Operation type identifier (maps to JSON step_mappings)
          */
-        void push_step(const State& state, const std::string& operation_id);
+        void push_step(
+            const State& state, 
+            const std::string& operation_id
+        );
 
         /**
          * @brief Convert internal state to AlgorithmStep object
@@ -124,7 +109,10 @@ namespace c2l::algorithms
          * @param operation_id Operation type identifier
          * @return Fully populated AlgorithmStep
          */
-        AlgorithmStep create_step_from_state(const State& state, const std::string& operation_id) const;
+        AlgorithmStep create_step_from_state(
+            const State& state, 
+            const std::string& operation_id
+        ) const;
 
         /**
          * @brief Populate metadata for a step using JSON templates
@@ -133,7 +121,11 @@ namespace c2l::algorithms
          * @param state Current algorithm state
          * @param operation_id Operation type identifier
          */
-        void populate_step_metadata(AlgorithmStep& step, const State& state, const std::string& operation_id) const;
+        void populate_step_metadata(
+            AlgorithmStep& step, 
+            const State& state, 
+            const std::string& operation_id
+        ) const;
 
         /**
          * @brief Update visualization-specific data for the step
@@ -145,7 +137,11 @@ namespace c2l::algorithms
          * @param state Current algorithm state
          * @param operation_id Operation type identifier
          */
-        void update_visualization_data(AlgorithmStep& step, const State& state, const std::string& operation_id) const;
+        void update_visualization_data(
+            AlgorithmStep& step, 
+            const State& state, 
+            const std::string& operation_id
+        ) const;
 
         /**
          * @brief Convert phase enum to string for metadata
@@ -155,13 +151,16 @@ namespace c2l::algorithms
         /**
          * @brief Calculate child indices for a given parent
          */
-        inline size_t left_child_index(size_t parent) const { return 2 * parent + 1; }
-        inline size_t right_child_index(size_t parent) const { return 2 * parent + 2; }
+        inline size_t left_child_index(size_t parent) const 
+        { 
+            return 2 * parent + 1; 
+        }
+        inline size_t right_child_index(size_t parent) const 
+        { 
+            return 2 * parent + 2; 
+        }
 
         // Member variables
-        std::vector<int> m_original_data;          // Original input data
-        std::vector<AlgorithmStep> m_steps;        // All generated steps
-        size_t m_current_step_index{0};            // Current position in steps
         size_t m_total_comparisons{0};             // Total comparisons across algorithm
         size_t m_total_swaps{0};                   // Total swaps across algorithm
     };

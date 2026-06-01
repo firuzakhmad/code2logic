@@ -11,6 +11,7 @@
 #include "core/json_config_manager/json_config_manager.hpp"
 #include "algorithms/core/algorithm_step.hpp"
 #include "algorithms/core/algorithm_registry.hpp"
+#include "algorithms/managers/parallel_algorithm.hpp"
 
 #include <memory>
 #include <mutex>
@@ -23,46 +24,6 @@ namespace c2l::algorithms
     class ParallelComparisonManager final : public AlgorithmObserver
     {
     public:
-        struct ParallelAlgorithm
-        {
-            std::unique_ptr<ISimpleAlgorithm> algorithm;
-            std::unique_ptr<IAlgorithmVisualizer> visualizer;
-            const IAlgorithmMetadata *metadata          {nullptr};
-            AtomicPerformanceMetrics metrics;
-            AlgorithmType type                          {AlgorithmType::UNKNOWN};
-            size_t id                                   {0};
-            std::string name;
-
-            // Thread synchronization
-            std::mutex algorithm_mutex;
-            std::condition_variable step_cv;
-            std::atomic<bool> step_ready                {false};
-            std::atomic<bool> step_completed            {true};
-
-            bool is_valid() const noexcept
-            {
-                return algorithm != nullptr && metadata != nullptr;
-            }
-
-            void reset()
-            {
-                std::lock_guard<std::mutex> lock(algorithm_mutex);
-                if (algorithm)
-                {
-                    algorithm->reset();
-                }
-
-                if (visualizer)
-                {
-                    visualizer.reset();
-                }
-
-                metrics.reset();
-                step_ready = false;
-                step_completed = true;
-            }
-        };
-
         explicit ParallelComparisonManager(
             core::ThreadManager& thread_manager,
             AlgorithmRegistry& algorithm_registry);
@@ -111,20 +72,22 @@ namespace c2l::algorithms
             struct AlgorithmResult
             {
                 std::chrono::microseconds total_time    {0};
-                size_t steps;
-                size_t comparisons;
-                size_t swaps;
-                double speed_score;
-                double efficiency_score;
-                double avg_step_time_ms;
+                size_t steps                            {0};
+                size_t comparisons                      {0};
+                size_t swaps                            {0};
+                double speed_score                      {0};
+                double efficiency_score                 {0.0};
+                double avg_step_time_ms                 {0.0};
+                size_t visited_node_count               {0};
+                size_t explored_node_count              {0};
             };
 
-            AlgorithmResult left;
-            AlgorithmResult right;
+            AlgorithmResult left        {};
+            AlgorithmResult right       {};
 
             std::string_view winner;
-            double performance_ratio;
-            double parallel_efficiency;
+            double performance_ratio    {0.0};
+            double parallel_efficiency  {0.0};
 
             [[nodiscard]] bool has_winner() const noexcept
             {

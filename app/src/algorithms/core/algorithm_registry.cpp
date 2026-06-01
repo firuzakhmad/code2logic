@@ -8,18 +8,39 @@
 #include "algorithms/merge_sort.hpp"
 #include "algorithms/selection_sort.hpp"
 #include "algorithms/heap_sort.hpp"
+#include "algorithms/binary_search.hpp"
+#include "algorithms/insertion_sort.hpp"
+#include "algorithms/linear_search.hpp"
+#include "algorithms/visualizers/array_based_visualizer.hpp"
+#include "algorithms/interpolation_search.hpp"
+#include "algorithms/jump_search.hpp"
+#include "algorithms/visualizers/graph_based_visualizer.hpp"
+#include "algorithms/bfs.hpp"
+#include "algorithms/dfs.hpp"
+#include "algorithms/dijkstra.hpp"
+#include "algorithms/a_star.hpp"
+#include "algorithms/bellman_ford.hpp"
+#include "algorithms/topological_sort.hpp"
+#include "algorithms/grid_a_star.hpp"
+#include "algorithms/jump_point_search.hpp"
+#include "algorithms/visualizers/path_finding_visualizer.hpp"
+#include "algorithms/grid_dijkstra.hpp"
+#include "algorithms/grid_bfs.hpp"
+#include "algorithms/grid_dfs.hpp"
+#include "algorithms/theta_star.hpp"
 
 #include <algorithm>
 
-#include "algorithms/insertion_sort.hpp"
-#include "algorithms/visualizers/array_based_visualizer.hpp"
+#include "algorithms/best_first_search.hpp"
 
 
 namespace c2l::algorithms
 {
     AlgorithmRegistry::AlgorithmRegistry(
-        core::JsonConfigManager &json_config_manager)
+        core::JsonConfigManager &json_config_manager,
+        ui::managers::IconManager& icon_manager)
             : m_json_config_manager{json_config_manager}
+            , m_icon_manager{icon_manager}
     {
         m_is_valid = create_entry_for_available_algorithms();
 
@@ -216,9 +237,9 @@ namespace c2l::algorithms
                 {
                     switch (parsed_type)
                     {
+                        // Sort algorithms
                         case AlgorithmType::BUBBLE_SORT:
                             return std::make_unique<BubbleSort>(m_json_config_manager);
-
                         case AlgorithmType::QUICK_SORT:
                             return std::make_unique<QuickSort>(m_json_config_manager);
                         case AlgorithmType::MERGE_SORT:
@@ -229,24 +250,67 @@ namespace c2l::algorithms
                             return std::make_unique<SelectionSort>(m_json_config_manager);
                         case AlgorithmType::HEAP_SORT: 
                             return std::make_unique<HeapSort>(m_json_config_manager);
+                        // Search algorithms
+                        case AlgorithmType::BINARY_SEARCH:
+                            return std::make_unique<BinarySearch>(m_json_config_manager);
+                        case AlgorithmType::LINEAR_SEARCH:
+                            return std::make_unique<LinearSearch>(m_json_config_manager);
+                        case AlgorithmType::JUMP_SEARCH:
+                            return std::make_unique<JumpSearch>(m_json_config_manager);
+                        case AlgorithmType::INTERPOLATION_SEARCH:
+                            return std::make_unique<InterpolationSearch>(m_json_config_manager);
+                        // Graph algorithms
+                        case AlgorithmType::BFS:   
+                            return std::make_unique<BFS>(m_json_config_manager);
+                        case AlgorithmType::DFS:   
+                            return std::make_unique<DFS>(m_json_config_manager);
+                        case AlgorithmType::DIJKSTRA:   
+                            return std::make_unique<Dijkstra>(m_json_config_manager);
+                        case AlgorithmType::A_STAR:       
+                            return std::make_unique<AStar>(m_json_config_manager);
+                        case AlgorithmType::BELLMAN_FORD:
+                            return std::make_unique<BellmanFord>(m_json_config_manager);
+                        case AlgorithmType::TOPOLOGICAL_SORT:
+                            return std::make_unique<TopologicalSort>(m_json_config_manager);
+                        case AlgorithmType::JUMP_POINT_SEARCH:
+                            return std::make_unique<JumpPointSearch>(m_json_config_manager);
+                        case AlgorithmType::GRID_DIJKSTRA:
+                            return std::make_unique<GridDijkstra>(m_json_config_manager);
+                        case AlgorithmType::GRID_BFS:
+                            return std::make_unique<GridBFS>(m_json_config_manager);
+                        case AlgorithmType::GRID_DFS:
+                            return std::make_unique<GridDFS>(m_json_config_manager);
+                        case AlgorithmType::THETA_STAR:
+                            return std::make_unique<ThetaStar>(m_json_config_manager);
+                        case AlgorithmType::BEST_FIRST_SEARCH:
+                            return std::make_unique<BestFirstSearch>(m_json_config_manager);
 
+                        // Path Finding
+                        case AlgorithmType::GRID_A_STAR:
+                            return std::make_unique<GridAStar>(m_json_config_manager);
                         default:
                             return nullptr;
                     }
                 };
 
             entry.visualizer_factory =
-                [parsed_type](const VisualizationConfig& visualization_config)
+                [parsed_type, this](const VisualizationConfig& visualization_config)
                 -> std::unique_ptr<IAlgorithmVisualizer>
                 {
                     switch (auto category = algorithm_category(parsed_type)) {
                         case AlgorithmCategory::SORTING:
                         case AlgorithmCategory::SEARCHING:
                             return std::make_unique<ArrayBasedVisualizer>(visualization_config);
-
                         case AlgorithmCategory::GRAPH:
-                            // return std::make_unique<GraphBasedVisualizer>(config);
-
+                            return std::make_unique<GraphBasedVisualizer>(
+                                m_icon_manager,
+                                visualization_config
+                            );
+                        case AlgorithmCategory::PATH_FINDING:
+                            return std::make_unique<PathFindingVisualizer>(
+                                m_icon_manager,
+                                visualization_config
+                            );
                         case AlgorithmCategory::TREE:
                             // return std::make_unique<TreeBasedVisualizer>(config);
 

@@ -3,8 +3,12 @@
 
 #include "algorithms/visualizers/i_algorithm_visualizer.hpp"
 #include "algorithms/visualizers/array_based_visualizer.hpp"
+#include "algorithms/managers/parallel_comparison_manager.hpp"
+#include "algorithms/managers/parallel_algorithm.hpp"
 
 #include "imgui.h"
+#include "shared_graph_state.hpp"
+#include "shared_grid_state.hpp"
 
 namespace c2l::algorithms
 {
@@ -18,13 +22,22 @@ namespace c2l::algorithms
         ~SideBySideVisualizer() = default;
 
         void initialize(
-            ISimpleAlgorithm *left_algo,
-            const IAlgorithmMetadata *left_meta,
-            ISimpleAlgorithm *right_algo,
-            const IAlgorithmMetadata *right_meta);
+            const ParallelAlgorithm& left,
+            const ParallelAlgorithm& right,
+            SharedGridState* shared_grid_state = nullptr);
 
         void render();
+
+        void render_metrics_panel(
+            ISimpleAlgorithm *algorithm,
+            const IAlgorithmMetadata *metadata);
+
+        void render_splitter(float height);
+
         void update(double dt);
+
+        void sync_shared_grid_to_visualizer(IAlgorithmVisualizer& visualizer);
+        void sync_shared_graph_to_visualizer(IAlgorithmVisualizer& visualizer);
 
         // Configuration
         void set_split_position(float position) { m_split_position = position; }
@@ -34,20 +47,23 @@ namespace c2l::algorithms
 
         void render_algorithm_side(
             const char *side_name,
-            ISimpleAlgorithm *algorithm,
-            const IAlgorithmMetadata *metadata,
-            const ImVec2 &size,
-            bool is_left);
+            const ParallelAlgorithm& algo,
+            const ImVec2 &size);
 
-        void render_comparison_metrics();
+        const ParallelAlgorithm* m_left{nullptr};
+        const ParallelAlgorithm* m_right{nullptr};
 
-        ISimpleAlgorithm* m_left_algorithm          {nullptr};
-        const IAlgorithmMetadata *m_left_metadata   {nullptr};
-        ISimpleAlgorithm* m_right_algorithm         {nullptr};
-        const IAlgorithmMetadata *m_right_metadata  {nullptr};
+        SharedGridState* m_shared_grid_state{nullptr};
+        SharedGraphState* m_shared_graph_state{nullptr};
 
-        ArrayBasedVisualizer m_left_visualizer;
-        ArrayBasedVisualizer m_right_visualizer;
+        bool m_show_grid_lines{true};
+        bool m_show_weights{true};
+        bool m_show_coordinates{false};
+
+        bool m_show_edge_weights{true};
+        bool m_show_node_labels{true};
+        bool m_show_node_ids{true};
+        bool m_show_distances{true};
 
         float m_split_position                      {0.5f};
         bool m_show_metrics                         {true};

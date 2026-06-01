@@ -1,0 +1,414 @@
+{
+  "algorithm": {
+    "id": "grid_a_star",
+    "name": "Grid A* Search Algorithm",
+    "display_type": "Grid A*",
+    "category": "Path Finding",
+    "version": "1.0.0",
+    "last_updated": "2026-05-17",
+
+    "complexity": {
+      "time_best": "O(E)",
+      "time_average": "O((V + E) log V)",
+      "time_worst": "O((V + E) log V)",
+      "space": "O(V)",
+      "explanation": "Grid A* uses a priority queue with heuristic function. Time complexity depends on heuristic quality. Space complexity is O(V) for open/closed sets."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Grid A* is an informed pathfinding algorithm for grid-based maps that uses heuristics to efficiently find the shortest path.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O((V + E) log V) - with good heuristic",
+        "Space Complexity: O(V) - for open and closed sets",
+        "",
+        "Key Characteristics:",
+        "• Uses heuristic to guide search toward target",
+        "• Combines Dijkstra's optimality with greedy best-first speed",
+        "• Supports 4-directional and 8-directional movement",
+        "• Handles weighted terrain (different movement costs)",
+        "",
+        "Applications:",
+        "• Video game pathfinding",
+        "• Robotics navigation",
+        "• GPS routing on grid maps",
+        "• Maze solving"
+      ],
+
+      "pseudocode": [
+        "vector<Cell> GridAStar(",
+        "       const Grid& grid,",
+        "       Cell start,",
+        "       Cell target)",
+        "{",
+        "    PriorityQueue<Cell, float> open_set;",
+        "    vector<vector<bool>> in_open_set(rows, vector<bool>(cols, false));",
+        "    vector<vector<bool>> closed_set(rows, vector<bool>(cols, false));",
+        "    vector<vector<Cell>> came_from(rows, vector<Cell>(cols));",
+        "    vector<vector<float>> g_score(rows, vector<float>(cols, INFINITY));",
+        "    vector<vector<float>> f_score(rows, vector<float>(cols, INFINITY));",
+        "",
+        "    g_score[start.row][start.col] = 0;",
+        "    f_score[start.row][start.col] = heuristic(start, target);",
+        "    open_set.push(start, f_score[start.row][start.col]);",
+        "    in_open_set[start.row][start.col] = true;",
+        "",
+        "    while (!open_set.empty())",
+        "    {",
+        "        Cell current = open_set.pop_min();",
+        "        in_open_set[current.row][current.col] = false;",
+        "",
+        "        if (current == target)",
+        "        {",
+        "            break;",
+        "        }",
+        "",
+        "        closed_set[current.row][current.col] = true;",
+        "",
+        "        for (const Cell& neighbor : get_neighbors(current))",
+        "        {",
+        "            if (closed_set[neighbor.row][neighbor.col]) continue;",
+        "            if (grid[neighbor.row][neighbor.col] == WALL) continue;",
+        "",
+        "            float tentative_g_score = g_score[current.row][current.col] +",
+        "                movement_cost(current, neighbor);",
+        "",
+        "            if (tentative_g_score < g_score[neighbor.row][neighbor.col])",
+        "            {",
+        "                came_from[neighbor.row][neighbor.col] = current;",
+        "                g_score[neighbor.row][neighbor.col] = tentative_g_score;",
+        "                f_score[neighbor.row][neighbor.col] = g_score[neighbor.row][neighbor.col] +",
+        "                    heuristic(neighbor, target);",
+        "",
+        "                if (!in_open_set[neighbor.row][neighbor.col])",
+        "                {",
+        "                    open_set.push(neighbor, f_score[neighbor.row][neighbor.col]);",
+        "                    in_open_set[neighbor.row][neighbor.col] = true;",
+        "                }",
+        "            }",
+        "        }",
+        "    }",
+        "",
+        "    return reconstruct_path(came_from, start, target);",
+        "}"
+      ],
+
+      "optimizations": [
+        "Binary heap for priority queue",
+        "Tie-breaking strategies for better performance",
+        "Jump Point Search for uniform grids",
+        "HPA* (Hierarchical Pathfinding A*) for large maps"
+      ],
+
+      "use_cases": [
+        "Real-time strategy games",
+        "Robotics navigation",
+        "GPS navigation systems",
+        "Maze solving",
+        "Autonomous vehicle path planning"
+      ],
+
+      "disadvantages": [
+        "Requires good heuristic for optimal performance",
+        "Memory usage can be high for large grids",
+        "8-directional movement requires sqrt(2) cost for diagonal moves"
+      ],
+
+      "related_algorithms": [
+        "Dijkstra's Algorithm",
+        "BFS for unweighted grids",
+        "Jump Point Search",
+        "Theta*"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "start_cell",
+        "display_name": "Start Cell",
+        "type": "string",
+        "description": "Starting position on the grid",
+        "visualization": {"color": "#00FF00", "icon": "start"}
+      },
+      {
+        "name": "target_cell",
+        "display_name": "Target Cell",
+        "type": "string",
+        "description": "Goal position to reach",
+        "visualization": {"color": "#FF0000", "icon": "target"}
+      },
+      {
+        "name": "current_cell",
+        "display_name": "Current Cell",
+        "type": "string",
+        "description": "Cell currently being processed",
+        "visualization": {"color": "#FF6B6B", "icon": "current"}
+      },
+      {
+        "name": "open_set_size",
+        "display_name": "Open Set Size",
+        "type": "size_t",
+        "description": "Number of cells in the open set (frontier)",
+        "visualization": {"color": "#4ECDC4", "icon": "queue"}
+      },
+      {
+        "name": "closed_set_size",
+        "display_name": "Closed Set Size",
+        "type": "size_t",
+        "description": "Number of cells in closed set (explored)",
+        "visualization": {"color": "#9B59B6", "icon": "explored"}
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Neighbor Evaluations",
+        "type": "size_t",
+        "description": "Number of neighbor cells evaluated",
+        "visualization": {"color": "#88B04B", "icon": "comparison"}
+      },
+      {
+        "name": "g_score",
+        "display_name": "G-Score",
+        "type": "float",
+        "description": "Actual cost from start to current cell",
+        "visualization": {"color": "#92A8D1", "icon": "distance"}
+      },
+      {
+        "name": "f_score",
+        "display_name": "F-Score",
+        "type": "float",
+        "description": "Estimated total cost (g + h)",
+        "visualization": {"color": "#E8A87C", "icon": "score"}
+      },
+      {
+        "name": "heuristic_value",
+        "display_name": "Heuristic",
+        "type": "float",
+        "description": "Estimated distance to target",
+        "visualization": {"color": "#D4A5A5", "icon": "heuristic"}
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "push_start",
+        "name": "Push Start Cell",
+        "description": "Adding start cell to open set",
+        "tags": ["open_set", "start"],
+        "icon": "push"
+      },
+      {
+        "id": "pop_min",
+        "name": "Pop Minimum F-Score",
+        "description": "Extracting cell with lowest f-score from open set",
+        "tags": ["open_set", "pop", "process"],
+        "icon": "extract"
+      },
+      {
+        "id": "goal_check",
+        "name": "Goal Check",
+        "description": "Checking if current cell is the target",
+        "tags": ["goal", "check"],
+        "icon": "target"
+      },
+      {
+        "id": "add_to_closed",
+        "name": "Add to Closed Set",
+        "description": "Adding current cell to closed set (explored)",
+        "tags": ["closed_set", "settle"],
+        "icon": "settle"
+      },
+      {
+        "id": "evaluate_neighbor",
+        "name": "Evaluate Neighbor",
+        "description": "Evaluating neighboring cell",
+        "tags": ["neighbor", "evaluate"],
+        "icon": "edge"
+      },
+      {
+        "id": "relax_edge",
+        "name": "Relax Edge",
+        "description": "Checking if better path to neighbor found",
+        "tags": ["edge", "relax"],
+        "icon": "relax"
+      },
+      {
+        "id": "update_scores",
+        "name": "Update Scores",
+        "description": "Updating g-score and f-score for neighbor",
+        "tags": ["update", "score"],
+        "icon": "update"
+      },
+      {
+        "id": "push_neighbor",
+        "name": "Push Neighbor",
+        "description": "Adding neighbor to open set",
+        "tags": ["open_set", "push", "neighbor"],
+        "icon": "push"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target cell has been reached",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "open_set_empty",
+        "name": "Open Set Empty",
+        "description": "No path exists to target",
+        "tags": ["complete", "failure"],
+        "icon": "empty"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Grid A* search completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "vector<Cell> GridAStar(const Grid& grid, Cell start, Cell target)",
+        "description_template": "Initializing Grid A* algorithm on {rows}x{cols} grid",
+        "extract_variables": ["rows", "cols"],
+        "tags": ["initialization"]
+      },
+      "push_start": {
+        "pseudocode_line": 15,
+        "code_line": 15,
+        "code_line_content": "open_set.push(start, f_score[start.row][start.col])",
+        "description_template": "Adding start cell ({start_row},{start_col}) to open set (f = {f_score})",
+        "extract_variables": ["start_row", "start_col", "f_score"],
+        "tags": ["open_set", "start"]
+      },
+      "pop_min": {
+        "pseudocode_line": 20,
+        "code_line": 20,
+        "code_line_content": "Cell current = open_set.pop_min()",
+        "description_template": "Popping cell ({current_row},{current_col}) with f = {f_score} from open set",
+        "extract_variables": ["current_row", "current_col", "f_score", "g_score"],
+        "tags": ["open_set", "pop"]
+      },
+      "goal_check": {
+        "pseudocode_line": 23,
+        "code_line": 23,
+        "code_line_content": "if (current == target)",
+        "description_template": "Checking if ({current_row},{current_col}) is the target cell",
+        "extract_variables": ["current_row", "current_col", "target_row", "target_col"],
+        "tags": ["goal", "check"]
+      },
+      "add_to_closed": {
+        "pseudocode_line": 28,
+        "code_line": 28,
+        "code_line_content": "closed_set[current.row][current.col] = true",
+        "description_template": "Adding cell ({current_row},{current_col}) to closed set (explored)",
+        "extract_variables": ["current_row", "current_col", "closed_set_size"],
+        "tags": ["closed_set", "settle"]
+      },
+      "evaluate_neighbor": {
+        "pseudocode_line": 30,
+        "code_line": 30,
+        "code_line_content": "for (const Cell& neighbor : get_neighbors(current))",
+        "description_template": "Evaluating neighbor ({neighbor_row},{neighbor_col}) from ({current_row},{current_col})",
+        "extract_variables": ["current_row", "current_col", "neighbor_row", "neighbor_col"],
+        "tags": ["neighbor", "evaluate"]
+      },
+      "relax_edge": {
+        "pseudocode_line": 38,
+        "code_line": 38,
+        "code_line_content": "if (tentative_g_score < g_score[neighbor.row][neighbor.col])",
+        "description_template": "Relaxing edge: tentative g = {tentative_g} < current g = {old_g} to ({neighbor_row},{neighbor_col})",
+        "extract_variables": ["tentative_g", "old_g", "neighbor_row", "neighbor_col"],
+        "tags": ["edge", "relax"]
+      },
+      "update_scores": {
+        "pseudocode_line": 41,
+        "code_line": 41,
+        "code_line_content": "g_score[neighbor.row][neighbor.col] = tentative_g_score",
+        "description_template": "Updating ({neighbor_row},{neighbor_col}): g = {new_g}, f = {new_f}",
+        "extract_variables": ["neighbor_row", "neighbor_col", "new_g", "new_f"],
+        "tags": ["update", "score"]
+      },
+      "push_neighbor": {
+        "pseudocode_line": 47,
+        "code_line": 47,
+        "code_line_content": "open_set.push(neighbor, f_score[neighbor.row][neighbor.col])",
+        "description_template": "Adding neighbor ({neighbor_row},{neighbor_col}) to open set with f = {f_score}",
+        "extract_variables": ["neighbor_row", "neighbor_col", "f_score"],
+        "tags": ["open_set", "push"]
+      },
+      "target_found": {
+        "pseudocode_line": 25,
+        "code_line": 25,
+        "code_line_content": "break",
+        "description_template": "Target cell ({target_row},{target_col}) reached! Path length: {path_length} steps, cost: {path_cost}",
+        "extract_variables": ["target_row", "target_col", "path_length", "path_cost"],
+        "tags": ["target", "found", "complete"]
+      },
+      "open_set_empty": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "while (!open_set.empty())",
+        "description_template": "Open set empty - No path exists to target from ({start_row},{start_col}) to ({target_row},{target_col})",
+        "extract_variables": ["start_row", "start_col", "target_row", "target_col", "explored_count"],
+        "tags": ["complete", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 54,
+        "code_line": 54,
+        "code_line_content": "return reconstruct_path(came_from, start, target)",
+        "description_template": "Grid A* completed. Explored {closed_set_size} cells, evaluated {comparisons} neighbors",
+        "extract_variables": ["closed_set_size", "comparisons", "rows", "cols"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "grid",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "closed": "#06D6A0",
+        "open": "#FFD166",
+        "path": "#9B59B6",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500",
+        "wall": "#2A2A3A",
+        "weight_1": "#4A6A8A",
+        "weight_2": "#3A5A7A",
+        "weight_3": "#2A4A6A",
+        "weight_4": "#1A3A5A",
+        "weight_5": "#0A2A4A"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_coordinates": true,
+      "show_scores": false,
+      "show_edge_weights": true
+    }
+  }
+}

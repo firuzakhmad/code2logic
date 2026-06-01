@@ -39,17 +39,8 @@ namespace c2l::algorithms
         SelectionSort& operator=(SelectionSort&&) noexcept = delete;
 
         // ISimpleAlgorithm Interface Implementation
-        void initialize(const std::vector<int>& data) override;
-        bool step_forward() override;
-        bool step_backward() override;
-        void reset() override;
-
-        [[nodiscard]] std::vector<int> get_original_data() const override;
-        [[nodiscard]] AlgorithmStep get_current_step() const override;
-        [[nodiscard]] size_t get_step_count() const override;
-        [[nodiscard]] size_t get_current_step_index() const override;
-        [[nodiscard]] bool is_complete() const override;
-        [[nodiscard]] bool is_steps_empty_or_invalid() const override;
+        void generate_all_steps() override;
+        void reset_state() override {};
 
     private:
         /**
@@ -74,16 +65,6 @@ namespace c2l::algorithms
             bool found_new_min			{false}; 	// Whether new minimum was found in current comparison
             size_t last_compared_idx	{0};       	// Last index that was compared
         };
-
-        /**
-         * @brief Generate all algorithm steps upfront for navigation
-         * 
-         * This method pre-computes every step of the selection sort algorithm
-         * to enable forward/backward navigation through the visualization.
-         * It follows the exact algorithm logic while capturing state at each
-         * significant operation.
-         */
-        void generate_all_steps();
 
         /**
          * @brief Push a new step to the steps vector
@@ -164,11 +145,6 @@ namespace c2l::algorithms
             size_t min_idx
         );
 
-        // Member variables
-        std::vector<int> m_original_data;          
-        std::vector<AlgorithmStep> m_steps;        
-        size_t m_current_step_index{0};            
-        
         // Performance tracking
         size_t m_total_comparisons{0};              
         size_t m_total_swaps{0};                    

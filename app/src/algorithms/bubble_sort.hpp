@@ -6,7 +6,6 @@
 #define CODE2LOGIC_BUBBLE_SORT_ALGORITHM_HPP
 
 #include "algorithms/core/json_algorithm_base.hpp"
-#include "algorithms/core/algorithm_state_tracker.hpp"
 #include "algorithms/core/algorithm_step_operation.hpp"
 #include "core/json_config_manager/json_config_manager.hpp"
 
@@ -29,18 +28,8 @@ namespace c2l::algorithms
         BubbleSort(BubbleSort&&) noexcept = delete;
         BubbleSort& operator=(BubbleSort&&) noexcept = delete;
 
-        // ISimpleAlgorithm interface
-        void initialize(const std::vector<int>& data) override;
-        bool step_forward() override;
-        bool step_backward() override;
-        void reset() override;
-
-        [[nodiscard]] std::vector<int> get_original_data() const override;
-        [[nodiscard]] AlgorithmStep get_current_step() const override;
-        [[nodiscard]] size_t get_current_step_index() const override;
-        [[nodiscard]] size_t get_step_count() const override;
-        [[nodiscard]] bool is_complete() const override;
-        [[nodiscard]] bool is_steps_empty_or_invalid() const override;
+        void generate_all_steps() override;
+        void reset_state() override;
 
     private:
         /**
@@ -57,7 +46,6 @@ namespace c2l::algorithms
             size_t swaps                    {0};
         };
 
-        void generate_all_steps();
 
         void push_step(
             const std::vector<int>& data,
@@ -88,10 +76,6 @@ namespace c2l::algorithms
             size_t total_comparisons,
             size_t total_swaps
         ) const;
-
-        std::vector<int> m_original_data;
-        std::vector<AlgorithmStep> m_steps;
-        size_t m_current_step_index         {0};
 
         // Performance tracking
         size_t m_total_comparisons          {0};

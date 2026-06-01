@@ -1,0 +1,419 @@
+{
+  "algorithm": {
+    "id": "dfs",
+    "name": "Depth-First Search",
+    "display_type": "DFS",
+    "category": "Graph",
+    "version": "1.0.0",
+    "last_updated": "2026-05-11",
+
+    "complexity": {
+      "time_best": "O(V + E)",
+      "time_average": "O(V + E)",
+      "time_worst": "O(V + E)",
+      "space": "O(V)",
+      "explanation": "DFS explores each vertex and edge once. Space complexity is O(V) for the recursion stack or explicit stack."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": false,
+      "online": false,
+      "recursive": true,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Depth-First Search (DFS) is a graph traversal algorithm that explores as far as possible along each branch before backtracking.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O(V + E) - visit each vertex and edge once",
+        "Space Complexity: O(V) - for recursion stack or explicit stack",
+        "",
+        "Key Characteristics:",
+        "• Explores graph depth-first before backtracking",
+        "• Uses stack (recursion) for traversal",
+        "• Can be used for topological sorting",
+        "• Detects cycles in directed graphs",
+        "",
+        "Applications:",
+        "• Topological sorting",
+        "• Cycle detection",
+        "• Finding connected components",
+        "• Maze solving",
+        "• Path finding"
+      ],
+
+      "pseudocode": [
+        "void DFS(",
+        "       const Graph& graph,",
+        "       size_t start_node,",
+        "       optional<size_t> target_node)",
+        "{",
+        "    Stack<size_t> stack;",
+        "    vector<bool> visited(graph.node_count, false);",
+        "    vector<bool> in_stack(graph.node_count, false);",
+        "    vector<size_t> parent(graph.node_count, INVALID_NODE);",
+        "    vector<int> distance(graph.node_count, -1);",
+        "    vector<int> entry_time(graph.node_count, -1);",
+        "    vector<int> exit_time(graph.node_count, -1);",
+        "    int time_counter = 0;",
+        "",
+        "    stack.push(start_node);",
+        "    in_stack[start_node] = true;",
+        "    distance[start_node] = 0;",
+        "",
+        "    while (!stack.empty())",
+        "    {",
+        "        size_t current_node = stack.top();",
+        "        stack.pop();",
+        "        in_stack[current_node] = false;",
+        "",
+        "        if (!visited[current_node])",
+        "        {",
+        "            visited[current_node] = true;",
+        "            entry_time[current_node] = time_counter++;",
+        "",
+        "            if (target_node.has_value() &&",
+        "                current_node == target_node.value())",
+        "            {",
+        "                break;",
+        "            }",
+        "",
+        "            for (size_t neighbor : graph.adjacencyList[current_node])",
+        "            {",
+        "                if (!visited[neighbor] && !in_stack[neighbor])",
+        "                {",
+        "                    stack.push(neighbor);",
+        "                    in_stack[neighbor] = true;",
+        "                    parent[neighbor] = current_node;",
+        "                    distance[neighbor] = distance[current_node] + 1;",
+        "                }",
+        "            }",
+        "",
+        "            exit_time[current_node] = time_counter++;",
+        "        }",
+        "    }",
+        "}"
+      ],
+
+      "optimizations": [
+        "Iterative implementation to avoid recursion limits",
+        "Early termination when target found",
+        "Color-coded node states for visualization",
+        "Explicit stack for better performance"
+      ],
+
+      "use_cases": [
+        "Topological sorting",
+        "Cycle detection in graphs",
+        "Finding connected components",
+        "Maze generation and solving",
+        "Puzzle solving",
+        "Path existence checking"
+      ],
+
+      "disadvantages": [
+        "May not find shortest path",
+        "Recursive implementation can cause stack overflow",
+        "Can get stuck in deep graphs",
+        "Not suitable for infinite graphs"
+      ],
+
+      "related_algorithms": [
+        "Breadth-First Search (BFS)",
+        "Topological Sort",
+        "Kosaraju's Algorithm",
+        "Tarjan's Algorithm"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "start_node",
+        "display_name": "Start Node",
+        "type": "size_t",
+        "description": "The vertex where DFS begins its traversal",
+        "visualization": {
+          "color": "#00FF00",
+          "icon": "start"
+        }
+      },
+      {
+        "name": "current_node",
+        "display_name": "Current Node",
+        "type": "size_t",
+        "description": "The vertex currently being processed",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "current"
+        }
+      },
+      {
+        "name": "stack_size",
+        "display_name": "Stack Size",
+        "type": "size_t",
+        "description": "Number of vertices on the recursion stack",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "stack"
+        }
+      },
+      {
+        "name": "depth",
+        "display_name": "Depth",
+        "type": "size_t",
+        "description": "Current depth of DFS traversal",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "depth"
+        }
+      },
+      {
+        "name": "explored_count",
+        "display_name": "Explored Nodes",
+        "type": "size_t",
+        "description": "Number of vertices visited so far",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "explored"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Adjacency Checks",
+        "type": "size_t",
+        "description": "Number of neighbor checks performed",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "distance",
+        "display_name": "Distance",
+        "type": "int",
+        "description": "Distance from start node to current node",
+        "visualization": {
+          "color": "#92A8D1",
+          "icon": "distance"
+        }
+      },
+      {
+        "name": "entry_time",
+        "display_name": "Entry Time",
+        "type": "int",
+        "description": "Discovery time of the node",
+        "visualization": {
+          "color": "#E8A87C",
+          "icon": "entry"
+        }
+      },
+      {
+        "name": "exit_time",
+        "display_name": "Exit Time",
+        "type": "int",
+        "description": "Finish time of the node",
+        "visualization": {
+          "color": "#D4A5A5",
+          "icon": "exit"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "push_start",
+        "name": "Push Start Node",
+        "description": "Pushing the starting node onto the stack",
+        "tags": ["stack", "start"],
+        "icon": "push"
+      },
+      {
+        "id": "pop_node",
+        "name": "Pop Node",
+        "description": "Popping a node from the stack for processing",
+        "tags": ["stack", "pop", "process"],
+        "icon": "pop"
+      },
+      {
+        "id": "visit_node",
+        "name": "Visit Node",
+        "description": "Marking a node as visited and processing it",
+        "tags": ["visit", "process"],
+        "icon": "visit"
+      },
+      {
+        "id": "explore_edge",
+        "name": "Explore Edge",
+        "description": "Examining an edge to a neighbor vertex",
+        "tags": ["edge", "explore", "comparison"],
+        "icon": "edge"
+      },
+      {
+        "id": "push_neighbor",
+        "name": "Push Neighbor",
+        "description": "Pushing an unvisited neighbor onto the stack",
+        "tags": ["stack", "push", "neighbor"],
+        "icon": "push"
+      },
+      {
+        "id": "node_processed",
+        "name": "Node Processed",
+        "description": "Finished processing the current node",
+        "tags": ["complete", "processed"],
+        "icon": "check"
+      },
+      {
+        "id": "backtrack",
+        "name": "Backtrack",
+        "description": "Backtracking from the current node",
+        "tags": ["backtrack", "complete"],
+        "icon": "back"
+      },
+      {
+        "id": "stack_empty",
+        "name": "Stack Empty",
+        "description": "No more nodes to process",
+        "tags": ["complete", "stack"],
+        "icon": "empty"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target node has been found",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "DFS traversal completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "void DFS(const Graph& graph, size_t start_node, optional<size_t> target_node)",
+        "description_template": "Initializing DFS algorithm on graph with {node_count} nodes and {edge_count} edges",
+        "extract_variables": ["node_count", "edge_count"],
+        "tags": ["initialization"]
+      },
+      "push_start": {
+        "pseudocode_line": 15,
+        "code_line": 14,
+        "code_line_content": "stack.push(start_node)",
+        "description_template": "Pushing start node {start_node} onto stack",
+        "extract_variables": ["start_node"],
+        "tags": ["stack", "start"]
+      },
+      "pop_node": {
+        "pseudocode_line": 21,
+        "code_line": 20,
+        "code_line_content": "size_t current_node = stack.top()",
+        "description_template": "Popping node {current_node} from stack (stack size: {stack_size})",
+        "extract_variables": ["current_node", "stack_size"],
+        "tags": ["stack", "pop"]
+      },
+      "visit_node": {
+        "pseudocode_line": 25,
+        "code_line": 24,
+        "code_line_content": "if (!visited[current_node])",
+        "description_template": "Visiting node {current_node} at depth {distance} from start",
+        "extract_variables": ["current_node", "distance", "depth", "explored_count"],
+        "tags": ["visit", "process"]
+      },
+      "explore_edge": {
+        "pseudocode_line": 38,
+        "code_line": 38,
+        "code_line_content": "if (!visited[neighbor] && !in_stack[neighbor])",
+        "description_template": "Exploring edge from {current_node} to neighbor {explored_neighbor}",
+        "extract_variables": ["current_node", "explored_neighbor"],
+        "tags": ["edge", "explore"]
+      },
+      "push_neighbor": {
+        "pseudocode_line": 40,
+        "code_line": 40,
+        "code_line_content": "stack.push(neighbor)",
+        "description_template": "Pushing unvisited neighbor {explored_neighbor} onto stack",
+        "extract_variables": ["explored_neighbor", "stack_size"],
+        "tags": ["stack", "push"]
+      },
+      "node_processed": {
+        "pseudocode_line": 48,
+        "code_line": 48,
+        "code_line_content": "}",
+        "description_template": "Finished processing node {current_node}",
+        "extract_variables": ["current_node", "explored_count"],
+        "tags": ["process", "complete"]
+      },
+      "backtrack": {
+        "pseudocode_line": 47,
+        "code_line": 47,
+        "code_line_content": "exit_time[current_node] = time_counter++",
+        "description_template": "Backtracking from node {current_node} (exit time: {exit_time})",
+        "extract_variables": ["current_node", "exit_time"],
+        "tags": ["backtrack", "complete"]
+      },
+      "stack_empty": {
+        "pseudocode_line": 19,
+        "code_line": 19,
+        "code_line_content": "while (!stack.empty())",
+        "description_template": "Stack is empty - DFS traversal complete",
+        "extract_variables": ["explored_count"],
+        "tags": ["complete", "stack"]
+      },
+      "target_found": {
+        "pseudocode_line": 30,
+        "code_line": 30,
+        "code_line_content": "if (target_node.has_value() && current_node == target_node.value())",
+        "description_template": "Target node {found_at_node} found at depth {depth}!",
+        "extract_variables": ["found_at_node", "depth"],
+        "tags": ["target", "found", "complete"]
+      },
+      "completed": {
+        "pseudocode_line": 50,
+        "code_line": 50,
+        "code_line_content": "}",
+        "description_template": "DFS completed. Explored {explored_count} out of {node_count} nodes",
+        "extract_variables": ["explored_count", "node_count"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "force_directed",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "visited": "#06D6A0",
+        "frontier": "#FFD166",
+        "explored": "#4ECDC4",
+        "path": "#9B59B6",
+        "start": "#00FF00",
+        "target": "#FF0000",
+        "edge_active": "#FFA500",
+        "backtrack_edge": "#E74C3C"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_distances": true
+    }
+  }
+}

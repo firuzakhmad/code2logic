@@ -24,6 +24,74 @@
     {
       "id": "heap_sort",
       "type": "HEAP_SORT"
+    },
+    {
+      "id": "binary_search",
+      "type": "BINARY_SEARCH"
+    },
+    {
+      "id": "linear_search",
+      "type": "LINEAR_SEARCH"
+    },
+    {
+      "id": "jump_search",
+      "type": "JUMP_SEARCH"
+    },
+    {
+      "id": "interpolation_search",
+      "type": "INTERPOLATION_SEARCH"
+    },
+    {
+      "id": "bfs",
+      "type": "BFS"
+    },
+    {
+      "id": "dfs",
+      "type": "DFS"
+    },
+    {
+      "id": "dijkstra",
+      "type": "DIJKSTRA"
+    },
+    {
+      "id": "a_star",
+      "type": "A_STAR"
+    },
+    {
+      "id": "bellman_ford",
+      "type": "BELLMAN_FORD"
+    },
+    {
+      "id": "topological_sort",
+      "type": "TOPOLOGICAL_SORT"
+    },
+    {
+      "id": "grid_a_star",
+      "type": "GRID_A_STAR"
+    },
+    {
+      "id": "jump_point_search",
+      "type": "JUMP_POINT_SEARCH"
+    },
+    {
+      "id": "grid_dijkstra",
+      "type": "GRID_DIJKSTRA"
+    },
+    {
+      "id": "grid_bfs",
+      "type": "GRID_BFS"
+    },
+    {
+      "id": "grid_dfs",
+      "type": "GRID_DFS"
+    },
+    {
+      "id": "theta_star",
+      "type": "THETA_STAR"
+    },
+    {
+      "id": "best_first_search",
+      "type": "BEST_FIRST_SEARCH"
     }
   ]
 }

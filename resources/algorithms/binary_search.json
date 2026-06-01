@@ -1,0 +1,403 @@
+{
+  "algorithm": {
+    "id": "binary_search",
+    "name": "Binary Search",
+    "display_type": "Binary Search",
+    "category": "Searching",
+    "version": "1.0.0",
+    "last_updated": "2026-04-04",
+    
+    "complexity": {
+      "time_best": "O(1)",
+      "time_average": "O(log n)",
+      "time_worst": "O(log n)",
+      "space": "O(1)",
+      "explanation": "Binary search has logarithmic time complexity as it repeatedly divides the search interval in half. The best case occurs when the target is found at the middle element on the first try. Space complexity is O(1) for iterative implementation."
+    },
+    
+    "properties": {
+      "stable": true,
+      "in_place": true,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": false,
+      "parallelizable": true,
+      "deterministic": true
+    },
+    
+    "description": {
+      "brief": "An efficient searching algorithm that finds the position of a target value within a sorted array by repeatedly dividing the search interval in half.",
+      
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(1)   - target found at middle",
+        "• Average case: O(log n) - typical performance",
+        "• Worst case:   O(log n) - target not found or at ends",
+        "",
+        "Space Complexity: O(1) - iterative implementation",
+        "",
+        "Key Characteristics:",
+        "• Requires sorted input array",
+        "• Divide and conquer approach",
+        "• Much faster than linear search for large datasets",
+        "• Can be implemented iteratively or recursively",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: At most ⌊log₂(n)⌋ + 1",
+        "• Memory: Constant O(1) auxiliary space",
+        "• Best for static sorted data with frequent searches",
+        "",
+        "Comparison with Other Search Algorithms:",
+        "• Linear Search: O(n) but works on unsorted data",
+        "• Ternary Search: O(log n) but with more comparisons",
+        "• Interpolation Search: O(log log n) average but O(n) worst case"
+      ],
+      
+      "pseudocode": [
+        "int binary_search(const std::vector<int>& arr, int target)",
+        "{",
+        "    size_t left = 0;",
+        "    size_t right = arr.size() - 1;",
+        "    ",
+        "    while (left <= right)",
+        "    {",
+        "        size_t mid = left + (right - left) / 2;",
+        "        ",
+        "        if (arr[mid] == target)",
+        "        {",
+        "            return mid;  // Target found",
+        "        }",
+        "        ",
+        "        if (arr[mid] < target)",
+        "        {",
+        "            left = mid + 1;   // Search in right half",
+        "        }",
+        "        else",
+        "        {",
+        "            right = mid - 1;  // Search in left half",
+        "        }",
+        "    }",
+        "    ",
+        "    return -1;  // Target not found",
+        "}"
+      ],
+      
+      "optimizations": [
+        "Using (left + right) >>> 1 to prevent overflow in Java/C#",
+        "Using left + (right - left) / 2 to prevent overflow in C++",
+        "Early exit when target equals mid",
+        "Branch prediction optimization for predictable patterns",
+        "Vectorized binary search for SIMD processors"
+      ],
+      
+      "use_cases": [
+        "Searching in sorted arrays",
+        "Dictionary/phonebook lookup",
+        "Finding insertion point for new elements",
+        "Solving mathematical equations (root finding)",
+        "Database index searching (B-trees)",
+        "Debugging and testing sorted data"
+      ],
+      
+      "disadvantages": [
+        "Requires sorted input data",
+        "Inefficient for small datasets (linear search may be better)",
+        "Poor performance on linked lists due to O(n) random access",
+        "Not suitable for dynamic data with frequent insertions/deletions",
+        "Overflow risk with naive mid calculation (left + right) / 2"
+      ],
+      
+      "related_algorithms": [
+        "Linear Search",
+        "Ternary Search",
+        "Interpolation Search",
+        "Exponential Search",
+        "Fibonacci Search",
+        "Binary Search Tree Search"
+      ]
+    },
+    
+    "variables": [
+      {
+        "name": "target",
+        "display_name": "Target Value",
+        "type": "int",
+        "description": "The value being searched for in the array",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "target"
+        }
+      },
+      {
+        "name": "left",
+        "display_name": "Left Boundary",
+        "type": "size_t",
+        "description": "Left boundary of the current search interval (inclusive)",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "left_boundary"
+        }
+      },
+      {
+        "name": "right",
+        "display_name": "Right Boundary",
+        "type": "size_t",
+        "description": "Right boundary of the current search interval (inclusive)",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "right_boundary"
+        }
+      },
+      {
+        "name": "mid",
+        "display_name": "Middle Index",
+        "type": "size_t",
+        "description": "Middle index of the current search interval being examined",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "mid_point"
+        }
+      },
+      {
+        "name": "mid_value",
+        "display_name": "Middle Value",
+        "type": "int",
+        "description": "Value at the middle index being compared with target",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "mid_value"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of comparisons performed so far",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "search_interval_size",
+        "display_name": "Interval Size",
+        "type": "size_t",
+        "description": "Current size of the search interval (right - left + 1)",
+        "visualization": {
+          "color": "#F7DC6F",
+          "icon": "interval"
+        }
+      },
+      {
+        "name": "found",
+        "display_name": "Found",
+        "type": "bool",
+        "description": "Whether the target has been found",
+        "visualization": {
+          "color": "#06D6A0",
+          "icon": "found"
+        }
+      },
+      {
+        "name": "result_index",
+        "display_name": "Result Index",
+        "type": "int",
+        "description": "Index where target was found, or -1 if not found",
+        "visualization": {
+          "color": "#E67E22",
+          "icon": "result"
+        }
+      }
+    ],
+    
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "loop_start",
+        "name": "Loop Start",
+        "description": "Beginning of a new search iteration",
+        "tags": ["loop", "iteration"],
+        "icon": "loop"
+      },
+      {
+        "id": "mid_calculation",
+        "name": "Mid Calculation",
+        "description": "Calculating the middle index of current search interval",
+        "tags": ["calculation", "mid"],
+        "icon": "calculate"
+      },
+      {
+        "id": "compare_equal",
+        "name": "Compare Equal",
+        "description": "Comparing middle value with target (equality check)",
+        "tags": ["comparison", "equal"],
+        "icon": "compare"
+      },
+      {
+        "id": "compare_less",
+        "name": "Compare Less",
+        "description": "Checking if middle value is less than target",
+        "tags": ["comparison", "less"],
+        "icon": "compare"
+      },
+      {
+        "id": "compare_greater",
+        "name": "Compare Greater",
+        "description": "Checking if middle value is greater than target",
+        "tags": ["comparison", "greater"],
+        "icon": "compare"
+      },
+      {
+        "id": "found",
+        "name": "Found",
+        "description": "Target value found at current mid index",
+        "tags": ["found", "success"],
+        "icon": "success"
+      },
+      {
+        "id": "search_left",
+        "name": "Search Left",
+        "description": "Moving search to left half (target is smaller)",
+        "tags": ["search", "left_half"],
+        "icon": "left"
+      },
+      {
+        "id": "search_right",
+        "name": "Search Right",
+        "description": "Moving search to right half (target is larger)",
+        "tags": ["search", "right_half"],
+        "icon": "right"
+      },
+      {
+        "id": "not_found",
+        "name": "Not Found",
+        "description": "Target value not found in the array",
+        "tags": ["not_found", "failure"],
+        "icon": "failure"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm completed - search finished",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+    
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "int binary_search(const std::vector<int>& arr, int target)",
+        "description_template": "Initializing Binary Search to find target {target} in array of size {size}",
+        "extract_variables": ["target", "size"],
+        "tags": ["initialization"]
+      },
+      "loop_start": {
+        "pseudocode_line": 6,
+        "code_line": 7,
+        "code_line_content": "while (left <= right)",
+        "description_template": "Starting search iteration. Current interval: [{left}, {right}] (size = {interval_size})",
+        "extract_variables": ["left", "right", "interval_size"],
+        "tags": ["loop", "iteration"]
+      },
+      "mid_calculation": {
+        "pseudocode_line": 8,
+        "code_line": 8,
+        "code_line_content": "size_t mid = left + (right - left) / 2;",
+        "description_template": "Calculating middle index: mid = {mid} (value = {mid_value})",
+        "extract_variables": ["mid", "mid_value"],
+        "tags": ["calculation", "mid"]
+      },
+      "compare_equal": {
+        "pseudocode_line": 10,
+        "code_line": 10,
+        "code_line_content": "if (arr[mid] == target)",
+        "description_template": "Comparing arr[{mid}] = {mid_value} with target = {target}",
+        "extract_variables": ["target", "mid_value", "mid"],
+        "tags": ["comparison", "equal"]
+      },
+      "found": {
+        "pseudocode_line": 12,
+        "code_line": 12,
+        "code_line_content": "return mid;",
+        "description_template": "✓ Target found! arr[{mid}] = {mid_value} equals target {target}. Returning index {mid}",
+        "extract_variables": ["mid", "mid_value", "target"],
+        "tags": ["found", "success"]
+      },
+      "compare_less": {
+        "pseudocode_line": 15,
+        "code_line": 16,
+        "code_line_content": "if (arr[mid] < target)",
+        "description_template": "Checking if arr[{mid}] = {mid_value} < target = {target}",
+        "extract_variables": ["target", "mid_value", "mid"],
+        "tags": ["comparison", "less"]
+      },
+      "search_right": {
+        "pseudocode_line": 17,
+        "code_line": 17,
+        "code_line_content": "left = mid + 1;",
+        "description_template": "arr[{mid}] = {mid_value} < target {target}. Searching right half: new interval [{left_new}, {right}]",
+        "extract_variables": ["mid", "mid_value", "target", "left_new", "right"],
+        "tags": ["search", "right_half"]
+      },
+      "search_left": {
+        "pseudocode_line": 21,
+        "code_line": 20,
+        "code_line_content": "right = mid - 1;",
+        "description_template": "arr[{mid}] = {mid_value} > target {target}. Searching left half: new interval [{left}, {right_new}]",
+        "extract_variables": ["mid", "mid_value", "target", "left", "right_new"],
+        "tags": ["search", "left_half"]
+      },
+      "not_found": {
+        "pseudocode_line": 25,
+        "code_line": 24,
+        "code_line_content": "return -1;",
+        "description_template": "✗ Target {target} not found in array after {comparisons} comparisons",
+        "extract_variables": ["target", "comparisons"],
+        "tags": ["not_found", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 26,
+        "code_line": 26,
+        "code_line_content": "} // end binary_search",
+        "description_template": "Binary Search completed. Target {target} {found_status} at index {result_index} after {comparisons} comparisons",
+        "extract_variables": ["target", "found_status", "result_index", "comparisons"],
+        "tags": ["completed"]
+      }
+    },
+    
+    "visualization": {
+      "default_style": "classic_bars",
+      "highlight_colors": {
+        "target": "#FF6B6B",
+        "left_boundary": "#4ECDC4",
+        "right_boundary": "#FFD166",
+        "mid_point": "#9B59B6",
+        "searched_region": "#3498DB",
+        "eliminated_left": "#E67E22",
+        "eliminated_right": "#E67E22",
+        "found": "#06D6A0",
+        "not_found": "#EF476F"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true,
+      "search_visualization": {
+        "show_boundaries": true,
+        "highlight_search_range": true,
+        "show_eliminated_regions": true
+      }
+    }
+  }
+}

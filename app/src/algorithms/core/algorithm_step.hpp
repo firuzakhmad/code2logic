@@ -110,6 +110,29 @@ namespace c2l::algorithms
             bool is_compare_step{false};
 
 
+            // Search-specific fields
+            struct SearchVisualization
+            {
+                int target_value{0};                        // Value being searched for
+                std::vector<size_t> searched_indices;       // Indices that have been examined
+                std::vector<size_t> eliminated_indices;     // Indices eliminated from search
+                std::optional<size_t> found_index;          // Where target was found
+                bool is_searching{true};                    // Whether search is still active
+                size_t search_step{0};                      // Current search step number
+                float search_progress{0.0f};                // Progress through search
+
+                // For binary search specifically
+                std::optional<size_t> left_boundary;
+                std::optional<size_t> right_boundary;
+                std::optional<size_t> mid_point;
+            } search;
+
+            // For backward compatibility with existing code
+            std::vector<size_t> eliminated_regions;  // Can map to search.eliminated_indices
+            int target_value{0};                     // Can map to search.target_value
+            bool is_found{false};                    // Can map to search.found_index.has_value()
+
+
             // Graph-based algorithms
             struct GraphState
             {
@@ -139,11 +162,13 @@ namespace c2l::algorithms
             size_t tree_root            {0};
 
             // Performance metrics
-            size_t comparisons          {0};
-            size_t swaps                {0};
+            size_t comparison_count          {0};
+            size_t swap_count                {0};
+            size_t visited_node_count        {0};
+            size_t explored_node_count       {0};
             size_t memory_usage         {0};
         } visualization;
-
+        
         AlgorithmStep() = default;
         AlgorithmStep(std::vector<int> data_vec, std::string desc)
             : data(std::move(data_vec)), description(std::move(desc)) {}

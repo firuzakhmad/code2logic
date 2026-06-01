@@ -9,81 +9,6 @@ namespace c2l::algorithms
         LOG_DEBUG("MergeSort created and metadata loaded from JSON");
     }
 
-    void MergeSort::initialize(const std::vector<int>& data)
-    {
-        m_original_data = data;
-        reset();
-        generate_all_steps();
-        notify_observers();
-        
-        LOG_INFO(
-            "MergeSort initialized with {} elements. Generated {} steps.",
-            data.size(), 
-            m_steps.size()
-        );
-    }
-
-    bool MergeSort::step_forward()
-    {
-        if (m_current_step_index < m_steps.size() - 1)
-        {
-            m_current_step_index++;
-            notify_observers();
-            return true;
-        }
-        return false;
-    }
-
-    bool MergeSort::step_backward()
-    {
-        if (m_current_step_index > 0)
-        {
-            m_current_step_index--;
-            notify_observers();
-            return true;
-        }
-        return false;
-    }
-
-    void MergeSort::reset()
-    {
-        m_current_step_index = 0;
-        m_steps.clear();
-        m_total_comparisons = 0;
-        m_total_copies = 0;
-    }
-
-    std::vector<int> MergeSort::get_original_data() const
-    {
-        return m_original_data;
-    }
-
-    AlgorithmStep MergeSort::get_current_step() const
-    {
-        if (is_steps_empty_or_invalid()) return {};
-        return m_steps[m_current_step_index];
-    }
-
-    size_t MergeSort::get_step_count() const
-    {
-        return m_steps.size();
-    }
-
-    size_t MergeSort::get_current_step_index() const
-    {
-        return m_current_step_index;
-    }
-
-    bool MergeSort::is_complete() const
-    {
-        return !m_steps.empty() && m_current_step_index == m_steps.size() - 1;
-    }
-
-    bool MergeSort::is_steps_empty_or_invalid() const
-    {
-        return m_steps.empty() || m_current_step_index >= m_steps.size();
-    }
-
     void MergeSort::generate_all_steps()
     {
         if (m_original_data.empty())
@@ -388,8 +313,8 @@ namespace c2l::algorithms
         auto& viz = step.visualization;
         
         // Basic metrics
-        viz.comparisons = state.comparisons;
-        viz.swaps = 0;  // Merge sort doesn't use swaps
+        viz.comparison_count = state.comparisons;
+        viz.swap_count = 0;  // Merge sort doesn't use swaps
         viz.memory_usage = state.aux.size() * sizeof(int);
         
         // Clear previous highlights

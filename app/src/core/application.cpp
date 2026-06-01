@@ -31,9 +31,7 @@ namespace c2l
         );
         m_json_config_manager->initialize();
 
-        m_algorithm_registry = std::make_unique<algorithms::AlgorithmRegistry>(
-            *m_json_config_manager
-        );
+
 
         m_resource_manager = std::make_unique<core::resources::ResourceManager>(
             *m_file_system,
@@ -50,6 +48,11 @@ namespace c2l
         *m_json_config_manager
         );
 
+        m_algorithm_registry = std::make_unique<algorithms::AlgorithmRegistry>(
+            *m_json_config_manager,
+            *m_icon_manager
+        );
+
         m_scene_manager = std::make_unique<scenes::SceneManager>(
         *m_renderer,
         *m_thread_manager,
@@ -59,7 +62,6 @@ namespace c2l
         *m_icon_manager
         );
 
-
         LOG_INFO("Application initialization complete");
     }
 
@@ -68,9 +70,9 @@ namespace c2l
         LOG_INFO("Application shutdown initiated...");
 
         m_scene_manager.reset();
+        m_algorithm_registry.reset();
         m_icon_manager.reset();
         m_resource_manager.reset();
-        m_algorithm_registry.reset();
         m_json_config_manager.reset();
         m_file_system.reset();
         m_thread_manager.reset();

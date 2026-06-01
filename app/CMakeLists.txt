@@ -43,8 +43,28 @@ set(CODE2LOGIC_SOURCES
         src/algorithms/selection_sort.cpp
         src/algorithms/heap_sort.cpp
         src/algorithms/visualizers/visualization_style.cpp
-
-
+        src/algorithms/binary_search.cpp
+        src/algorithms/linear_search.cpp
+        src/algorithms/jump_search.cpp
+        src/algorithms/interpolation_search.cpp
+        src/algorithms/visualizers/graph_based_visualizer.cpp
+        src/algorithms/bfs.cpp
+        src/algorithms/dfs.cpp
+        src/algorithms/dijkstra.cpp
+        src/algorithms/a_star.cpp
+        src/algorithms/bellman_ford.cpp
+        src/algorithms/topological_sort.cpp
+        src/algorithms/grid_a_star.cpp
+        src/algorithms/visualizers/path_finding_visualizer.cpp
+        src/algorithms/jump_point_search.cpp
+        src/algorithms/grid_dijkstra.cpp
+        src/algorithms/grid_bfs.cpp
+        src/algorithms/grid_dfs.cpp
+        src/algorithms/theta_star.cpp
+        src/algorithms/best_first_search.cpp
+        src/algorithms/core/grid_pathfinding_base.cpp
+        src/algorithms/visualizers/graph_data.cpp
+        src/algorithms/visualizers/graph_layout_engine.cpp
 
 )
 
@@ -88,7 +108,6 @@ set(CODE2LOGIC_HEADERS
         src/algorithms/core/algorithm_observer.hpp
         src/algorithms/core/algorithm_step.hpp
         src/algorithms/core/algorithm_step_operation.hpp
-        src/algorithms/core/algorithm_state_tracker.hpp
         src/algorithms/core/algorithm_base.hpp
         src/algorithms/bubble_sort.hpp
         src/algorithms/quick_sort.hpp
@@ -115,7 +134,31 @@ set(CODE2LOGIC_HEADERS
         src/algorithms/selection_sort.hpp
         src/algorithms/heap_sort.hpp
         src/algorithms/visualizers/visualization_style.hpp
-
+        src/algorithms/binary_search.hpp
+        src/algorithms/linear_search.hpp
+        src/algorithms/jump_search.hpp
+        src/algorithms/interpolation_search.hpp
+        src/algorithms/visualizers/graph_based_visualizer.hpp
+        src/algorithms/bfs.hpp
+        src/algorithms/dfs.hpp
+        src/algorithms/dijkstra.hpp
+        src/algorithms/a_star.hpp
+        src/algorithms/bellman_ford.hpp
+        src/algorithms/topological_sort.hpp
+        src/algorithms/grid_a_star.hpp
+        src/algorithms/visualizers/path_finding_visualizer.hpp
+        src/algorithms/visualizers/grid_cell_type.hpp
+        src/algorithms/jump_point_search.hpp
+        src/algorithms/grid_dijkstra.hpp
+        src/algorithms/grid_bfs.hpp
+        src/algorithms/grid_dfs.hpp
+        src/algorithms/theta_star.hpp
+        src/algorithms/best_first_search.hpp
+        src/algorithms/core/grid_pathfinding_base.hpp
+        src/algorithms/visualizers/graph_data.hpp
+        src/algorithms/visualizers/graph_layout_engine.hpp
+        src/algorithms/visualizers/shared_grid_state.hpp
+        src/algorithms/visualizers/shared_graph_state.hpp
 
 
 )

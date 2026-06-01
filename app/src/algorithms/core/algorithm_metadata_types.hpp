@@ -191,6 +191,8 @@ namespace c2l::algorithms
         std::string display_category;
         AlgorithmType type              { AlgorithmType::UNKNOWN };
         std::string display_type;
+        VisualizationType visualization_type { VisualizationType::UNKNOWN };
+        std::string display_visualization;
  
         AlgorithmComplexityInfo complexity;
         AlgorithmPropertiesInfo properties;

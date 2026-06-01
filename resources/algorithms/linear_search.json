@@ -1,0 +1,333 @@
+{
+  "algorithm": {
+    "id": "linear_search",
+    "name": "Linear Search",
+    "display_type": "Linear Search",
+    "category": "Searching",
+    "version": "1.0.0",
+    "last_updated": "2026-05-02",
+
+    "complexity": {
+      "time_best": "O(1)",
+      "time_average": "O(n/2) ≈ O(n)",
+      "time_worst": "O(n)",
+      "space": "O(1)",
+      "explanation": "Linear search scans each element sequentially until the target is found. Best case occurs when the target is at the first position. Average case examines half the elements. Worst case examines all elements. Space complexity is O(1) as it uses only a few variables."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": true,
+      "adaptive": true,
+      "comparison_based": true,
+      "online": true,
+      "recursive": false,
+      "parallelizable": true,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "A simple searching algorithm that sequentially checks each element in the array until the target is found or the array ends.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity:",
+        "• Best case:    O(1)   - target found at first position",
+        "• Average case: O(n/2) ≈ O(n) - examines half the elements",
+        "• Worst case:   O(n)   - target not found or at last position",
+        "",
+        "Space Complexity: O(1) - uses constant extra space",
+        "",
+        "Key Characteristics:",
+        "• Works on both sorted and unsorted arrays",
+        "• Extremely simple to implement",
+        "• Excellent for small datasets (< 100 elements)",
+        "• No preprocessing required",
+        "• Adaptive: can stop immediately when target found",
+        "",
+        "Performance Metrics:",
+        "• Comparisons: Up to n in worst case",
+        "• Memory: Constant O(1) auxiliary space",
+        "• Best for: Unsorted data, small arrays, single searches",
+        "",
+        "Comparison with Other Search Algorithms:",
+        "• Binary Search: O(log n) but requires sorted data",
+        "• Sentinel Search: Slightly faster by removing boundary check",
+        "• Index Search: Uses index table for faster searching",
+        "• Hash Table: O(1) average but requires hash function"
+      ],
+
+      "pseudocode": [
+        "int linear_search(const std::vector<int>& arr, int target)",
+        "{",
+        "    size_t n = arr.size();",
+        "    ",
+        "    for (size_t i = 0; i < n; ++i)",
+        "    {",
+        "        if (arr[i] == target)",
+        "        {",
+        "            return i;   // Target found at index i",
+        "        }",
+        "    }",
+        "    ",
+        "    return -1;   // Target not found",
+        "}"
+      ],
+
+      "optimizations": [
+        "Sentinel linear search (removes boundary check at cost of extra memory)",
+        "Unrolled loop for better performance",
+        "Parallel linear search for multi-core processors",
+        "Move-to-front (MTF) for frequently accessed elements",
+        "Transposition for adaptive searching",
+        "Bloom filter pre-filtering for negative searches"
+      ],
+
+      "use_cases": [
+        "Searching in unsorted data",
+        "Small datasets (n < 100)",
+        "Real-time systems where O(n) is acceptable",
+        "Finding first occurrence of an element",
+        "Implementing 'find' operations in linked lists",
+        "Embedded systems with limited memory",
+        "Debugging and testing",
+        "When data is streamed or generated on-the-fly"
+      ],
+
+      "disadvantages": [
+        "Slow for large datasets (O(n) worst case)",
+        "Inefficient for multiple searches on same data",
+        "Poor performance compared to hash-based methods",
+        "Not suitable for production systems with large data",
+        "Does not use array ordering to optimize"
+      ],
+
+      "related_algorithms": [
+        "Binary Search",
+        "Sentinel Linear Search",
+        "Transposition Search",
+        "Move-to-Front Search",
+        "Interpolation Search",
+        "Exponential Search",
+        "Hash Table Search"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "target",
+        "display_name": "Target Value",
+        "type": "int",
+        "description": "The value being searched for in the array",
+        "visualization": {
+          "color": "#FF6B6B",
+          "icon": "target"
+        }
+      },
+      {
+        "name": "i",
+        "display_name": "Current Index",
+        "type": "size_t",
+        "description": "Current index being examined in the array",
+        "visualization": {
+          "color": "#4ECDC4",
+          "icon": "index"
+        }
+      },
+      {
+        "name": "current_value",
+        "display_name": "Current Value",
+        "type": "int",
+        "description": "Value at the current index being compared",
+        "visualization": {
+          "color": "#9B59B6",
+          "icon": "value"
+        }
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Comparisons",
+        "type": "size_t",
+        "description": "Total number of comparisons performed so far",
+        "visualization": {
+          "color": "#6B5B95",
+          "icon": "comparison"
+        }
+      },
+      {
+        "name": "found",
+        "display_name": "Found",
+        "type": "bool",
+        "description": "Whether the target has been found",
+        "visualization": {
+          "color": "#06D6A0",
+          "icon": "found"
+        }
+      },
+      {
+        "name": "result_index",
+        "display_name": "Result Index",
+        "type": "int",
+        "description": "Index where target was found, or -1 if not found",
+        "visualization": {
+          "color": "#E67E22",
+          "icon": "result"
+        }
+      },
+      {
+        "name": "elements_checked",
+        "display_name": "Elements Checked",
+        "type": "size_t",
+        "description": "Number of elements examined so far",
+        "visualization": {
+          "color": "#FFD166",
+          "icon": "checked"
+        }
+      },
+      {
+        "name": "search_progress",
+        "display_name": "Search Progress",
+        "type": "float",
+        "description": "Progress through the array (0.0 to 1.0)",
+        "visualization": {
+          "color": "#88B04B",
+          "icon": "progress"
+        }
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "loop_start",
+        "name": "Loop Start",
+        "description": "Starting iteration through the array",
+        "tags": ["loop", "iteration"],
+        "icon": "loop"
+      },
+      {
+        "id": "compare",
+        "name": "Comparison",
+        "description": "Comparing current element with target",
+        "tags": ["comparison", "decision"],
+        "icon": "compare"
+      },
+      {
+        "id": "found",
+        "name": "Found",
+        "description": "Target value found at current index",
+        "tags": ["found", "success"],
+        "icon": "success"
+      },
+      {
+        "id": "continue_search",
+        "name": "Continue Search",
+        "description": "Target not found at current index, continuing",
+        "tags": ["continue", "search"],
+        "icon": "continue"
+      },
+      {
+        "id": "not_found",
+        "name": "Not Found",
+        "description": "Target value not found after checking entire array",
+        "tags": ["not_found", "failure"],
+        "icon": "failure"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Algorithm completed - search finished",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "int linear_search(const std::vector<int>& arr, int target)",
+        "description_template": "Initializing Linear Search to find target {target} in array of size {size}",
+        "extract_variables": ["target", "size"],
+        "tags": ["initialization"]
+      },
+      "loop_start": {
+        "pseudocode_line": 5,
+        "code_line": 5,
+        "code_line_content": "for (size_t i = 0; i < n; ++i)",
+        "description_template": "Starting iteration {i} of search loop",
+        "extract_variables": ["i"],
+        "tags": ["loop", "iteration"]
+      },
+      "compare": {
+        "pseudocode_line": 7,
+        "code_line": 7,
+        "code_line_content": "if (arr[i] == target)",
+        "description_template": "Comparing arr[{i}] = {current_value} with target = {target}",
+        "extract_variables": ["i", "current_value", "target"],
+        "tags": ["comparison"]
+      },
+      "found": {
+        "pseudocode_line": 9,
+        "code_line": 9,
+        "code_line_content": "return i;",
+        "description_template": "Target found! arr[{i}] = {current_value} equals target {target}. Returning index {i}",
+        "extract_variables": ["i", "current_value", "target"],
+        "tags": ["found", "success"]
+      },
+      "continue_search": {
+        "pseudocode_line": 10,
+        "code_line": 10,
+        "code_line_content": " // continue loop",
+        "description_template": "arr[{i}] = {current_value} ≠ target {target}. Moving to next element",
+        "extract_variables": ["i", "current_value", "target"],
+        "tags": ["continue", "search"]
+      },
+      "not_found": {
+        "pseudocode_line": 13,
+        "code_line": 12,
+        "code_line_content": "return -1;",
+        "description_template": "Target {target} not found in array after checking {elements_checked} elements",
+        "extract_variables": ["target", "elements_checked"],
+        "tags": ["not_found", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 14,
+        "code_line": 14,
+        "code_line_content": "} // end linear_search",
+        "description_template": "Linear Search completed. Target {target} {found_status} at index {result_index} after {comparisons} comparisons",
+        "extract_variables": ["target", "found_status", "result_index", "comparisons"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "classic_bars",
+      "highlight_colors": {
+        "target": "#FF6B6B",
+        "current": "#4ECDC4",
+        "checked": "#3498DB",
+        "unchecked": "#7F8C8D",
+        "found": "#06D6A0",
+        "not_found": "#EF476F"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_values": true,
+      "show_indices": true,
+      "search_visualization": {
+        "show_progress_scan": true,
+        "animate_current_element": true,
+        "show_checked_region": true,
+        "pulse_on_compare": true
+      }
+    }
+  }
+}

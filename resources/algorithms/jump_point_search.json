@@ -1,0 +1,448 @@
+{
+  "algorithm": {
+    "id": "jump_point_search",
+    "name": "Jump Point Search (JPS)",
+    "display_type": "Jump Point Search",
+    "category": "Path Finding",
+    "version": "1.0.0",
+    "last_updated": "2026-05-19",
+
+    "complexity": {
+      "time_best": "O(n)",
+      "time_average": "O(kn) where k << V",
+      "time_worst": "O(V log V)",
+      "space": "O(V)",
+      "explanation": "JPS uses symmetry reduction to prune redundant paths. In practice, it's much faster than A* on uniform grids as it only evaluates 'jump points' - nodes where direction changes are forced."
+    },
+
+    "properties": {
+      "stable": true,
+      "in_place": false,
+      "adaptive": false,
+      "comparison_based": true,
+      "online": false,
+      "recursive": true,
+      "parallelizable": false,
+      "deterministic": true
+    },
+
+    "description": {
+      "brief": "Jump Point Search is an optimization of A* for uniform-cost grids that dramatically reduces the number of nodes evaluated by 'jumping' over large sections of open space.",
+
+      "detailed": [
+        "Algorithm Analysis:",
+        "──────────────────",
+        "Time Complexity: O(n) to O(V log V) depending on grid structure",
+        "Space Complexity: O(V) for open/closed sets and jump points",
+        "",
+        "Key Characteristics:",
+        "• Uses symmetry breaking to prune redundant paths",
+        "• Only considers 'jump points' - nodes where direction changes",
+        "• Can skip large areas of uniform terrain in one step",
+        "• Up to 10x faster than A* on open grids",
+        "",
+        "Applications:",
+        "• Real-time strategy games",
+        "• Large-scale grid navigation",
+        "• Robotics path planning in open environments",
+        "• Video game AI movement"
+      ],
+
+      "pseudocode": [
+        "vector<Cell> JumpPointSearch(",
+        "       const Grid& grid,",
+        "       Cell start,",
+        "       Cell target)",
+        "{",
+        "    PriorityQueue<Cell> open_set;",
+        "    vector<vector<bool>> closed_set(rows, vector<bool>(cols, false));",
+        "    vector<vector<Cell>> came_from(rows, vector<Cell>(cols));",
+        "    vector<vector<float>> g_score(rows, vector<float>(cols, INFINITY));",
+        "",
+        "    g_score[start.row][start.col] = 0;",
+        "    open_set.push(start, heuristic(start, target));",
+        "",
+        "    while (!open_set.empty())",
+        "    {",
+        "        Cell current = open_set.pop_min();",
+        "",
+        "        if (current == target)",
+        "        {",
+        "            break;",
+        "        }",
+        "",
+        "        closed_set[current.row][current.col] = true;",
+        "",
+        "        // Get pruned neighbors (only jump points)",
+        "        for (Cell neighbor : get_jump_points(current))",
+        "        {",
+        "            if (closed_set[neighbor.row][neighbor.col]) continue;",
+        "",
+        "            float tentative_g = g_score[current.row][current.col] +",
+        "                distance(current, neighbor);",
+        "",
+        "            if (tentative_g < g_score[neighbor.row][neighbor.col])",
+        "            {",
+        "                came_from[neighbor.row][neighbor.col] = current;",
+        "                g_score[neighbor.row][neighbor.col] = tentative_g;",
+        "                float f_score = tentative_g + heuristic(neighbor, target);",
+        "                open_set.push(neighbor, f_score);",
+        "            }",
+        "        }",
+        "    }",
+        "",
+        "    return reconstruct_path(came_from, start, target);",
+        "}",
+        "",
+        "function jump(Cell from, Direction dir):",
+        "    Cell next = from + dir;",
+        "    if (next is wall) return null;",
+        "    if (next == target) return next;",
+        "    if (has_forced_neighbor(next, dir)) return next;",
+        "    if (dir.is_diagonal())",
+        "        if (jump(next, dir.horizontal) || jump(next, dir.vertical))",
+        "            return next;",
+        "    return jump(next, dir);"
+      ],
+
+      "optimizations": [
+        "Recursive jump point identification",
+        "Forced neighbor detection for path pruning",
+        "Directional pruning for symmetry breaking",
+        "Early termination on target detection"
+      ],
+
+      "use_cases": [
+        "Large open world game pathfinding",
+        "Tactical strategy games",
+        "Warehouse robot navigation",
+        "Search and rescue operations",
+        "Urban path planning"
+      ],
+
+      "disadvantages": [
+        "Primarily optimized for uniform-cost grids",
+        "Complex implementation compared to A*",
+        "Less effective in highly constrained environments",
+        "Not suitable for weighted terrain (use A* instead)"
+      ],
+
+      "related_algorithms": [
+        "A* Algorithm",
+        "Theta* (adds line-of-sight)",
+        "HPA* (Hierarchical)",
+        "Dijkstra's Algorithm"
+      ]
+    },
+
+    "variables": [
+      {
+        "name": "start_cell",
+        "display_name": "Start Cell",
+        "type": "string",
+        "description": "Starting position on the grid",
+        "visualization": {"color": "#00FF00", "icon": "start"}
+      },
+      {
+        "name": "target_cell",
+        "display_name": "Target Cell",
+        "type": "string",
+        "description": "Goal position to reach",
+        "visualization": {"color": "#FF0000", "icon": "target"}
+      },
+      {
+        "name": "current_cell",
+        "display_name": "Current Cell",
+        "type": "string",
+        "description": "Jump point currently being processed",
+        "visualization": {"color": "#FF6B6B", "icon": "current"}
+      },
+      {
+        "name": "jump_point",
+        "display_name": "Jump Point",
+        "type": "string",
+        "description": "Node where direction change is forced",
+        "visualization": {"color": "#FFD700", "icon": "jump"}
+      },
+      {
+        "name": "open_set_size",
+        "display_name": "Open Set Size",
+        "type": "size_t",
+        "description": "Number of jump points in the open set",
+        "visualization": {"color": "#4ECDC4", "icon": "queue"}
+      },
+      {
+        "name": "closed_set_size",
+        "display_name": "Closed Set Size",
+        "type": "size_t",
+        "description": "Number of jump points explored",
+        "visualization": {"color": "#9B59B6", "icon": "explored"}
+      },
+      {
+        "name": "jump_points_found",
+        "display_name": "Jump Points Found",
+        "type": "size_t",
+        "description": "Total number of jump points identified",
+        "visualization": {"color": "#FFD700", "icon": "jump"}
+      },
+      {
+        "name": "comparisons",
+        "display_name": "Jump Evaluations",
+        "type": "size_t",
+        "description": "Number of jump point evaluations performed",
+        "visualization": {"color": "#88B04B", "icon": "comparison"}
+      },
+      {
+        "name": "g_score",
+        "display_name": "G-Score",
+        "type": "float",
+        "description": "Actual cost from start to jump point",
+        "visualization": {"color": "#92A8D1", "icon": "distance"}
+      },
+      {
+        "name": "f_score",
+        "display_name": "F-Score",
+        "type": "float",
+        "description": "Estimated total cost (g + h)",
+        "visualization": {"color": "#E8A87C", "icon": "score"}
+      }
+    ],
+
+    "step_types": [
+      {
+        "id": "init",
+        "name": "Initialization",
+        "description": "Algorithm initialization and setup",
+        "tags": ["initialization", "setup"],
+        "icon": "start"
+      },
+      {
+        "id": "push_start",
+        "name": "Push Start Cell",
+        "description": "Adding start cell as first jump point",
+        "tags": ["open_set", "start", "jump_point"],
+        "icon": "push"
+      },
+      {
+        "id": "pop_min",
+        "name": "Pop Minimum F-Score",
+        "description": "Extracting jump point with lowest f-score",
+        "tags": ["open_set", "pop", "process"],
+        "icon": "extract"
+      },
+      {
+        "id": "goal_check",
+        "name": "Goal Check",
+        "description": "Checking if current jump point is the target",
+        "tags": ["goal", "check"],
+        "icon": "target"
+      },
+      {
+        "id": "add_to_closed",
+        "name": "Add to Closed Set",
+        "description": "Adding jump point to closed set",
+        "tags": ["closed_set", "settle"],
+        "icon": "settle"
+      },
+      {
+        "id": "find_jump_points",
+        "name": "Finding Jump Points",
+        "description": "Identifying jump points from current node",
+        "tags": ["jump", "search"],
+        "icon": "jump"
+      },
+      {
+        "id": "prune_neighbors",
+        "name": "Pruning Neighbors",
+        "description": "Applying symmetry reduction to prune paths",
+        "tags": ["prune", "optimization"],
+        "icon": "prune"
+      },
+      {
+        "id": "evaluate_jump_point",
+        "name": "Evaluate Jump Point",
+        "description": "Evaluating discovered jump point",
+        "tags": ["jump_point", "evaluate"],
+        "icon": "edge"
+      },
+      {
+        "id": "relax_edge",
+        "name": "Relax Edge",
+        "description": "Checking if better path to jump point found",
+        "tags": ["edge", "relax", "jump"],
+        "icon": "relax"
+      },
+      {
+        "id": "update_scores",
+        "name": "Update Scores",
+        "description": "Updating g-score and f-score for jump point",
+        "tags": ["update", "score"],
+        "icon": "update"
+      },
+      {
+        "id": "push_neighbor",
+        "name": "Push Jump Point",
+        "description": "Adding jump point to open set",
+        "tags": ["open_set", "push", "jump_point"],
+        "icon": "push"
+      },
+      {
+        "id": "target_found",
+        "name": "Target Found",
+        "description": "Target cell has been reached",
+        "tags": ["target", "found", "complete"],
+        "icon": "target"
+      },
+      {
+        "id": "open_set_empty",
+        "name": "Open Set Empty",
+        "description": "No path exists to target",
+        "tags": ["complete", "failure"],
+        "icon": "empty"
+      },
+      {
+        "id": "completed",
+        "name": "Completed",
+        "description": "Jump Point Search completed",
+        "tags": ["completed", "finished"],
+        "icon": "finished"
+      }
+    ],
+
+    "step_mappings": {
+      "init": {
+        "pseudocode_line": 1,
+        "code_line": 1,
+        "code_line_content": "vector<Cell> JumpPointSearch(const Grid& grid, Cell start, Cell target)",
+        "description_template": "Initializing Jump Point Search on {rows}x{cols} grid",
+        "extract_variables": ["rows", "cols"],
+        "tags": ["initialization"]
+      },
+      "push_start": {
+        "pseudocode_line": 13,
+        "code_line": 13,
+        "code_line_content": "open_set.push(start, heuristic(start, target))",
+        "description_template": "Adding start cell ({start_row},{start_col}) as first jump point (f = {f_score})",
+        "extract_variables": ["start_row", "start_col", "f_score"],
+        "tags": ["open_set", "start"]
+      },
+      "pop_min": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "Cell current = open_set.pop_min()",
+        "description_template": "Popping jump point ({current_row},{current_col}) with f = {f_score}",
+        "extract_variables": ["current_row", "current_col", "f_score", "g_score"],
+        "tags": ["open_set", "pop"]
+      },
+      "goal_check": {
+        "pseudocode_line": 21,
+        "code_line": 21,
+        "code_line_content": "if (current == target)",
+        "description_template": "Checking if ({current_row},{current_col}) is the target cell",
+        "extract_variables": ["current_row", "current_col", "target_row", "target_col"],
+        "tags": ["goal", "check"]
+      },
+      "add_to_closed": {
+        "pseudocode_line": 26,
+        "code_line": 26,
+        "code_line_content": "closed_set[current.row][current.col] = true",
+        "description_template": "Adding jump point ({current_row},{current_col}) to closed set",
+        "extract_variables": ["current_row", "current_col", "closed_set_size"],
+        "tags": ["closed_set", "settle"]
+      },
+      "find_jump_points": {
+        "pseudocode_line": 29,
+        "code_line": 29,
+        "code_line_content": "for (Cell neighbor : get_jump_points(current))",
+        "description_template": "Finding jump points from ({current_row},{current_col})",
+        "extract_variables": ["current_row", "current_col"],
+        "tags": ["jump", "search"]
+      },
+      "prune_neighbors": {
+        "pseudocode_line": 30,
+        "code_line": 30,
+        "code_line_content": "// Get pruned neighbors (only jump points)",
+        "description_template": "Applying symmetry reduction to prune redundant paths",
+        "extract_variables": ["current_row", "current_col"],
+        "tags": ["prune", "optimization"]
+      },
+      "evaluate_jump_point": {
+        "pseudocode_line": 31,
+        "code_line": 31,
+        "code_line_content": "if (closed_set[neighbor.row][neighbor.col]) continue;",
+        "description_template": "Evaluating jump point ({jump_point_row},{jump_point_col})",
+        "extract_variables": ["current_row", "current_col", "jump_point_row", "jump_point_col"],
+        "tags": ["jump_point", "evaluate"]
+      },
+      "relax_edge": {
+        "pseudocode_line": 35,
+        "code_line": 35,
+        "code_line_content": "if (tentative_g < g_score[neighbor.row][neighbor.col])",
+        "description_template": "Relaxing edge: tentative g = {tentative_g} < current g = {old_g} to jump point ({jump_point_row},{jump_point_col})",
+        "extract_variables": ["tentative_g", "old_g", "jump_point_row", "jump_point_col"],
+        "tags": ["edge", "relax"]
+      },
+      "update_scores": {
+        "pseudocode_line": 38,
+        "code_line": 38,
+        "code_line_content": "g_score[neighbor.row][neighbor.col] = tentative_g",
+        "description_template": "Updating jump point ({jump_point_row},{jump_point_col}): g = {new_g}, f = {new_f}",
+        "extract_variables": ["jump_point_row", "jump_point_col", "new_g", "new_f"],
+        "tags": ["update", "score"]
+      },
+      "push_neighbor": {
+        "pseudocode_line": 42,
+        "code_line": 42,
+        "code_line_content": "open_set.push(neighbor, f_score)",
+        "description_template": "Adding jump point ({jump_point_row},{jump_point_col}) to open set with f = {f_score}",
+        "extract_variables": ["jump_point_row", "jump_point_col", "f_score"],
+        "tags": ["open_set", "push"]
+      },
+      "target_found": {
+        "pseudocode_line": 23,
+        "code_line": 23,
+        "code_line_content": "break",
+        "description_template": "Target cell ({target_row},{target_col}) reached! Path length: {path_length} steps",
+        "extract_variables": ["target_row", "target_col", "path_length"],
+        "tags": ["target", "found", "complete"]
+      },
+      "open_set_empty": {
+        "pseudocode_line": 18,
+        "code_line": 18,
+        "code_line_content": "while (!open_set.empty())",
+        "description_template": "Open set empty - No path exists from ({start_row},{start_col}) to ({target_row},{target_col})",
+        "extract_variables": ["start_row", "start_col", "target_row", "target_col"],
+        "tags": ["complete", "failure"]
+      },
+      "completed": {
+        "pseudocode_line": 47,
+        "code_line": 47,
+        "code_line_content": "return reconstruct_path(came_from, start, target)",
+        "description_template": "JPS completed. Explored {closed_set_size} jump points, found {jump_points_found} total jump points",
+        "extract_variables": ["closed_set_size", "jump_points_found", "rows", "cols"],
+        "tags": ["completed"]
+      }
+    },
+
+    "visualization": {
+      "default_style": "grid",
+      "highlight_colors": {
+        "current": "#FF6B6B",
+        "closed": "#06D6A0",
+        "open": "#FFD166",
+        "path": "#9B59B6",
+        "source": "#00FF00",
+        "target": "#FF0000",
+        "jump_point": "#FFD700",
+        "edge_active": "#FFA500",
+        "wall": "#2A2A3A",
+        "pruned": "#808080"
+      },
+      "animation_speed": 1.0,
+      "show_labels": true,
+      "show_coordinates": false,
+      "show_scores": false,
+      "show_jump_points": true
+    }
+  }
+}

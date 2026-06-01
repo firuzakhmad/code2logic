@@ -6,6 +6,8 @@
 
 #include <iterator>
 
+#include "imgui_internal.h"
+
 namespace c2l::scenes
 {
     AlgorithmVisualizerScene::AlgorithmVisualizerScene(
@@ -135,6 +137,17 @@ namespace c2l::scenes
         if (m_algorithm_manager)
         {
             m_algorithm_manager->update(delta_time);
+
+            // Handling search event to avoid being called each frame
+            if (m_target_state.search_requested)
+            {
+                if (auto* algo = m_algorithm_manager->get_current_algorithm())
+                {
+                    algo->set_search_target(m_target_state.target_value);
+                }
+
+                m_target_state.search_requested = false;
+            }
         }
 
         m_icon_manager.update();
@@ -278,16 +291,23 @@ namespace c2l::scenes
             ImGuiCond_FirstUseEver
         );
 
-        ImGui::Begin(
-            "Algorithm Selector", 
-            &m_show_algorithm_selector_panel, 
-            ImGuiWindowFlags_NoCollapse
-        );
+        if (!ImGui::Begin(
+            "Algorithm Selector",
+            &m_show_algorithm_selector_panel,
+            ImGuiWindowFlags_NoCollapse)
+            )
+        {
+            ImGui::End();
+            return;
+        }
 
         // Header with icon
         render_algorithm_header(nullptr);
 
+        ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
         // Search box
+        ImGui::SetNextItemWidth(-1);
         static char search_buffer[128] = "";
         ImGui::InputTextWithHint(
             "##Search", 
@@ -951,7 +971,7 @@ namespace c2l::scenes
             );
             ImGui::SameLine();
             core::utils::heading_colored_text(
-                "Array Visualization"
+                m_algorithm_manager->get_current_display_visualization().c_str()
             );
 
             current_visualizer->render();
@@ -1010,11 +1030,11 @@ namespace c2l::scenes
         {
             ImGui::Text(
                 "Estimated Comparisons: %zu",
-                current_step.visualization.comparisons
+                current_step.visualization.comparison_count
             );
             ImGui::Text(
                 "Estimated Swaps: %zu",
-                current_step.visualization.swaps
+                current_step.visualization.swap_count
             );
         }
 
@@ -1030,45 +1050,71 @@ namespace c2l::scenes
     {
         auto* current_algorithm = m_algorithm_manager->get_current_algorithm();
         if (!current_algorithm) return;
-        
+
+        // Set window size to default only on first use
         ImGui::SetNextWindowSize(
-            DEFAULT_WINDOW_SIZE, 
+            DEFAULT_WINDOW_SIZE,
             ImGuiCond_FirstUseEver
         );
 
-        ImGui::Begin(
-            "Playback Controls", 
-            &m_show_algorithm_control_panel
-        );
+        // Begin window
+        if (!ImGui::Begin(
+            "Playback Controls",
+            &m_show_algorithm_control_panel)
+            )
+        {
+            ImGui::End();
+            return;
+        }
+
+        ImGui::Spacing();
+        ImGui::TextUnformatted("Playback Controls");
+        ImGui::Separator();
+
+        float available_width = ImGui::GetContentRegionAvail().x;
+
+        const float button_block_width =
+            DEFAULT_BUTTON_ICON_SIZE.x * 4 +
+            ImGui::GetStyle().ItemSpacing.x * 4;
+
+        constexpr float speed_section_width = 250.0f;
+        constexpr float min_progress_width = 100.0f;
+
+        // Decide wrapping EARLY
+        bool wrap = available_width < (button_block_width + speed_section_width + min_progress_width);
 
         // Play/Pause button
         auto play_pause_icon = m_algorithm_manager->is_playing()
             ? ui::managers::IconType::PAUSE
             : ui::managers::IconType::PLAY;
 
-        render_icon_button(
+        m_icon_manager.render_icon_button(
             "play_pause_btn",
             play_pause_icon,
             [this]()
             {
-                if (m_algorithm_manager->is_playing()) 
+                if (m_algorithm_manager->is_playing())
                 {
                     m_algorithm_manager->pause();
-                } 
-                else {
+                }
+                else
+                {
                     m_algorithm_manager->play();
                 }
-            }
+            },
+            ImVec2(0, 0),
+            true,
+            m_algorithm_manager->is_playing() ? "Pause" : "Play"
         );
 
         ImGui::SameLine();
 
-        // Checking if step controls should be enabled
+        // Step controls enabled state
         bool step_controls_enabled = (!m_algorithm_manager->is_executing() ||
-                                        m_algorithm_manager->is_paused());
+                                       m_algorithm_manager->is_paused());
 
         // Step backward button
-        render_icon_button(
+        m_icon_manager.render_icon_button(
             "step_backward_btn",
             ui::managers::IconType::STEP_BACKWARD,
             [this]() { m_algorithm_manager->step_backward(); },
@@ -1077,16 +1123,32 @@ namespace c2l::scenes
 
         ImGui::SameLine();
 
-        // Progress bar
+        // Progress bar: make width flexible with available space
         const float progress = current_algorithm->get_step_count() > 0 ?
             static_cast<float>(current_algorithm->get_current_step_index()) /
             static_cast<float>(current_algorithm->get_step_count() - 1) : 0.0f;
 
-        ImGui::ProgressBar(progress, ImVec2(200, PROGRESS_BAR_HEIGHT + 5));
-        ImGui::SameLine();
+        float progress_width = ImGui::GetContentRegionAvail().x;
+
+        if (!wrap)
+        {
+            progress_width -= (speed_section_width + ImGui::GetStyle().ItemSpacing.x);
+        }
+
+        progress_width = ImMax(progress_width, min_progress_width);
+
+        // Progress bar
+        ImGui::ProgressBar(
+            progress,
+            ImVec2(progress_width, PROGRESS_BAR_HEIGHT + 5)
+        );
+
+        // Continue row if no wrap
+        if (!wrap)
+            ImGui::SameLine();
 
         // Step forward button
-        render_icon_button(
+        m_icon_manager.render_icon_button(
             "step_forward_btn",
             ui::managers::IconType::STEP_FORWARD,
             [this]() { m_algorithm_manager->step_forward(); },
@@ -1096,7 +1158,7 @@ namespace c2l::scenes
         ImGui::SameLine();
 
         // Reset button
-        render_icon_button(
+        m_icon_manager.render_icon_button(
             "reset_btn",
             ui::managers::IconType::RESET,
             [this]() { m_algorithm_manager->stop(); },
@@ -1105,21 +1167,41 @@ namespace c2l::scenes
 
         ImGui::SameLine();
 
-        // Speed control
-        ImGui::Text("Speed:");
-        ImGui::SameLine();
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4.0f));
-        ImGui::PushStyleVar(ImGuiStyleVar_GrabMinSize, 13.0f);
+        // Speed section
+        if (wrap)
+        {
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::TextUnformatted("Speed");
+        }
 
-        ImGui::SetNextItemWidth(SLIDER_WIDTH);
+        if (!wrap)
+        {
+            ImGui::SameLine();
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Speed");
+            ImGui::SameLine();
+        }
+
+        // Slider sizing
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
         float current_speed = m_algorithm_manager->get_speed();
-        if (ImGui::SliderFloat("##Speed", &current_speed, 0.1f, 5.0f, "%.1fx"))
+        if (ImGui::SliderFloat(
+            "##Speed",
+            &current_speed,
+            ALGORITHM_COMPUTATION_MIN_SPEED,
+            ALGORITHM_COMPUTATION_MAX_SPEED,
+            "%.1fx")
+            )
         {
             m_algorithm_manager->set_speed(current_speed);
         }
 
-        ImGui::PopStyleVar(2);
-        
+        ImGui::Dummy({0.0f, 15.0f});
+        render_target_state();
+
+        // End window
         ImGui::End();
     }
 
@@ -1257,5 +1339,162 @@ namespace c2l::scenes
 
         ImGui::End();
     }
+
+    void AlgorithmVisualizerScene::render_target_state()
+    {
+        auto* metadata = m_algorithm_manager->get_current_metadata();
+        if (!metadata ||
+            metadata->get_category() != algorithms::AlgorithmCategory::SEARCHING)
+        {
+            return;
+        }
+
+        core::utils::heading_colored_text("Search Target");
+        ImGui::Separator();
+
+        ImGui::PushStyleVar(
+            ImGuiStyleVar_FramePadding, 
+            ImVec2(8, 6)
+        );
+        ImGui::PushStyleVar(
+            ImGuiStyleVar_FrameRounding, 
+            4.0f
+        );
+
+        // Input field
+        ImGui::SetNextItemWidth(-1); 
+
+        bool input_changed = ImGui::InputTextWithHint(
+            "##TargetValue",
+            "Enter value to search... (e.g., 42)",
+            m_target_state.target_buffer,
+            sizeof(m_target_state.target_buffer),
+            ImGuiInputTextFlags_CharsDecimal
+        );
+
+        // Validate input as integer
+        char* endptr = nullptr;
+        long val = strtol(m_target_state.target_buffer, &endptr, 10);
+
+        const bool valid = 
+            endptr != m_target_state.target_buffer && 
+            *endptr == '\0';
+
+
+        ImVec4 border_color = valid
+            ? ImVec4(0.2f, 0.8f, 0.2f, 1.0f)
+            : ImVec4(0.2f, 0.8f, 0.2f, 1.0f);   // Green when target set
+
+        ImGui::PushStyleColor(
+            ImGuiCol_Border, 
+            border_color
+        );
+
+
+        // Button row 
+        ImGui::Spacing();
+        ImGui::PushStyleVar(
+            ImGuiStyleVar_ItemSpacing, 
+            ImVec2(8, 4)
+        );
+
+        // Animate search button
+        bool is_animating = (m_target_state.search_animation > 0.0f);
+
+        if (is_animating) {
+            m_target_state.search_animation -= ImGui::GetIO().DeltaTime;
+
+            ImGui::PushStyleColor(
+                ImGuiCol_Button, 
+                ImVec4(0.2f, 0.6f, 0.2f, 1.0f)
+            );
+            ImGui::PushStyleColor(
+                ImGuiCol_ButtonHovered, 
+                ImVec4(0.3f, 0.7f, 0.3f, 1.0f)
+            );
+        }
+
+        if (!valid)
+            ImGui::BeginDisabled();
+
+
+        if (ImGui::Button("Search", ImVec2(120, 32)))
+        {
+            m_target_state.target_value = static_cast<int>(val);
+            m_target_state.has_target = true;
+
+
+            m_target_state.search_requested = true;
+            m_target_state.search_animation = 0.5f;
+        }
+        
+        if (!valid)
+            ImGui::EndDisabled();
+
+        if (is_animating)
+        {
+            ImGui::PopStyleColor(2);
+        }
+
+        ImGui::SameLine();
+
+        // Clear button
+        if (ImGui::Button("Clear", ImVec2(80, 32)))
+        {
+            memset(
+                m_target_state.target_buffer, 
+                0, 
+                sizeof(m_target_state.target_buffer)
+            );
+            m_target_state.has_target = false;
+            m_target_state.search_requested = false;
+            m_target_state.search_animation = 0.0f;
+        }
+
+        ImGui::PopStyleColor();
+
+        if (!valid && m_target_state.target_buffer[0] != '\0')
+        {
+            ImGui::Spacing();
+            ImGui::TextColored(
+                ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
+                "Invalid number"
+            );
+        }
+
+        // Display current target
+        if (m_target_state.has_target) 
+        {
+            ImGui::Spacing();
+            ImGui::Separator();
+
+            ImGui::TextColored(
+                ImVec4(0.6f, 0.8f, 1.0f, 1.0f), 
+                "Current Target:"
+            );
+            ImGui::SameLine();
+            ImGui::TextColored(
+                ImVec4(0.2f, 1.0f, 0.2f, 1.0f), 
+                "%d", 
+                m_target_state.target_value
+            );
+        }
+
+        // Handle search request
+        // if (m_target_state.search_requested) {
+        //     execute_search_with_target();
+        //     m_target_state.search_requested = false;
+        // }
+
+        ImGui::PopStyleVar(3);
+
+    }
+
+
+    void AlgorithmVisualizerScene::render_search_result_feedback()
+    {
+
+    }
+
 
 } // namespace c2l::scenes

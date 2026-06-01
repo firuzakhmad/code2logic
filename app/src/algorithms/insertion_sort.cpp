@@ -10,86 +10,6 @@ namespace c2l::algorithms
         LOG_DEBUG("InsertionSort created and metadata loaded from JSON");
     }
 
-    void InsertionSort::initialize(const std::vector<int>& data)
-    {
-        m_original_data = data;
-        reset();
-        generate_all_steps();
-        notify_observers();
-
-        LOG_INFO(
-            "InsertionSort initialized with {} elements, generated {} steps",
-            data.size(),
-            m_steps.size()
-        );
-    }
-
-    bool InsertionSort::step_forward()
-    {
-        if (m_current_step_index < m_steps.size() - 1)
-        {
-            ++m_current_step_index;
-            notify_observers();
-            return true;
-        }
-
-        return false;
-    }
-
-    bool InsertionSort::step_backward()
-    {
-        if (m_current_step_index > 0)
-        {
-            --m_current_step_index;
-            notify_observers();
-            return true;
-        }
-
-        return false;
-    }
-
-    void InsertionSort::reset()
-    {
-        m_current_step_index = 0;
-        m_steps.clear();
-        m_total_comparisons = 0;
-        m_total_swaps = 0;
-    }
-
-    std::vector<int> InsertionSort::get_original_data() const
-    {
-        return m_original_data;
-    }
-
-    AlgorithmStep InsertionSort::get_current_step() const
-    {
-        if (is_steps_empty_or_invalid()) return {};
-        return m_steps[m_current_step_index];
-    }
-
-    size_t InsertionSort::get_step_count() const
-    {
-        return m_steps.size();
-    }
-
-    size_t InsertionSort::get_current_step_index() const
-    {
-        return m_current_step_index;
-    }
-
-    bool InsertionSort::is_complete() const
-    {
-        return !m_steps.empty() && m_current_step_index == m_steps.size() - 1;
-    }
-
-    bool InsertionSort::is_steps_empty_or_invalid() const
-    {
-        if (m_steps.empty() || m_current_step_index >= m_steps.size())
-            return true;
-
-        return false;
-    }
-
     void InsertionSort::generate_all_steps()
     {
         if (m_original_data.empty())
@@ -343,8 +263,8 @@ namespace c2l::algorithms
             viz.additional_highlights.push_back(i);
         }
 
-        viz.comparisons = state.comparisons;
-        viz.swaps = state.swaps;
+        viz.comparison_count = state.comparisons;
+        viz.swap_count = state.swaps;
     }
 
 } // namespace c2l::algorithms
