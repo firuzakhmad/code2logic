@@ -1,9 +1,9 @@
 # Dependency versions
 set(GLFW_VERSION "3.4")
-set(GLM_VERSION "1.0.1")
+set(GLM_VERSION "1.0.3")
 set(GLAD_VERSION "2.0.8")
 set(IMGUI_VERSION "1.90.8")
-set(NLOHMANN_JSON_VERSION "3.11.3")
+set(NLOHMANN_JSON_VERSION "3.12.0")
 
 # Project version
 set(CODE2LOGIC_VERSION_MAJOR 1)

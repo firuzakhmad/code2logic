@@ -80,14 +80,9 @@ namespace c2l::core
     #define C2L_ASSERT(expr, ...) \
     do { \
         if (!(expr)) { \
-            /* Check if there are variadic arguments */ \
-            constexpr bool has_message = (sizeof(__VA_ARGS__) > 0); \
-            LOG_FATAL("Assertion failed: ", #expr); \
-            if constexpr (has_message) { \
-                LOG_FATAL("  Message: ", __VA_ARGS__); \
-            } \
-            LOG_FATAL("  Location: ", __FILE__, ":", __LINE__, \
-                      "\n  Function: ", __FUNCTION__); \
+            LOG_FATAL("Assertion failed: {}", #expr); \
+            __VA_OPT__(LOG_FATAL("  Message: {}", __VA_ARGS__);) \
+            LOG_FATAL("  Location: {}:{}\n  Function: {}", __FILE__, __LINE__, __FUNCTION__); \
             DEBUG_BREAK(); \
             std::abort(); \
         } \
@@ -109,9 +104,8 @@ namespace c2l::core
     do { \
         auto result = call; \
         if (result) { \
-            LOG_FATAL("[ad Error] ", #call, " returned failure", \
-                      " at ", __FILE__, ":", __LINE__ \
-                      __VA_OPT__(, "\nContext: ", __VA_ARGS__)); \
+            LOG_FATAL("[C2L Error] {} returned failure at {}:{}", #call, __FILE__, __LINE__); \
+            __VA_OPT__(LOG_FATAL("Context: {}", __VA_ARGS__);) \
             DEBUG_BREAK(); \
             std::abort(); \
         } \

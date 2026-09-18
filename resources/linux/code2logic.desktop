@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Code2Logic
+Comment=Algorithm visualizer
+Exec=code2logic
+Icon=code2logic
+Terminal=false
+Categories=Development;Education;

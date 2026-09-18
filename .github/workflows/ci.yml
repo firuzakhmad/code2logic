@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_call:
+
+env:
+  CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+  CONFIGURE_FLAGS: >-
+    -DCMAKE_BUILD_TYPE=Release
+    -DCODE2LOGIC_BUILD_TESTS=OFF
+    -DCODE2LOGIC_BUILD_EXAMPLES=OFF
+    -DCODE2LOGIC_BUILD_WITH_IMGUI=ON
+    -DCODE2LOGIC_USE_SYSTEM_DEPS=OFF
+    -DGLFW_BUILD_WAYLAND=OFF
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+          - ubuntu-24.04
+          - windows-2022
+          - macos-15
+          - macos-15-intel
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux GL/X11 dev packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libxi-dev \
+            xorg-dev
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Pillow (Windows .ico generation)
+        if: runner.os == 'Windows'
+        run: pip install pillow
+
+      - name: Set up sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Configure
+        run: cmake -S . -B build ${{ env.CONFIGURE_FLAGS }}
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.os }}
+          path: build/bin/**
+          retention-days: 3

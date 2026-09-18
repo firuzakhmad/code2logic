@@ -12,6 +12,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Generate compile_commands.json for tools like clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
+
 # Build configuration options
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(CODE2LOGIC_BUILD_TESTS "Build tests" OFF)
@@ -57,6 +61,7 @@ install(
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
+    BUNDLE DESTINATION .
     COMPONENT Code2Logic_Runtime
 )
 

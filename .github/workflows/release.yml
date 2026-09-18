@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    tags: [ "v*.*.*" ]
+
+permissions:
+  contents: write
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Package & Release (${{ matrix.os }})
+    needs: ci
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+          - ubuntu-24.04
+          - windows-2022
+          - macos-15
+          - macos-15-intel
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ matrix.os }}
+          path: build/bin
+
+      - name: Restore executable bit (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x build/bin/code2logic 2>/dev/null || true
+          chmod +x build/bin/code2logic.app/Contents/MacOS/* 2>/dev/null || true
+
+      - name: Assemble package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist/code2logic
+          cp build/bin/code2logic dist/code2logic/
+          cp resources/icons/default/code2logic/code2logic.png dist/code2logic/
+          cp resources/linux/code2logic.desktop dist/code2logic/
+          cp LICENSE.txt dist/code2logic/
+
+          cd dist
+          tar -czf code2logic-${{ github.ref_name }}-${{ matrix.os }}-x86_64.tar.gz code2logic
+
+      - name: Assemble package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist/code2logic -Force | Out-Null
+
+          Copy-Item build/bin/code2logic.exe dist/code2logic/
+          Copy-Item LICENSE.txt dist/code2logic/
+
+          Compress-Archive `
+            -Path dist/code2logic `
+            -DestinationPath dist/code2logic-${{ github.ref_name }}-${{ matrix.os }}-x86_64.zip
+
+      - name: Assemble package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist
+
+          cp -R build/bin/code2logic.app dist/
+          cp LICENSE.txt dist/
+
+          cd dist
+          zip -r \
+            code2logic-${{ github.ref_name }}-${{ matrix.os }}.zip \
+            code2logic.app LICENSE.txt
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

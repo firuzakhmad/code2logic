@@ -6,7 +6,11 @@
 namespace c2l::core
 {
 
-Logger g_logger;
+Logger& get_logger()
+{
+    static Logger instance;
+    return instance;
+}
 
 // Implementation of format_string method
 std::string ILogger::format_string(const std::string& format, const std::vector<std::string>& args)
@@ -90,19 +94,18 @@ void Logger::init(const std::string& file_name, LogLevel level)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    // Close the existing log file if open
     if (m_log_file.is_open())
     {
         m_log_file.close();
     }
 
-    // Open new log file if specified filename
     if (!file_name.empty())
     {
         m_log_file.open(file_name, std::ios::out | std::ios::app);
         if (!m_log_file.is_open())
         {
-            throw std::runtime_error("Failed to open log file: " + file_name);
+            std::cerr << "[Logger] Warning: could not open log file '"
+                      << file_name << "' - continuing with console-only logging.\n";
         }
     }
 
@@ -164,7 +167,7 @@ std::string Logger::log_level_to_string(LogLevel level)
         case LogLevel::DEBUG:   return "DEBUG";
         case LogLevel::INFO:    return "INFO";
         case LogLevel::WARNING: return "WARN";
-        case LogLevel::ERROR:   return "ERROR";
+        case LogLevel::ERR:     return "ERROR";
         case LogLevel::FATAL:   return "FATAL";
         default:                return "UNKNOWN";
     }
@@ -178,7 +181,7 @@ std::string Logger::log_level_to_color(LogLevel level)
         case LogLevel::DEBUG:   return "\033[36m";       // Cyan
         case LogLevel::INFO:    return "\033[32m";       // Green
         case LogLevel::WARNING: return "\033[33m";       // Yellow
-        case LogLevel::ERROR:   return "\033[31m";       // Red
+        case LogLevel::ERR:     return "\033[31m";       // Red
         case LogLevel::FATAL:   return "\033[41m\033[97m"; // Red bg, White text
         default:                return "\033[0m";        // Reset
     }

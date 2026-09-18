@@ -106,6 +106,15 @@ if(NOT TARGET glfw)
         add_library(glfw ALIAS glfw)
     else()
         message(STATUS "Fetching GLFW ${GLFW_VERSION}")
+
+        # Code2Logic uses X11 on Linux.
+        # Disable Wayland to avoid requiring wayland-scanner and
+        # additional Wayland protocol dependencies.
+        if(UNIX AND NOT APPLE)
+            set(GLFW_BUILD_X11 ON CACHE BOOL "Build X11 support" FORCE)
+            set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "Build Wayland support" FORCE)
+        endif()
+
         FetchContent_Declare(
             glfw
             DOWNLOAD_EXTRACT_TIMESTAMP TRUE
@@ -157,6 +166,7 @@ if(CODE2LOGIC_BUILD_WITH_IMGUI AND NOT TARGET imgui)
             imgui
             GIT_REPOSITORY https://github.com/ocornut/imgui.git
             GIT_TAG docking
+            GIT_SHALLOW TRUE
             DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     FetchContent_MakeAvailable(imgui)

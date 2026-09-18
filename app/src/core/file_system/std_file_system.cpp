@@ -5,6 +5,15 @@
 #include <filesystem>
 #include <sstream>
 
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#elif defined(_WIN32)
+#include <windows.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#include <climits>
+#endif
+
 namespace c2l::core::filesystem
 {
 	
@@ -368,32 +377,90 @@ namespace c2l::core::filesystem
 	    add_search_path(m_base_path / "resources" / "shaders");
 	    add_search_path(m_base_path / "resources" / "models");
 	}
+
+	namespace
+    {
+		std::optional<fs::path> get_executable_path()
+    	{
+#if defined(__APPLE__)
+        	char buf[PATH_MAX];
+	        uint32_t size = sizeof(buf);
+
+	        if (_NSGetExecutablePath(buf, &size) != 0)
+	            return std::nullopt;
+
+	        std::error_code ec;
+	        auto resolved = fs::canonical(buf, ec);
+	        return ec ? std::nullopt : std::optional(resolved);
+#elif defined(_WIN32)
+	        wchar_t buf[MAX_PATH];
+	        DWORD len = GetModuleFileNameW(nullptr, buf, MAX_PATH);
+
+	        if (len == 0 || len == MAX_PATH)
+	            return std::nullopt;
+
+	        return fs::path(buf);
+#elif defined(__linux__)
+	        char buf[PATH_MAX];
+	        ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+
+	        if (len == -1)
+	            return std::nullopt;
+
+	        buf[len] = '\0';
+	        return fs::path(buf);
+#else
+        	return std::nullopt;
+#endif
+        }
+    }
 	 
 	std::optional<fs::path> StdFileSystem::find_root_path()
-	{
-		// Finding project root (where CMakeLists.txt is)
-	    std::error_code ec;
-		fs::path current = fs::current_path(ec);
-		if (ec)
-			return std::nullopt;
+    {
+        if (auto exe_path = get_executable_path())
+        {
+#if defined(__APPLE__)
+            // Inside a .app bundle, bundled resources live in
+            // Contents/Resources, a sibling of Contents/MacOS/.
+            std::string exe_str = exe_path->string();
+            auto macos_pos = exe_str.find("/Contents/MacOS/");
+            if (macos_pos != std::string::npos)
+            {
+                fs::path resources_dir =
+                    fs::path(exe_str.substr(0, macos_pos)) / "Contents" / "Resources";
+                if (fs::exists(resources_dir))
+                    return resources_dir;
+            }
+#endif
+            // Windows/Linux: resources are copied next to the executable.
+            fs::path exe_dir = exe_path->parent_path();
+            if (fs::exists(exe_dir / "resources"))
+                return exe_dir;
+        }
 
-		while (!current.empty())
-		{
-			if (fs::exists(current / "CMakeLists.txt") ||
-				fs::exists(current / "resources") ||
-				fs::exists(current / "src"))
-			{
-				return current;
-			}
+        // Development fallback
+        std::error_code ec;
+        fs::path current = fs::current_path(ec);
+        if (ec)
+            return std::nullopt;
 
-			fs::path parent = current.parent_path();
-			if (parent == current)
-				break;
+        while (!current.empty())
+        {
+            if (fs::exists(current / "CMakeLists.txt") ||
+                fs::exists(current / "resources") ||
+                fs::exists(current / "src"))
+            {
+                return current;
+            }
 
-			current = parent;
-		}
+            fs::path parent = current.parent_path();
+            if (parent == current)
+                break;
 
-		return std::nullopt;
-	}
+            current = parent;
+        }
+
+        return std::nullopt;
+    }
 
 } // namespace c2l::core::filesystem

@@ -184,6 +184,35 @@ target_link_libraries(code2logic PRIVATE
 
 target_include_directories(code2logic PRIVATE src)
 
+include(${CMAKE_SOURCE_DIR}/CMake/Icon.cmake)
+code2logic_configure_app_icon(code2logic
+    ${CMAKE_SOURCE_DIR}/resources/icons/default/code2logic/code2logic.png
+)
+
+if(APPLE)
+    file(GLOB_RECURSE CODE2LOGIC_RESOURCE_FILES
+         RELATIVE ${CMAKE_SOURCE_DIR}/resources
+         ${CMAKE_SOURCE_DIR}/resources/*)
+    foreach(res_file ${CODE2LOGIC_RESOURCE_FILES})
+        get_filename_component(res_dir ${res_file} DIRECTORY)
+        target_sources(code2logic PRIVATE ${CMAKE_SOURCE_DIR}/resources/${res_file})
+        if(res_dir STREQUAL "")
+            set(pkg_location "Resources/resources")
+        else()
+            set(pkg_location "Resources/resources/${res_dir}")
+        endif()
+        set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/${res_file} PROPERTIES
+            MACOSX_PACKAGE_LOCATION "${pkg_location}"
+        )
+    endforeach()
+else()
+    add_custom_command(TARGET code2logic POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/resources
+            $<TARGET_FILE_DIR:code2logic>/resources
+    )
+endif()
+
 # Platform-specific executable properties
 if(WIN32)
     set_target_properties(code2logic PROPERTIES

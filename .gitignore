@@ -1,4 +1,45 @@
-# Ignore macOS .DS_Store files in all directories
-**/.DS_Store
-# Ignore build directories
+# Build output
 build/
+cmake-build-*/        # CLion's default build directories (cmake-build-debug, cmake-build-release, etc.)
+out/
+bin/
+
+# CMake-generated files (in case CMake is ever run in-source by mistake)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+compile_commands.json
+.cache/
+
+# IDE / editor
+.idea/                # CLion / IntelliJ
+.vscode/
+.vs/                  # Visual Studio
+*.swp                 # Vim
+
+# Compiled objects and debug symbols
+*.o
+*.obj
+*.exe
+*.dSYM/                # macOS debug symbols
+*.pdb                  # Windows debug symbols
+*.ilk
+
+# macOS
+**/.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Linux
+*~
+
+# Python (scripts/png_to_ico.py)
+__pycache__/
+*.pyc
+
+# Local environment / secrets
+.env

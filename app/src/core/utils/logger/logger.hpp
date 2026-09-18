@@ -1,14 +1,6 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#elif defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#endif
-
 
 /**
  * @brief Logging system with file and console output
@@ -45,7 +37,7 @@ namespace c2l::core
         DEBUG,
         INFO,
         WARNING,
-        ERROR,
+        ERR,
         FATAL
     };
 
@@ -82,6 +74,8 @@ namespace c2l::core
          */
         virtual void log(LogLevel level, const std::string& message) = 0;
 
+        [[nodiscard]] virtual LogLevel get_log_level() const = 0;
+
         /**
          * @brief Log a formatted message with {} placeholders
          * @tparams Args Types of the arguments to format
@@ -89,11 +83,12 @@ namespace c2l::core
          * @param format Format string with {} placeholder
          * @param args Arguments to replace placeholders
          */
-         template<typename... Args>
-         void log_format(LogLevel level, const std::string& format, Args&&... args)
-         {
+        template<typename... Args>
+        void log_format(LogLevel level, const std::string& format, Args&&... args)
+        {
+            if (level < get_log_level()) return;
             log(level, format_message(format, std::forward<Args>(args)...));
-         }
+        }
 
         /**
          * @brief Converts a single argument to its string representations.
@@ -168,6 +163,8 @@ namespace c2l::core
          */
         void log(LogLevel level, const std::string& message) override;
 
+        [[nodiscard]] LogLevel get_log_level() const override { return m_log_level.load(); }
+
         /**
          * @brief Logs a formatted message with {} placeholders at the specified severity level.
          *
@@ -237,17 +234,18 @@ namespace c2l::core
         void init(const std::string&, LogLevel) override {}
         void set_log_level(LogLevel) override {}
         void log(LogLevel, const std::string&) override {}
+        [[nodiscard]] LogLevel get_log_level() const override { return LogLevel::FATAL; }
     };
 
 // New macros with format string support
 #define LOG_FORMAT_IMPL(logger, level, format, ...) \
     do { \
-        if (logger) logger->log_format(c2l::core::LogLevel::level, format, ##__VA_ARGS__); \
+        if (logger) logger->log_format(c2l::core::LogLevel::level, format __VA_OPT__(,) __VA_ARGS__); \
     } while(0)
 
 #define LOG_FORMAT_GLOBAL_IMPL(level, format, ...) \
     do { \
-        c2l::core::g_logger.log_format(c2l::core::LogLevel::level, format, ##__VA_ARGS__); \
+        c2l::core::get_logger().log_format(c2l::core::LogLevel::level, format __VA_OPT__(,) __VA_ARGS__); \
     } while(0)
 
 // Formating string macros
@@ -255,7 +253,7 @@ namespace c2l::core
 #define LOG_DEBUG_FORMAT(logger, format, ...)    LOG_FORMAT_IMPL(logger, DEBUG, format, ##__VA_ARGS__)
 #define LOG_INFO_FORMAT(logger, format, ...)     LOG_FORMAT_IMPL(logger, INFO, format, ##__VA_ARGS__)
 #define LOG_WARNING_FORMAT(logger, format, ...)  LOG_FORMAT_IMPL(logger, WARNING, format, ##__VA_ARGS__)
-#define LOG_ERROR_FORMAT(logger, format, ...)    LOG_FORMAT_IMPL(logger, ERROR, format, ##__VA_ARGS__)
+#define LOG_ERROR_FORMAT(logger, format, ...)    LOG_FORMAT_IMPL(logger, ERR, format, ##__VA_ARGS__)
 #define LOG_FATAL_FORMAT(logger, format, ...)    LOG_FORMAT_IMPL(logger, FATAL, format, ##__VA_ARGS__)
 
 // Global format string macros
@@ -263,17 +261,11 @@ namespace c2l::core
 #define LOG_DEBUG(format, ...)    LOG_FORMAT_GLOBAL_IMPL(DEBUG, format, ##__VA_ARGS__)
 #define LOG_INFO(format, ...)     LOG_FORMAT_GLOBAL_IMPL(INFO, format, ##__VA_ARGS__)
 #define LOG_WARNING(format, ...)  LOG_FORMAT_GLOBAL_IMPL(WARNING, format, ##__VA_ARGS__)
-#define LOG_ERROR(format, ...)    LOG_FORMAT_GLOBAL_IMPL(ERROR, format, ##__VA_ARGS__)
+#define LOG_ERROR(format, ...)    LOG_FORMAT_GLOBAL_IMPL(ERR, format, ##__VA_ARGS__)
 #define LOG_FATAL(format, ...)    LOG_FORMAT_GLOBAL_IMPL(FATAL, format, ##__VA_ARGS__)
 
-extern Logger g_logger;
+Logger& get_logger();
 
 } // namespace c2l::core
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 #endif // LOGGER_HPP

@@ -126,6 +126,7 @@ namespace c2l::core::resources
 			if (!font_data)
 			{
 				LOG_ERROR("Failed to read binary font file: {}", m_path.string());
+				return false;
 			}
 
 			m_font_data = *font_data;
